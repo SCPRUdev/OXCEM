@@ -186,6 +186,15 @@ void ManufactureInfoState::buildUi()
 	_btnOk->onKeyboardPress((ActionHandler)&ManufactureInfoState::btnOkClick, Options::keyOk);
 	_btnOk->onKeyboardPress((ActionHandler)&ManufactureInfoState::btnOkClick, Options::keyCancel);
 
+	if (!_game->getMod()->getNewBaseUnlockResearch().empty())
+	{
+		bool newBasesUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getNewBaseUnlockResearch(), true);
+		if (!newBasesUnlocked)
+		{
+			_btnSell->setVisible(false);
+		}
+	}
+
 	if (!_item && _production)
 	{
 		if (_production->getRules()->getRefund())

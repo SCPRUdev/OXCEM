@@ -235,6 +235,7 @@ void BasescapeState::init()
 		if (!newBasesUnlocked)
 		{
 			_btnNewBase->setVisible(false);
+			_txtFunds->setVisible(false);
 		}
 	}
 

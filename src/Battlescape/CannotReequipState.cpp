@@ -95,6 +95,17 @@ CannotReequipState::CannotReequipState(std::vector<ReequipStat> &missingItems, B
 	_lstItems->setSelectable(true);
 	_lstItems->setBackground(_window);
 	_lstItems->setMargin(2);
+
+	if (!_game->getMod()->getNewBaseUnlockResearch().empty())
+	{
+		bool newBasesUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getNewBaseUnlockResearch(), true);
+		if (!newBasesUnlocked)
+		{
+		_btnManufacture->setVisible(false);
+		_btnPurchase->setVisible(false);
+		}
+	}
+
 }
 
 /**

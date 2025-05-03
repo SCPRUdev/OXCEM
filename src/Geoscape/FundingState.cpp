@@ -128,6 +128,22 @@ FundingState::FundingState()
 
 	_fundingCountryOrder = FC_NONE;
 
+	if (!_game->getMod()->getNewBaseUnlockResearch().empty())
+	{
+		bool newBasesUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getNewBaseUnlockResearch(), true);
+		if (!newBasesUnlocked)
+		{
+			_txtCountry->setVisible(false);
+			_txtFunding->setVisible(false);
+			_txtChange->setVisible(false);
+			_lstCountries->setVisible(false);
+			_sortName->setVisible(false);
+			_sortFunding->setVisible(false);
+			_sortChange->setVisible(false);
+
+		}
+	}
+
 	for (auto* country : *_game->getSavedGame()->getCountries())
 	{
 		_fundingCountryList.push_back(FundingCountry(

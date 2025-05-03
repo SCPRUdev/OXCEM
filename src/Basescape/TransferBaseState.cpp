@@ -91,6 +91,16 @@ TransferBaseState::TransferBaseState(Base *base, DebriefingState *debriefingStat
 	_lstBases->setMargin(2);
 	_lstBases->onMouseClick((ActionHandler)&TransferBaseState::lstBasesClick);
 
+	if (!_game->getMod()->getNewBaseUnlockResearch().empty())
+	{
+		bool newBasesUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getNewBaseUnlockResearch(), true);
+		if (!newBasesUnlocked)
+		{
+			_txtFunds->setVisible(false);
+		}
+	}
+
+
 	int row = 0;
 	for (auto* xbase : *_game->getSavedGame()->getBases())
 	{
