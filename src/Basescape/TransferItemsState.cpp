@@ -194,6 +194,9 @@ TransferItemsState::TransferItemsState(Base *baseFrom, Base *baseTo, DebriefingS
 	{
 		RuleItem *rule = _game->getMod()->getItem(itemType, true);
 		int qty = _baseFrom->getStorageItems()->getItem(rule);
+		if (!rule->getCanBeTransferredNormally())
+		{
+			qty = 0;		}
 		if (_debriefingState != 0)
 		{
 			qty = _debriefingState->getRecoveredItemCount(rule);
