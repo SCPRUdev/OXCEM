@@ -2608,7 +2608,7 @@ void BattleUnit::prepareTimeUnits(int tu)
 		setValueMax(_tu, tu, 0, getBaseStats()->tu);
 
 		// Apply reductions, if new TU == 0 then it could make not spend TU decay
-		float encumbrance = (float)getBaseStats()->strength / (float)getCarriedWeight();
+		float encumbrance = (float)getBaseStats()->strength * 4 / (float)getCarriedWeight();
 		if (encumbrance < 1)
 		{
 		  _tu = int(encumbrance * _tu);
