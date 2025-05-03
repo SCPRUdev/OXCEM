@@ -603,6 +603,10 @@ void State::setStandardPalette(const std::string &palette, int backpals)
 	{
 		_cursorColor = Mod::GRAPHS_CURSOR;
 	}
+	else if (palette == "PAL_MENU_SCREENS")
+	{
+		_cursorColor = Mod::GRAPHS_CURSOR;
+	}
 	else
 	{
 		_cursorColor = Mod::BATTLESCAPE_CURSOR;
