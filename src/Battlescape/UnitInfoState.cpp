@@ -147,6 +147,11 @@ UnitInfoState::UnitInfoState(BattleUnit *unit, BattlescapeState *parent, bool fr
 	_barFrontArmor = new Bar(150, 5, 170, yPos + 1);
 	yPos += step;
 
+	_txtRearArmor = new Text(140, 9, 8, yPos);
+	_numRearArmor = new Text(18, 9, 150, yPos);
+	_barRearArmor = new Bar(150, 5, 170, yPos + 1);
+	yPos += step;
+
 	_txtLeftArmor = new Text(140, 9, 8, yPos);
 	_numLeftArmor = new Text(18, 9, 150, yPos);
 	_barLeftArmor = new Bar(150, 5, 170, yPos + 1);
@@ -155,11 +160,6 @@ UnitInfoState::UnitInfoState(BattleUnit *unit, BattlescapeState *parent, bool fr
 	_txtRightArmor = new Text(140, 9, 8, yPos);
 	_numRightArmor = new Text(18, 9, 150, yPos);
 	_barRightArmor = new Bar(150, 5, 170, yPos + 1);
-	yPos += step;
-
-	_txtRearArmor = new Text(140, 9, 8, yPos);
-	_numRearArmor = new Text(18, 9, 150, yPos);
-	_barRearArmor = new Bar(150, 5, 170, yPos + 1);
 	yPos += step;
 
 	_txtUnderArmor = new Text(140, 9, 8, yPos);
