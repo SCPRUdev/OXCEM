@@ -1722,6 +1722,11 @@ int BattleUnit::damage(Position relative, int damage, const RuleDamageType *type
 
 		std::get<toTransform>(args.data) += specialDamageTransformChance;
 		std::get<toArmor>(args.data) += type->getArmorPreFinalDamage(damage);
+		std::get<toHealth>(args.data) += type->getHealthPreFinalDamage(damage);
+		std::get<toStun>(args.data) += type->getStunPreFinalDamage(damage);
+		std::get<toTime>(args.data) += type->getTimePreFinalDamage(damage);
+		std::get<toEnergy>(args.data) += type->getEnergyPreFinalDamage(damage);
+		std::get<toMorale>(args.data) += type->getMoralePreFinalDamage(damage);
 
 		if (type->ArmorEffectiveness > 0.0f)
 		{

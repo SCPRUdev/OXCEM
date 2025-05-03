@@ -76,6 +76,8 @@ struct RuleDamageType
 	/// Threshold of smoke creation
 	int SmokeThreshold;
 
+	/// Conversion from power to unit damage before applying armor protection.
+	float ToHealthPre;
 	/// Conversion from power to unit damage.
 	float ToHealth;
 	/// Conversion from power to mana loss.
@@ -90,17 +92,27 @@ struct RuleDamageType
 	float ToItem;
 	/// Conversion from power to tile damage.
 	float ToTile;
+	/// Conversion from power to stun level before applying armor protection.
+	float ToStunPre;
 	/// Conversion from power to stun level.
 	float ToStun;
+	/// Conversion from power to energy lose before applying armor protection.
+	float ToEnergyPre;
 	/// Conversion from power to energy lose.
 	float ToEnergy;
+	/// Conversion from power to time units before applying armor protection.
+	float ToTimePre;
 	/// Conversion from power to time units lose.
 	float ToTime;
+	/// Conversion from power to morale lose before applying armor protection.
+	float ToMoralePre;
 	/// Conversion from power to morale lose.
 	float ToMorale;
 
 	/// Damage type use random conversion to health damage.
 	bool RandomHealth;
+	/// Damage type use random conversion to health pre damage.
+	bool RandomHealthPre;
 	/// Damage type use random conversion mana loss.
 	bool RandomMana;
 	///Damage type use random conversion armor damage.
@@ -115,12 +127,20 @@ struct RuleDamageType
 	bool RandomTile;
 	/// Damage type use random conversion stun level.
 	bool RandomStun;
+	/// Damage type use random conversion to stun level pre.
+	bool RandomStunPre;
 	/// Damage type use random conversion energy lose.
 	bool RandomEnergy;
+	/// Damage type use random conversion to energy lose pre.
+	bool RandomEnergyPre;
 	/// Damage type use random conversion time units lose.
 	bool RandomTime;
+	/// Damage type use random conversion to time units pre lose.
+	bool RandomTimePre;
 	/// Damage type use random conversion morale lose.
 	bool RandomMorale;
+	/// Damage type use random conversion to morale lose pre.
+	bool RandomMoralePre;
 
 	/// Which tile damage method should be used?
 	/// A. For AOE (area-of-effect) weapons:
@@ -148,6 +168,8 @@ struct RuleDamageType
 
 	/// Get final damage value to health based on damage.
 	int getHealthFinalDamage(int damage) const;
+	/// Get final damage value to health based on damage before armor reduction.
+	int getHealthPreFinalDamage(int damage) const;
 	/// Get final damage value to mana based on damage.
 	int getManaFinalDamage(int damage) const;
 	/// Get final damage value to armor based on damage.
@@ -162,12 +184,20 @@ struct RuleDamageType
 	int getTileFinalDamage(int damage) const;
 	/// Get stun level change based on damage.
 	int getStunFinalDamage(int damage) const;
+	/// Get stun level change based on damage before armor reduction.
+	int getStunPreFinalDamage(int damage) const;
 	/// Get energy change based on damage.
 	int getEnergyFinalDamage(int damage) const;
+	/// Get energy change based on damage before armor reduction.
+	int getEnergyPreFinalDamage(int damage) const;
 	/// Get time units change based on damage.
 	int getTimeFinalDamage(int damage) const;
+	/// Get time units change based on damage before armor reduction.
+	int getTimePreFinalDamage(int damage) const;
 	/// Get morale change based on damage.
 	int getMoraleFinalDamage(int damage) const;
+	/// Get morale change based on damage before armor reduction.
+	int getMoralePreFinalDamage(int damage) const;
 };
 
 } //namespace OpenXcom
