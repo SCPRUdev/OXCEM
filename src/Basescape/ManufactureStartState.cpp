@@ -189,7 +189,7 @@ ManufactureStartState::ManufactureStartState(Base *base, RuleManufacture *item) 
 	if (!hasVanillaOutput && !_item->getProducedItems().empty())
 	{
 		// separator line
-		_lstRequiredItems->addRow(1, tr("STR_UNITS_PRODUCED").c_str());
+		_lstRequiredItems->addRow(1, tr("STR_MANUFACTURE_OUTPUT").c_str());
 		_lstRequiredItems->setCellColor(row, 0, _lstRequiredItems->getSecondaryColor());
 		row++;
 
