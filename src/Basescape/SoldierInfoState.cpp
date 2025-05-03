@@ -90,8 +90,8 @@ SoldierInfoState::SoldierInfoState(Base *base, size_t soldierId, bool forceLimit
 	_btnSack = new TextButton(60, 14, 260, 33);
 	_btnDiary = new TextButton(60, 14, 260, 48);
 	_txtRank = new Text(130, 9, 0, 48);
-	_txtMissions = new Text(100, 9, 130, 48);
-	_txtKills = new Text(100, 9, 200, 48);
+	_txtMissions = new Text(60, 9, 197, 48);
+	_txtKills = new Text(65, 9, 130, 48);
 	_txtStuns = new Text(60, 9, 260, 48);
 	_txtCraft = new Text(130, 9, 0, 56);
 	_txtRecovery = new Text(180, 9, 130, 56);
