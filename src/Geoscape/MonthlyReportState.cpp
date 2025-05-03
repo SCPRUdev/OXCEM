@@ -398,6 +398,22 @@ void MonthlyReportState::btnOkClick(Action *)
 			_txtFailure->setVisible(true);
 	//		_game->getMod()->playMusic("GMLOSE"); //Removed gameover music from MonthlyReportState to avoid double playback in cutscenes
 
+ 		if (!_game->getMod()->getNewBaseUnlockResearch().empty())
+			{
+				bool newBasesUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getNewBaseUnlockResearch(), true);
+				if (!newBasesUnlocked)
+				{
+					_txtRating->setVisible(false);
+					_txtIncome->setVisible(false);
+					_txtMaintenance->setVisible(false);
+					_txtBalance->setVisible(false);
+					_txtBonus->setVisible(false);
+					_txtDesc->setVisible(false);
+				}
+			}
+
+
+
 		}
 	}
 }
