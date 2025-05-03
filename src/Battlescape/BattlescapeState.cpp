@@ -246,7 +246,7 @@ BattlescapeState::BattlescapeState() :
 		_barMana = new Bar(102, 3, x + 170, y + 41 + step*4);
 	}
 
-	_txtDebug = new Text(300, 10, 20, 0);
+	_txtDebug = new Text(400, 30, 20, 0);
 	_txtTooltip = new Text(300, 10, x + 2, y - 10);
 
 	// Palette transformations
