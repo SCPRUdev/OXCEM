@@ -363,7 +363,18 @@ void DebriefingState::applyVisibility()
 	_lstRecoveredItems->setVisible(showItems);
 
 	// Set text on toggle button accordingly
-	_btnSell->setVisible(showItems && _showSellButton);
+	// _btnSell->setVisible(showItems && _showSellButton);
+
+	if (!_game->getMod()->getNewBaseUnlockResearch().empty())
+	{
+		bool newBasesUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getNewBaseUnlockResearch(), true && showItems && _showSellButton);
+		if (!newBasesUnlocked)
+		{
+			_btnSell->setVisible(false);
+			_btnTransfer->setVisible(false);
+		}
+	}
+
 	_btnTransfer->setVisible(showItems && _showSellButton && _game->getSavedGame()->getBases()->size() > 1);
 	if (showScore)
 	{

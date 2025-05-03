@@ -157,6 +157,15 @@ BaseInfoState::BaseInfoState(Base *base, BasescapeState *state) : _base(base), _
 
 	centerAllSurfaces();
 
+	if (!_game->getMod()->getNewBaseUnlockResearch().empty())
+	{
+		bool newBasesUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getNewBaseUnlockResearch(), true);
+		if (!newBasesUnlocked)
+		{
+			_btnMonthlyCosts->setVisible(false);
+		}
+	}
+
 	// Set up objects
 	std::ostringstream ss;
 	if (Options::storageLimitsEnforced)
