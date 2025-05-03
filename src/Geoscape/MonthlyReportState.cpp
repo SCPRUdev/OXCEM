@@ -396,7 +396,8 @@ void MonthlyReportState::btnOkClick(Action *)
 			_btnOk->setVisible(false);
 			_btnBigOk->setVisible(true);
 			_txtFailure->setVisible(true);
-			_game->getMod()->playMusic("GMLOSE");
+	//		_game->getMod()->playMusic("GMLOSE"); //Removed gameover music from MonthlyReportState to avoid double playback in cutscenes
+
 		}
 	}
 }
