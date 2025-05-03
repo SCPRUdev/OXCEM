@@ -2040,8 +2040,14 @@ void StatsForNerdsState::initItemList()
 		addFloatAsPercentage(ss, rule->ToArmor, "ToArmor", ruleByResistType->ToArmor);
 		addBoolean(ss, rule->RandomArmor, "RandomArmor", ruleByResistType->RandomArmor);
 
+		addFloatAsPercentage(ss, rule->ToHealthPre, "ToHealthPre", ruleByResistType->ToHealthPre);
+		addBoolean(ss, rule->RandomHealthPre, "RandomHealthPre", ruleByResistType->RandomHealthPre);
+
 		addFloatAsPercentage(ss, rule->ToHealth, "ToHealth", ruleByResistType->ToHealth);
 		addBoolean(ss, rule->RandomHealth, "RandomHealth", ruleByResistType->RandomHealth);
+
+		addFloatAsPercentage(ss, rule->ToStunPre, "ToStunPre", ruleByResistType->ToStunPre);
+		addBoolean(ss, rule->RandomStunPre, "RandomStunPre", ruleByResistType->RandomStunPre);
 
 		addFloatAsPercentage(ss, rule->ToStun, "ToStun", ruleByResistType->ToStun);
 		addBoolean(ss, rule->RandomStun, "RandomStun", ruleByResistType->RandomStun);
@@ -2049,11 +2055,20 @@ void StatsForNerdsState::initItemList()
 		addFloatAsPercentage(ss, rule->ToWound, "ToWound", ruleByResistType->ToWound);
 		addBoolean(ss, rule->RandomWound, "RandomWound", ruleByResistType->RandomWound);
 
+		addFloatAsPercentage(ss, rule->ToTimePre, "ToTimePre", ruleByResistType->ToTimePre);
+		addBoolean(ss, rule->RandomTimePre, "RandomTimePre", ruleByResistType->RandomTimePre);
+
 		addFloatAsPercentage(ss, rule->ToTime, "ToTime", ruleByResistType->ToTime);
 		addBoolean(ss, rule->RandomTime, "RandomTime", ruleByResistType->RandomTime);
 
+		addFloatAsPercentage(ss, rule->ToEnergyPre, "ToEnergyePre", ruleByResistType->ToEnergyPre);
+		addBoolean(ss, rule->RandomEnergyPre, "RandomEnergyPre", ruleByResistType->RandomEnergyPre);
+
 		addFloatAsPercentage(ss, rule->ToEnergy, "ToEnergy", ruleByResistType->ToEnergy);
 		addBoolean(ss, rule->RandomEnergy, "RandomEnergy", ruleByResistType->RandomEnergy);
+
+		addFloatAsPercentage(ss, rule->ToMoralePre, "ToMoralePre", ruleByResistType->ToMoralePre);
+		addBoolean(ss, rule->RandomMoralePre, "RandomMoralePre", ruleByResistType->RandomMoralePre);
 
 		addFloatAsPercentage(ss, rule->ToMorale, "ToMorale", ruleByResistType->ToMorale);
 		addBoolean(ss, rule->RandomMorale, "RandomMorale", ruleByResistType->RandomMorale);
