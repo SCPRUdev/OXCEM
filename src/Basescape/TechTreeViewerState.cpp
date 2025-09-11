@@ -95,8 +95,8 @@ TechTreeViewerState::TechTreeViewerState(const RuleResearch *r, const RuleManufa
 	// Create objects
 	_window = new Window(this, 320, 200, 0, 0);
 	_txtTitle = new Text(304, 17, 8, 7);
-	_txtSelectedTopic = new Text(204, 9, 8, 24);
-	_txtProgress = new Text(100, 9, 212, 24);
+	_txtSelectedTopic = new Text(225, 9, 8, 24);
+	_txtProgress = new Text(79, 9, 233, 24);
 	_txtCostIndicator = new Text(100, 9, 16, 32); // experimental cost indicator
 	_lstLeft = new TextList(132, 128, 8, 40);
 	_lstRight = new TextList(132, 128, 164, 40);
