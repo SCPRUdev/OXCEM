@@ -47,8 +47,8 @@ CannotReequipState::CannotReequipState(std::vector<ReequipStat> &missingItems, B
 	_btnOk = new TextButton(34, 14, 278, 178);
 	_txtTitle = new Text(220, 32, 50, 8);
 	_txtItem = new Text(142, 9, 10, 50);
-	_txtQuantity = new Text(88, 9, 152, 50);
-	_txtCraft = new Text(74, 9, 218, 50);
+	_txtQuantity = new Text(78, 9, 152, 50);
+	_txtCraft = new Text(84, 9, 208, 50);
 	_lstItems = new TextList(288, 112, 8, 58);
 
 	// Set palette
@@ -91,7 +91,7 @@ CannotReequipState::CannotReequipState(std::vector<ReequipStat> &missingItems, B
 
 	_txtCraft->setText(tr("STR_CRAFT"));
 
-	_lstItems->setColumns(3, 162, 46, 80);
+	_lstItems->setColumns(3, 162, 36, 90);
 	_lstItems->setSelectable(true);
 	_lstItems->setBackground(_window);
 	_lstItems->setMargin(2);
