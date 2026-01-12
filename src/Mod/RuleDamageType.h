@@ -38,6 +38,7 @@ enum ItemDamageRandomType
 	DRT_EXPLOSION = 9,
 	DRT_SCP = 10,
 	DRT_SCP_LIGHT = 11,
+	DRT_SCP_ULTRALIGHT = 12,
 };
 
 /**

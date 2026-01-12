@@ -1300,6 +1300,7 @@ void StatsForNerdsState::addDamageRandomType(std::ostringstream &ss, const ItemD
 		case DRT_EXPLOSION: ss << tr("DRT_EXPLOSION"); break;
 		case DRT_SCP: ss << tr("DRT_SCP"); break;
 		case DRT_SCP_LIGHT:	ss << tr("DRT_SCP_LIGHT"); break;
+		case DRT_SCP_ULTRALIGHT: ss << tr("DRT_SCP_ULTRALIGHT"); break;
 		default: ss << tr("STR_UNKNOWN"); break;
 	}
 	if (_showIds)

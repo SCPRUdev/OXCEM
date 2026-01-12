@@ -115,6 +115,13 @@ int RuleDamageType::getRandomDamage(int power, FuncRef<int(int, int)> randFunc) 
 
 		return randFunc(min, max);
 	}
+
+	else if (randType == DRT_SCP_ULTRALIGHT)
+	{
+		int firstThrow = randFunc(0, power);
+
+		return firstThrow;
+	}
 	const bool def = randType == DRT_DEFAULT;
 	if (def)
 	{
