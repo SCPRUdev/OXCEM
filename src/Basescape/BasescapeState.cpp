@@ -235,9 +235,6 @@ void BasescapeState::init()
 		if (!newBasesUnlocked)
 		{
 			_btnNewBase->setVisible(false);
-			_txtFunds->setVisible(false);
-			_btnPurchase->setVisible(false);
-			_btnSell->setVisible(false);
 		}
 	}
 
