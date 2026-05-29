@@ -1225,6 +1225,11 @@ UfoDetection Craft::detect(const Ufo *target, const SavedGame *save, bool alread
  */
 void Craft::consumeFuel(int escortSpeed)
 {
+	if (!_dest && _rules->patrolWithoutFuel())
+	{
+		// patrol without fuel consumption
+		return;
+	}
 	setFuel(_fuel - getFuelConsumption(_speed, escortSpeed));
 }
 
@@ -1556,6 +1561,25 @@ bool Craft::areBannedArmorsOnboard()
 			}
 		}
 	}
+	if (!_rules->getLimitArmorGroups().empty())
+	{
+		auto& limitArmorGroups = _rules->getLimitArmorGroups();
+		for (auto& limit : limitArmorGroups)
+		{
+			int subTotal = 0;
+			for (const auto* tmpSoldier : *_base->getSoldiers())
+			{
+				if (tmpSoldier->getCraft() == this && tmpSoldier->getArmor()->getGroup() == limit.first)
+				{
+					++subTotal;
+				}
+			}
+			if (subTotal > limit.second)
+			{
+				return true;
+			}
+		}
+	}
 	return false;
 }
 
@@ -1563,13 +1587,13 @@ bool Craft::areBannedArmorsOnboard()
 * Checks if there are enough pilots onboard.
 * @return True if the craft has enough pilots.
 */
-bool Craft::arePilotsOnboard()
+bool Craft::arePilotsOnboard(const Mod* mod)
 {
 	if (_rules->getPilots() == 0)
 		return true;
 
 	// refresh the list of pilots (must be performed here, list may be out-of-date!)
-	const std::vector<Soldier*> pilots = getPilotList(true);
+	const std::vector<Soldier*> pilots = getPilotList(true, mod);
 
 	return (int)(pilots.size()) >= _rules->getPilots();
 }
@@ -1610,7 +1634,7 @@ void Craft::removeAllPilots()
 * Gets the list of craft pilots.
 * @return List of pilots.
 */
-const std::vector<Soldier*> Craft::getPilotList(bool autoAdd)
+const std::vector<Soldier*> Craft::getPilotList(bool autoAdd, const Mod* mod)
 {
 	std::vector<Soldier*> result;
 
@@ -1623,7 +1647,11 @@ const std::vector<Soldier*> Craft::getPilotList(bool autoAdd)
 		int total = 0;
 		for (auto* soldier : *_base->getSoldiers())
 		{
-			if (soldier->getCraft() == this && soldier->getRules()->getAllowPiloting())
+			if (soldier->getCraft() == this && mod)
+			{
+				soldier->prepareStatsWithBonuses(mod); // refresh stats for checking pilot requirements
+			}
+			if (soldier->getCraft() == this && soldier->hasAllPilotingRequirements())
 			{
 				result.push_back(soldier);
 				total++;
@@ -1643,7 +1671,7 @@ const std::vector<Soldier*> Craft::getPilotList(bool autoAdd)
 			{
 				for (auto* soldier : *_base->getSoldiers())
 				{
-					if (soldier->getCraft() == this && soldier->getRules()->getAllowPiloting() && soldier->getId() == soldierId)
+					if (soldier->getCraft() == this && soldier->getId() == soldierId && soldier->hasAllPilotingRequirements())
 					{
 						result.push_back(soldier);
 						total2++;
@@ -1661,7 +1689,7 @@ const std::vector<Soldier*> Craft::getPilotList(bool autoAdd)
 				for (std::vector<Soldier*>::reverse_iterator iter = _base->getSoldiers()->rbegin(); iter != _base->getSoldiers()->rend(); ++iter)
 				{
 					Soldier* soldier = (*iter);
-					if (soldier->getCraft() == this && soldier->getRules()->getAllowPiloting() && !isPilot(soldier->getId()))
+					if (soldier->getCraft() == this && !isPilot(soldier->getId()) && soldier->hasAllPilotingRequirements())
 					{
 						result.push_back(soldier);
 						total2++;
@@ -2252,6 +2280,25 @@ CraftPlacementErrors Craft::validateAddingSoldier(int space, const Soldier* s) c
 		if (std::find(allowedArmorGroups.begin(), allowedArmorGroups.end(), s->getArmor()->getGroup()) == allowedArmorGroups.end())
 		{
 			return CPE_ArmorGroupNotAllowed;
+		}
+	}
+	auto& limitArmorGroups = _rules->getLimitArmorGroups();
+	if (!limitArmorGroups.empty())
+	{
+		for (auto& limit : limitArmorGroups)
+		{
+			int subTotal = 0;
+			for (const auto* tmpSoldier : *_base->getSoldiers())
+			{
+				if (tmpSoldier->getCraft() == this && tmpSoldier->getArmor()->getGroup() == limit.first)
+				{
+					++subTotal;
+				}
+			}
+			if (subTotal >= limit.second)
+			{
+				return CPE_ArmorGroupNotAllowed;
+			}
 		}
 	}
 	return CPE_None;

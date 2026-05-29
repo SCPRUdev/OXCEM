@@ -22,6 +22,7 @@
 #include "../Engine/Yaml.h"
 #include "Unit.h"
 #include "RuleBaseFacilityFunctions.h"
+#include "../Savegame/WeightedOptions.h"
 
 namespace OpenXcom
 {
@@ -52,9 +53,11 @@ private:
 	UnitStats _rerollStats;
 	bool _lowerBoundAtMinStats, _upperBoundAtMaxStats, _upperBoundAtStatCaps;
 	int _upperBoundType;
+	std::vector<std::string> _removeTransformations;
 	bool _reset;
 	bool _resetRank;
 	std::string _soldierBonusType;
+	WeightedOptions _events;
 
 public:
 	/// Default constructor
@@ -147,12 +150,17 @@ public:
 	/// Gets whether to use soft upper bound limit or not.
 	bool isSoftLimit(bool isSameSoldierType) const;
 
+	/// Gets the list of (potential) previous soldier transformations to remove when undergoing this project
+	const std::vector<std::string>& getRemoveTransformations() const { return _removeTransformations; }
 	/// Gets whether or not this project should reset info about all previous transformations and all previously assigned soldier bonuses
 	bool getReset() const;
 	/// Gets whether or not this project should reset the rank of the destination soldier to rookie
 	bool getResetRank() const;
 	/// Gets the type of soldier bonus assigned by this project
 	const std::string &getSoldierBonusType() const;
+
+	/// Gets geoscape event rule name to spawn after soldier transformation
+	std::string chooseEvent() const { return _events.choose(); }
 };
 
 }

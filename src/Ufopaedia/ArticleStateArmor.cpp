@@ -79,9 +79,13 @@ namespace OpenXcom
 		_txtTitle->setText(tr(defs->getTitleForPage(_state->current_page)));
 
 		// optional background image
-		if (!defs->customPalette && !itf->getBackgroundImage().empty())
+		if (!defs->customPalette)
 		{
-			_game->getMod()->getSurface(itf->getBackgroundImage())->blitNShade(_bg, 0, 0);
+			auto& bgImageName = itf->getBackgroundImage(_game->getMod(), _game->getSavedGame());
+			if (!bgImageName.empty())
+			{
+				_game->getMod()->getSurface(bgImageName)->blitNShade(_bg, 0, 0);
+			}
 		}
 
 		if (customArmorSprite)
@@ -147,15 +151,76 @@ namespace OpenXcom
 		_lstInfo->addRow(0);
 		++_row;
 
-		// Add damage modifiers
-		for (int i = 0; i < DAMAGE_TYPES; ++i)
+		if (Options::oxcePediaSortResistances == 0)
 		{
-			ItemDamageType dt = (ItemDamageType)i;
-			int percentage = (int)Round(armor->getDamageModifier(dt) * 100.0f);
-			std::string damage = getDamageTypeText(dt);
-			if (percentage != 100 && damage != "STR_UNKNOWN")
+			// Add damage modifiers
+			for (int i = 0; i < DAMAGE_TYPES; ++i)
 			{
-				addStat(damage, Unicode::formatPercentage(percentage));
+				ItemDamageType dt = (ItemDamageType)i;
+				int percentage = (int)Round(armor->getDamageModifier(dt) * 100.0f);
+				std::string damage = getDamageTypeText(dt);
+				if (percentage != 100 && damage != "STR_UNKNOWN")
+				{
+					addModifier(damage, Unicode::formatPercentage(percentage));
+				}
+			}
+		}
+		else
+		{
+			// Add resistances
+			int counter = 0;
+			bool first = true;
+			for (int i = 0; i < DAMAGE_TYPES; ++i)
+			{
+				ItemDamageType dt = (ItemDamageType)i;
+				int percentage = (int)Round(armor->getDamageModifier(dt) * 100.0f);
+				std::string damage = getDamageTypeText(dt);
+				if (percentage < 100 && damage != "STR_UNKNOWN")
+				{
+					addModifier(damage, Unicode::formatPercentage(percentage));
+					counter++;
+				}
+			}
+			if (Options::oxcePediaSortResistances >= 2)
+			{
+				// Add standard damage (100%)
+				for (int i = 0; i < DAMAGE_TYPES; ++i)
+				{
+					ItemDamageType dt = (ItemDamageType)i;
+					int percentage = (int)Round(armor->getDamageModifier(dt) * 100.0f);
+					std::string damage = getDamageTypeText(dt);
+					if (percentage == 100 && damage != "STR_UNKNOWN")
+					{
+						if (counter > 0 && first)
+						{
+							first = false;
+							counter = 0;
+							_lstInfo->addRow(0);
+							++_row;
+						}
+						addModifier(damage, Unicode::formatPercentage(percentage));
+						counter++;
+					}
+				}
+			}
+			// Add vulnerabilities
+			first = true;
+			for (int i = 0; i < DAMAGE_TYPES; ++i)
+			{
+				ItemDamageType dt = (ItemDamageType)i;
+				int percentage = (int)Round(armor->getDamageModifier(dt) * 100.0f);
+				std::string damage = getDamageTypeText(dt);
+				if (percentage > 100 && damage != "STR_UNKNOWN")
+				{
+					if (counter > 0 && first)
+					{
+						first = false;
+						counter = 0;
+						_lstInfo->addRow(0);
+						++_row;
+					}
+					addModifier(damage, Unicode::formatPercentage(percentage));
+				}
 			}
 		}
 
@@ -196,10 +261,14 @@ namespace OpenXcom
 		}
 	}
 
-	void ArticleStateArmor::addStat(const std::string &label, const std::string &stat)
+	void ArticleStateArmor::addModifier(const std::string &label, const std::string &stat)
 	{
-		_lstInfo->addRow(2, tr(label).c_str(), stat.c_str());
-		_lstInfo->setCellColor(_row, 1, _listColor2);
-		++_row;
+		std::string translation = tr(label);
+		if (translation.length() > 2) // filter out unused OXCE damage types
+		{
+			_lstInfo->addRow(2, tr(label).c_str(), stat.c_str());
+			_lstInfo->setCellColor(_row, 1, _listColor2);
+			++_row;
+		}
 	}
 }

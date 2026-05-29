@@ -35,6 +35,7 @@ AlienDeployment::AlienDeployment(const std::string &type) :
 	_width(0), _length(0), _height(0), _civilians(0), _ignoreLivingCivilians(false), _markCiviliansAsVIP(false), _civilianSpawnNodeRank(0),
 	_shade(-1), _minShade(-1), _maxShade(-1), _finalDestination(false), _isAlienBase(false), _isHidden(false), _fakeUnderwaterSpawnChance(0),
 	_alert("STR_ALIENS_TERRORISE"), _alertBackground("BACK03.SCR"), _alertDescription(""), _alertSound(-1),
+	_alienBaseDiscoveredMessage(),
 	_markerName("STR_TERROR_SITE"), _markerIcon(-1), _durationMin(0), _durationMax(0), _minDepth(0), _maxDepth(0),
 	_genMissionFrequency(0), _genMissionLimit(1000), _genMissionRaceFromAlienBase(true),
 	_objectiveType(-1), _objectivesRequired(0), _objectiveCompleteScore(0), _objectiveFailedScore(0), _despawnPenalty(0), _abortPenalty(0), _points(0),
@@ -118,6 +119,7 @@ void AlienDeployment::load(const YAML::YamlNodeReader& node, Mod *mod)
 	reader.tryRead("alertDescription", _alertDescription);
 	mod->loadSoundOffset(_type, _alertSound, reader["alertSound"], "GEO.CAT");
 	reader.tryRead("briefing", _briefingData);
+	reader.tryRead("alienBaseDiscoveredMessage", _alienBaseDiscoveredMessage);
 	reader.tryRead("markerName", _markerName);
 	if (reader["markerIcon"])
 	{
@@ -203,6 +205,16 @@ void AlienDeployment::load(const YAML::YamlNodeReader& node, Mod *mod)
 	reader.tryRead("resetAlienBaseAgeAfterUpgrade", _resetAlienBaseAgeAfterUpgrade);
 	reader.tryRead("resetAlienBaseAge", _resetAlienBaseAge);
 	reader.tryRead("upgradeRace", _upgradeRace);
+	reader.tryRead("alienRaceEvolution", _alienRaceEvolution);
+	if (!_alienRaceEvolution.empty())
+	{
+		std::stable_sort(_alienRaceEvolution.begin(), _alienRaceEvolution.end(),
+			[](std::tuple<size_t, std::string, std::string> a, std::tuple<size_t, std::string, std::string> b)
+			{
+				return std::get<0>(a) > std::get<0>(b);
+			}
+		);
+	}
 	reader.tryRead("noWeaponPile", _noWeaponPile);
 }
 

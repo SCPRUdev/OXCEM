@@ -756,13 +756,14 @@ void DebriefingState::init()
 			bu->getStatistics()->delta = *bu->getGeoscapeSoldier()->getCurrentStats() - *bu->getGeoscapeSoldier()->getInitStats();
 
 			bu->getGeoscapeSoldier()->getDiary()->updateDiary(bu->getStatistics(), _game->getSavedGame()->getMissionStatistics(), _game->getMod());
-			if (!bu->getStatistics()->MIA && !bu->getStatistics()->KIA && bu->getGeoscapeSoldier()->getDiary()->manageCommendations(_game->getMod(), _game->getSavedGame()->getMissionStatistics()))
+			if (!bu->getStatistics()->MIA && !bu->getStatistics()->KIA &&
+				bu->getGeoscapeSoldier()->getDiary()->manageCommendations(_game->getMod(), _game->getSavedGame(), bu->getGeoscapeSoldier()))
 			{
 				_soldiersCommended.push_back(bu->getGeoscapeSoldier());
 			}
 			else if (bu->getStatistics()->MIA || bu->getStatistics()->KIA)
 			{
-				bu->getGeoscapeSoldier()->getDiary()->manageCommendations(_game->getMod(), _game->getSavedGame()->getMissionStatistics());
+				bu->getGeoscapeSoldier()->getDiary()->manageCommendations(_game->getMod(), _game->getSavedGame(), bu->getGeoscapeSoldier());
 				_deadSoldiersCommended.push_back(bu->getGeoscapeSoldier());
 			}
 		}
@@ -1717,6 +1718,7 @@ void DebriefingState::prepareDebriefing()
 			base->removeCraft(craft, false);
 			base->syncCraftSlots();
 			delete craft;
+			save->increaseCraftLostMission();
 			craft = 0; // To avoid a crash down there!!
 			lostCraft = true;
 		}
@@ -2385,7 +2387,10 @@ void DebriefingState::recoverItems(std::vector<BattleItem*> *from, Base *base, C
 		if (rule->getBattleType() == BT_AMMO && rule->getClipSize() > 0)
 		{
 			// It's a clip, count any rounds left.
-			_rounds[rule] += clip->getAmmoQuantity();
+			if (rule->isAmmoRechargeable())
+				_rounds[rule] += rule->getClipSize(); // restore 100% of clip capacity (i.e. the clip will be recharged at the base)
+			else
+				_rounds[rule] += clip->getAmmoQuantity();
 		}
 		else
 		{
@@ -2499,7 +2504,10 @@ void DebriefingState::recoverItems(std::vector<BattleItem*> *from, Base *base, C
 						// Special case: built-in ammo (e.g. throwing knives or bamboo stick)
 						if (!bi->needsAmmoForSlot(0) && rule->getClipSize() > 0)
 						{
-							_rounds[rule] += bi->getAmmoQuantity();
+							if (rule->isAmmoRechargeable())
+								_rounds[rule] += rule->getClipSize(); // restore 100% of clip capacity (i.e. the clip will be recharged at the base)
+							else
+								_rounds[rule] += bi->getAmmoQuantity();
 							recoverWeapon = false;
 						}
 						// It's a weapon, count any rounds left in the clip.

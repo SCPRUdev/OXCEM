@@ -1022,6 +1022,10 @@ interfaces:
         color: 244   # even lighter blue
         color2: 133  # minty green
         custom: -12  # above Intercept button
+      - id: trainingIndicator
+        color: 244   # even lighter blue
+        color2: 133  # minty green
+        custom: 4  # below standard visible area
       - id: genericWindow
         color: 239   # bright green
       - id: genericText
@@ -1116,6 +1120,7 @@ interfaces:
         color: 0     # brown
       - id: errorMessage
         color: 241   # pink
+        color2: 246  # purple
   - type: manageContainment
     backgroundImage: BACK05.SCR
     palette: PAL_BASESCAPE
@@ -2065,6 +2070,10 @@ interfaces:
         color: -1
         color2: 10
         border: 2
+      - id: infoBoxText
+        color: -1
+        color2: 14
+        border: 2
       - id: grenadeMenu
         color: 15
         color2: 27
@@ -2183,6 +2192,10 @@ interfaces:
         color2: 32
   - type: stats
     elements:
+      - id: numMaxHealth
+        color: 144
+        pos: [278, 0]    # only X counts, Y is ignored (because it's dynamic)
+        custom: 2        # 0 + 1(=show also when current hp is equal to max hp) + 2(=show '/' prefix)
       - id: textName
         color: 64
       - id: barTUs
@@ -2258,6 +2271,32 @@ interfaces:
         color: 138   # yellow
       - id: button
         color: 239   # bright green
+  - type: articleUnit
+    elements:
+      - id: button
+        color: 80    # light grey, 239 = grey
+      - id: title
+        color: 244   # light blue
+        color2: 239  # grey
+      - id: text
+        color: 239   # grey
+        color2: 244  # light blue
+      - id: list
+        color: 244   # light blue
+        color2: 239  # grey
+  - type: articleSoldier
+    elements:
+      - id: button
+        color: 80    # light grey, 239 = grey
+      - id: title
+        color: 244   # light blue
+        color2: 239  # grey
+      - id: text
+        color: 239   # grey
+        color2: 244  # light blue
+      - id: list
+        color: 244   # light blue
+        color2: 239  # grey
   - type: articleText
     elements:
       - id: button

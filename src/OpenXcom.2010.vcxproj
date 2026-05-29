@@ -136,7 +136,7 @@
       <MinimalRebuild>false</MinimalRebuild>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalOptions>/utf-8</AdditionalOptions>
+      <AdditionalOptions>/utf-8 /bigobj %(AdditionalOptions)</AdditionalOptions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -170,7 +170,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalOptions>/utf-8</AdditionalOptions>
+      <AdditionalOptions>/utf-8 /bigobj %(AdditionalOptions)</AdditionalOptions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -203,7 +203,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalOptions>/utf-8</AdditionalOptions>
+      <AdditionalOptions>/utf-8 /bigobj %(AdditionalOptions)</AdditionalOptions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -238,7 +238,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalOptions>/utf-8</AdditionalOptions>
+      <AdditionalOptions>/utf-8 /bigobj %(AdditionalOptions)</AdditionalOptions>
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
@@ -273,7 +273,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalOptions>/utf-8</AdditionalOptions>
+      <AdditionalOptions>/utf-8 /bigobj %(AdditionalOptions)</AdditionalOptions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -307,7 +307,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalOptions>/utf-8</AdditionalOptions>
+      <AdditionalOptions>/utf-8 /bigobj %(AdditionalOptions)</AdditionalOptions>
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
@@ -725,6 +725,7 @@
     <ClCompile Include="Ufopaedia\ArticleStateCraft.cpp" />
     <ClCompile Include="Ufopaedia\ArticleStateCraftWeapon.cpp" />
     <ClCompile Include="Ufopaedia\ArticleStateItem.cpp" />
+    <ClCompile Include="Ufopaedia\ArticleStateSoldier.cpp" />
     <ClCompile Include="Ufopaedia\ArticleStateText.cpp" />
     <ClCompile Include="Ufopaedia\ArticleStateTextImage.cpp" />
     <ClCompile Include="Ufopaedia\ArticleStateTFTD.cpp" />
@@ -736,6 +737,7 @@
     <ClCompile Include="Ufopaedia\ArticleStateTFTDUso.cpp" />
     <ClCompile Include="Ufopaedia\ArticleStateTFTDVehicle.cpp" />
     <ClCompile Include="Ufopaedia\ArticleStateUfo.cpp" />
+    <ClCompile Include="Ufopaedia\ArticleStateUnit.cpp" />
     <ClCompile Include="Ufopaedia\ArticleStateVehicle.cpp" />
     <ClCompile Include="Ufopaedia\StatsForNerdsState.cpp" />
     <ClCompile Include="Ufopaedia\Ufopaedia.cpp" />
@@ -1220,6 +1222,7 @@
     <ClInclude Include="Ufopaedia\ArticleStateCraft.h" />
     <ClInclude Include="Ufopaedia\ArticleStateCraftWeapon.h" />
     <ClInclude Include="Ufopaedia\ArticleStateItem.h" />
+    <ClInclude Include="Ufopaedia\ArticleStateSoldier.h" />
     <ClInclude Include="Ufopaedia\ArticleStateText.h" />
     <ClInclude Include="Ufopaedia\ArticleStateTextImage.h" />
     <ClInclude Include="Ufopaedia\ArticleStateTFTD.h" />
@@ -1231,6 +1234,7 @@
     <ClInclude Include="Ufopaedia\ArticleStateTFTDUso.h" />
     <ClInclude Include="Ufopaedia\ArticleStateTFTDVehicle.h" />
     <ClInclude Include="Ufopaedia\ArticleStateUfo.h" />
+    <ClInclude Include="Ufopaedia\ArticleStateUnit.h" />
     <ClInclude Include="Ufopaedia\ArticleStateVehicle.h" />
     <ClInclude Include="Ufopaedia\StatsForNerdsState.h" />
     <ClInclude Include="Ufopaedia\Ufopaedia.h" />

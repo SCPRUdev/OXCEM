@@ -399,6 +399,7 @@ set ( ufopedia_src
   Ufopaedia/ArticleStateCraft.cpp
   Ufopaedia/ArticleStateCraftWeapon.cpp
   Ufopaedia/ArticleStateItem.cpp
+  Ufopaedia/ArticleStateSoldier.cpp
   Ufopaedia/ArticleStateText.cpp
   Ufopaedia/ArticleStateTextImage.cpp
   Ufopaedia/ArticleStateTFTD.cpp
@@ -410,6 +411,7 @@ set ( ufopedia_src
   Ufopaedia/ArticleStateTFTDUso.cpp
   Ufopaedia/ArticleStateTFTDVehicle.cpp
   Ufopaedia/ArticleStateUfo.cpp
+  Ufopaedia/ArticleStateUnit.cpp
   Ufopaedia/ArticleStateVehicle.cpp
   Ufopaedia/StatsForNerdsState.cpp
   Ufopaedia/Ufopaedia.cpp
@@ -624,7 +626,7 @@ if (WIN32)
   set(WIN32_LIBS imagehlp dbghelp)
 endif(WIN32)
 
-target_link_libraries ( openxcom ${system_libs} ${PKG_DEPS_LDFLAGS} ${WIN32_LIBS} )
+target_link_libraries ( openxcom ${system_libs} ${PKG_DEPS_LDFLAGS} ${EXTRA_XCOM_LIBS} ${WIN32_LIBS} )
 
 # Pack libraries into bundle and link executable appropriately
 if ( APPLE AND CREATE_BUNDLE )

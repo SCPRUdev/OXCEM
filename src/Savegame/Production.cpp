@@ -37,7 +37,8 @@
 
 namespace OpenXcom
 {
-Production::Production(const RuleManufacture * rules, int amount) : _rules(rules), _amount(amount), _infinite(false), _timeSpent(0), _engineers(0), _sell(false)
+Production::Production(const RuleManufacture * rules, int amount) :
+	_rules(rules), _amount(amount), _infinite(false), _timeSpent(0), _engineers(0), _sell(false), _isFallback(false)
 {
 }
 
@@ -132,6 +133,24 @@ bool Production::haveEnoughMaterialsForOneMoreUnit(Base * b, const Mod *m) const
 
 productionProgress_e Production::step(Base * b, SavedGame * g, const Mod *m, Language *lang)
 {
+	if (_isFallback)
+	{
+		int availableEngineer = b->getAvailableEngineers();
+		int availableWorkSpace = b->getFreeWorkshops();
+
+		if (isQueuedOnly())
+		{
+			// start counting the workshop space now
+			availableWorkSpace -= _rules->getRequiredSpace();
+		}
+		if (availableEngineer > 0 && availableWorkSpace > 0)
+		{
+			int change = std::min(availableEngineer, availableWorkSpace);
+			setAssignedEngineers(getAssignedEngineers() + change);
+			b->setEngineers(b->getEngineers() - change);
+		}
+	}
+
 	int done = getAmountProduced();
 	_timeSpent += _engineers;
 
@@ -288,6 +307,16 @@ productionProgress_e Production::step(Base * b, SavedGame * g, const Mod *m, Lan
 					}
 				}
 			}
+			// Generate an event (side effect)
+			const std::string choice = _rules->chooseEvent();
+			if (!choice.empty())
+			{
+				RuleEvent* eventToSpawn = m->getEvent(choice, false);
+				if (eventToSpawn)
+				{
+					g->spawnEvent(eventToSpawn);
+				}
+			}
 			if (_rules->getPoints() != 0)
 			{
 				// yes, negative points are allowed too
@@ -376,6 +405,8 @@ void Production::save(YAML::YamlNodeWriter writer) const
 	writer.write("infinite", getInfiniteAmount());
 	if (getSellItems())
 		writer.write("sell", getSellItems());
+	if (_isFallback)
+		writer.write("isFallback", _isFallback);
 	if (!_rules->getRandomProducedItems().empty())
 		writer.write("randomProductionInfo", _randomProductionInfo);
 }
@@ -387,6 +418,7 @@ void Production::load(const YAML::YamlNodeReader& reader)
 	setAmountTotal(reader["amount"].readVal(getAmountTotal()));
 	setInfiniteAmount(reader["infinite"].readVal(getInfiniteAmount()));
 	setSellItems(reader["sell"].readVal(getSellItems()));
+	reader.tryRead("isFallback", _isFallback);
 	if (!_rules->getRandomProducedItems().empty())
 	{
 		_randomProductionInfo = reader["randomProductionInfo"].readVal(_randomProductionInfo);

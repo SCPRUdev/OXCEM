@@ -149,6 +149,7 @@ void createOptionsOXC()
 	_info.push_back(OptionInfo(OPTION_OXC, "battleFireSpeed", &battleFireSpeed, 6));
 	_info.push_back(OptionInfo(OPTION_OXC, "battleXcomSpeed", &battleXcomSpeed, 30));
 	battleXcomSpeedOrig = -1;
+	battleAlienSpeedOrig = -1;
 	_info.push_back(OptionInfo(OPTION_OXC, "battleAlienSpeed", &battleAlienSpeed, 30));
 #ifdef __MOBILE__
 	_info.push_back(OptionInfo(OPTION_OXC, "battleNewPreviewPath", (int*)&battleNewPreviewPath, PATH_FULL)); // for android, set full preview by default
@@ -380,7 +381,8 @@ void createOptionsOXCE()
 
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxceGeoscapeDebugLogMaxEntries", &oxceGeoscapeDebugLogMaxEntries, 1000, "", "HIDDEN"));
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxceGeoSlowdownFactor", &oxceGeoSlowdownFactor, 1, "", "HIDDEN"));
-	_info.push_back(OptionInfo(OPTION_OXCE, "oxceGeoShowScoreInsteadOfFunds", &oxceGeoShowScoreInsteadOfFunds, false, "", "HIDDEN"));
+	_info.push_back(OptionInfo(OPTION_OXCE, "oxceGeoShowScoreInsteadOfFunds", &oxceGeoShowScoreInsteadOfFunds, false)); // debug only
+	_info.push_back(OptionInfo(OPTION_OXCE, "oxceGeoEnableTrainingIndicator", &oxceGeoEnableTrainingIndicator, false, "", "HIDDEN"));
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxceGeoSuppressRedundantHKAlert", &oxceGeoSuppressRedundantHKAlert, true, "", "HIDDEN"));
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxceGeoSuppressLandingWithoutEquipment", &oxceGeoSuppressLandingWithoutEquipment, false, "", "HIDDEN"));
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxceGeoGoToNearestBase", &oxceGeoGoToNearestBase, false, "", "HIDDEN"));
@@ -388,6 +390,9 @@ void createOptionsOXCE()
 
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxceBaseInfoDefenseScaleMultiplier", &oxceBaseInfoDefenseScaleMultiplier, 100, "", "HIDDEN"));
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxceBaseSoldierTransformationShowOnlyEligible", &oxceBaseSoldierTransformationShowOnlyEligible, false, "", "HIDDEN"));
+	_info.push_back(OptionInfo(OPTION_OXCE, "oxceBaseFilterResearchable", &oxceBaseFilterResearchable, false, "", "HIDDEN"));
+	_info.push_back(OptionInfo(OPTION_OXCE, "oxceBaseResearchReorder", &oxceBaseResearchReorder, false, "", "HIDDEN"));
+	_info.push_back(OptionInfo(OPTION_OXCE, "oxceBaseManufactureFallbackButton", &oxceBaseManufactureFallbackButton, false, "", "HIDDEN"));
 #ifdef __MOBILE__
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxceBaseManufactureInfinityButton", &oxceBaseManufactureInfinityButton, true, "", "HIDDEN"));
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxceBaseTouchButtons", &oxceBaseTouchButtons, true, "", "HIDDEN"));
@@ -407,6 +412,7 @@ void createOptionsOXCE()
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxceToggleNightVisionType", &oxceToggleNightVisionType, 1, "", "HIDDEN"));     // per battle
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxceToggleBrightnessType", &oxceToggleBrightnessType, 0, "", "HIDDEN"));       // not persisted
 
+	_info.push_back(OptionInfo(OPTION_OXCE, "oxceShowBurningAsWounded", &oxceShowBurningAsWounded, false, "", "HIDDEN"));
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxceDisableInfoOnThrowCursor", &oxceDisableInfoOnThrowCursor, false, "", "HIDDEN"));
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxceSwapDontReselectActions", &oxceSwapDontReselectActions, false, "", "HIDDEN"));
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxceEnableUnitResponseSounds", &oxceEnableUnitResponseSounds, true, "", "HIDDEN"));
@@ -417,9 +423,11 @@ void createOptionsOXCE()
 #ifdef __MOBILE__
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxceInventorySplitScrollButton", &oxceInventorySplitScrollButton, true, "", "HIDDEN"));
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxceInventoryDropItemOverPaperdoll", &oxceInventoryDropItemOverPaperdoll, true, "", "HIDDEN"));
+	_info.push_back(OptionInfo(OPTION_OXCE, "oxceInventoryUnloadFixedWeapons", &oxceInventoryUnloadFixedWeapons, true, "", "HIDDEN"));
 #else
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxceInventorySplitScrollButton", &oxceInventorySplitScrollButton, false, "", "HIDDEN"));
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxceInventoryDropItemOverPaperdoll", &oxceInventoryDropItemOverPaperdoll, false, "", "HIDDEN"));
+	_info.push_back(OptionInfo(OPTION_OXCE, "oxceInventoryUnloadFixedWeapons", &oxceInventoryUnloadFixedWeapons, false, "", "HIDDEN"));
 #endif
 
 	// TODO: needs restart (or code change) to work properly
@@ -453,6 +461,7 @@ void createAdvancedOptionsOXCE()
 
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxceHighlightNewTopics", &oxceHighlightNewTopics, true, "STR_HIGHLIGHT_NEW", "STR_GENERAL"));
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxcePediaShowClipSize", &oxcePediaShowClipSize, false, "STR_PEDIA_SHOW_CLIP_SIZE", "STR_GENERAL"));
+	_info.push_back(OptionInfo(OPTION_OXCE, "oxcePediaSortResistances", &oxcePediaSortResistances, 0, "STR_PEDIA_SORT_RESISTANCES", "HIDDEN"));
 
 	// OXCE options geoscape
 	_info.push_back(OptionInfo(OPTION_OXCE, "oxceInterceptTableSize", &oxceInterceptTableSize, 8, "STR_INTERCEPT_TABLE_SIZE", "STR_GEOSCAPE"));
@@ -492,7 +501,7 @@ void createAdvancedOptionsOXCE()
 void createControlsOXCE()
 {
 	// OXCE controls general
-	_info.push_back(OptionInfo(OPTION_OXCE, "keyToggleQuickSearch", &keyToggleQuickSearch, SDLK_q, "STR_TOGGLE_QUICK_SEARCH", "STR_GENERAL"));
+	_info.push_back(OptionInfo(OPTION_OXCE, "keyToggleQuickSearch", &keyToggleQuickSearch, SDLK_q, "STR_TOGGLE_QUICK_SEARCH", "STR_GENERAL")); //
 	_info.push_back(OptionInfo(OPTION_OXCE, "keyInstaSave", &keyInstaSave, SDLK_F6, "STR_INSTA_SAVE", "STR_GENERAL"));
 
 	// OXCE controls geoscape

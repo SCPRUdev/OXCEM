@@ -65,6 +65,7 @@ struct CraftOption
 class RuleBaseFacility
 {
 private:
+	std::string _ufopediaType;
 	std::string _type;
 	std::vector<std::string> _requires;
 	RuleBaseFacilityFunctions _requiresBaseFunc = 0;
@@ -102,6 +103,7 @@ private:
 	std::vector<const RuleBaseFacility*> _leavesBehindOnSell;
 	int _removalTime;
 	bool _canBeBuiltOver;
+	bool _upgradeOnly;
 	std::vector<const RuleBaseFacility*> _buildOverFacilities;
 	std::vector<Position> _storageTiles;
 	std::string _destroyedFacilityName;
@@ -120,6 +122,10 @@ public:
 	void load(const YAML::YamlNodeReader& reader, Mod *mod);
 	/// Cross link with other rules.
 	void afterLoad(const Mod* mod);
+
+	/// Gets the custom name of the Ufopedia article related to this facility.
+	const std::string& getUfopediaType() const;
+
 	/// Gets the facility's type.
 	const std::string& getType() const;
 	/// Gets the facility's requirements.
@@ -248,6 +254,8 @@ public:
 	int getRemovalTime() const;
 	/// Gets whether or not this facility can be built over by other ones
 	bool getCanBeBuiltOver() const;
+	/// Gets whether or not this facility can ONLY be built over another facility (i.e. not standalone)
+	bool isUpgradeOnly() const { return _upgradeOnly; }
 	/// Check if a given facility `fac` can be replaced by this facility.
 	BasePlacementErrors getCanBuildOverOtherFacility(const RuleBaseFacility* fac) const;
 	/// Gets which facilities are allowed to be replaced by this building

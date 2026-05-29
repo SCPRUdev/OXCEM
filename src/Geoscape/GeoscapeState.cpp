@@ -129,6 +129,7 @@
 #include "../Mod/AlienDeployment.h"
 #include "../Mod/AlienRace.h"
 #include "../Mod/RuleInterface.h"
+#include "../Mod/RuleSoldier.h"
 #include "../Mod/RuleVideo.h"
 #include "../Mod/Texture.h"
 #include "../fmath.h"
@@ -195,6 +196,9 @@ GeoscapeState::GeoscapeState() : _pause(false), _pauseActive(false), _zoomInEffe
 	int slackingIndicatorOffset = _game->getMod()->getInterface("geoscape")->getElement("slackingIndicator")->custom;
 	_txtSlacking = new Text(59, 17, screenWidth - 61, screenHeight / 2 - 100 + slackingIndicatorOffset);
 	_btnActivePause = new InteractiveSurface(63, 39, screenWidth-63, screenHeight/2-28);
+	int trainingIndicatorOffset = _game->getMod()->getInterface("geoscape")->getElement("trainingIndicator")->custom;
+	_txtTraining = new Text(59, 17, screenWidth - 61, screenHeight / 2 + 100 + trainingIndicatorOffset);
+
 
 	_timeSpeed = _btn5Secs;
 	_lastSpeed = nullptr;
@@ -255,6 +259,7 @@ GeoscapeState::GeoscapeState() : _pause(false), _pauseActive(false), _zoomInEffe
 	add(_txtYear, "text", "geoscape");
 	add(_txtSlacking, "slackingIndicator", "geoscape");
 	add(_btnActivePause);
+	add(_txtTraining, "trainingIndicator", "geoscape");
 
 	add(_txtDebug, "text", "geoscape");
 	add(_cbxRegion, "button", "geoscape");
@@ -361,7 +366,7 @@ GeoscapeState::GeoscapeState() : _pause(false), _pauseActive(false), _zoomInEffe
 	_btn1Day->onMouseClick((ActionHandler)&GeoscapeState::btnUnpauseClick, SDL_BUTTON_LEFT);
 	_btn1Day->onKeyboardPress((ActionHandler)&GeoscapeState::btnTimerClick, Options::keyGeoSpeed6);
 	_btn1Day->setGeoscapeButton(true);
-	
+
 	_sideBottom->setGeoscapeButton(true);
 	_sideTop->setGeoscapeButton(true);
 
@@ -419,6 +424,7 @@ GeoscapeState::GeoscapeState() : _pause(false), _pauseActive(false), _zoomInEffe
 	_txtYear->setAlign(ALIGN_CENTER);
 
 	_txtSlacking->setAlign(ALIGN_RIGHT);
+	_txtTraining->setAlign(ALIGN_RIGHT);
 
 	if (Options::showFundsOnGeoscape)
 	{
@@ -1207,6 +1213,7 @@ void GeoscapeState::time5Seconds()
 				craftIt = xbase->removeCraft(craft, false);
 				xbase->syncCraftSlots();
 				delete craft;
+				_game->getSavedGame()->increaseCraftLostDogfight();
 				continue;
 			}
 			if (xcraft->getDestination() != 0)
@@ -2132,7 +2139,7 @@ void GeoscapeState::ufoDetection(Ufo* ufo, const std::vector<Craft*>* activeCraf
 			}
 			ufo->setDetected(true);
 			// don't show if player said he doesn't want to see this UFO anymore
-			if (!_game->getSavedGame()->isUfoOnIgnoreList(ufo->getId()))
+			if (!_game->getSavedGame()->isUfoOnIgnoreList(ufo->getId()) && !ufo->getRules()->isNoAlert())
 			{
 				popup(new UfoDetectedState(ufo, this, true, ufo->getHyperDetected()));
 			}
@@ -2514,32 +2521,17 @@ void GeoscapeState::time1Day()
 			xbase->removeResearch(project);
 			project = nullptr;
 
-			// 3b. handle interrogation
-			if (Options::retainCorpses && research->needItem() && research->destroyItem())
-			{
-				auto* ruleUnit = mod->getUnit(research->getName(), false); // don't use getNeededItem()
-				if (ruleUnit)
-				{
-					auto* ruleCorpse = ruleUnit->getArmor()->getCorpseGeoscape();
-					if (ruleCorpse && ruleCorpse->isRecoverable() && ruleCorpse->isCorpseRecoverable())
-					{
-						xbase->getStorageItems()->addItem(ruleCorpse);
-					}
-				}
-			}
-			// 3bb. add core research to research diary (before the getonefrees)
+			// 3b. add core research to research diary (before the getonefrees)
 			addResearchDiaryEntryForBase(research, DiscoverySourceType::BASE, xbase, nullptr);
-			RuleResearch* lookupResearch = mod->getResearch(research->getLookup(), true);
-			if (lookupResearch)
+			if (const RuleResearch* lookupResearch = research->getLookup())
 				addResearchDiaryEntryForBase(lookupResearch, DiscoverySourceType::BASE, xbase, nullptr);
 			// 3c. handle getonefrees (topic+lookup)
 			if ((bonus = saveGame->selectGetOneFree(research)))
 			{
 				addResearchDiaryEntryForBase(bonus, DiscoverySourceType::FREE_FROM, nullptr, research);
 				saveGame->addFinishedResearch(bonus, mod, xbase);
-				if (!bonus->getLookup().empty())
+				if (const RuleResearch* bonusLookup = bonus->getLookup())
 				{
-					RuleResearch* bonusLookup = mod->getResearch(bonus->getLookup(), true);
 					addResearchDiaryEntryForBase(bonusLookup, DiscoverySourceType::FREE_FROM, nullptr, research);
 					saveGame->addFinishedResearch(bonusLookup, mod, xbase);
 				}
@@ -2547,16 +2539,15 @@ void GeoscapeState::time1Day()
 			// 3d. determine and remember if the ufopedia article should pop up again or not
 			// Note: because different topics may lead to the same lookup
 			const RuleResearch *newResearch = research;
-			std::string name = research->getLookup().empty() ? research->getName() : research->getLookup();
-			if (saveGame->isResearched(name, false))
+			if (saveGame->isResearched(research->getLookup() ? research->getLookup() : research, false))
 			{
 				newResearch = 0;
 			}
 			// 3e. handle core research (topic+lookup)
 			saveGame->addFinishedResearch(research, mod, xbase);
-			if (!research->getLookup().empty())
+			if (research->getLookup())
 			{
-				saveGame->addFinishedResearch(mod->getResearch(research->getLookup(), true), mod, xbase);
+				saveGame->addFinishedResearch(research->getLookup(), mod, xbase);
 			}
 			// 3e. handle cutscene
 			if (!research->getCutscene().empty())
@@ -3724,6 +3715,12 @@ void GeoscapeState::handleBaseDefense(Base *base, Ufo *ufo)
 					_game->getMod()->getInterface("geoscape")->getElement("errorPalette")->color));
 			}
 		}
+
+		// continue mayhem?
+		if (ufo->getRules()->getMissileStopChance() > 0 && RNG::percent(ufo->getRules()->getMissileStopChance()))
+		{
+			ufo->getMission()->setInterrupted(true);
+		}
 	}
 	else if (base->getAvailableSoldiers(true, true) > 0 || !base->getVehicles()->empty())
 	{
@@ -3970,14 +3967,14 @@ void GeoscapeState::determineAlienMissions(bool isNewMonth, const RuleEvent* eve
 				++arcsEnabled;
 				if (ruleResearchSeq)
 				{
-					if (ruleResearchSeq->getLookup().empty())
+					if (ruleResearchSeq->getLookup())
 					{
-						Ufopaedia::openArticle(_game, ruleResearchSeq->getName());
+						save->addFinishedResearch(ruleResearchSeq->getLookup(), mod, hq, true);
+						Ufopaedia::openArticle(_game, ruleResearchSeq->getLookup()->getName());
 					}
 					else
 					{
-						save->addFinishedResearch(mod->getResearch(ruleResearchSeq->getLookup(), true), mod, hq, true);
-						Ufopaedia::openArticle(_game, ruleResearchSeq->getLookup());
+						Ufopaedia::openArticle(_game, ruleResearchSeq->getName());
 					}
 				}
 			}
@@ -3989,14 +3986,14 @@ void GeoscapeState::determineAlienMissions(bool isNewMonth, const RuleEvent* eve
 				++arcsEnabled; // for good measure :)
 				if (ruleResearchRng)
 				{
-					if (ruleResearchRng->getLookup().empty())
+					if (ruleResearchRng->getLookup())
 					{
-						Ufopaedia::openArticle(_game, ruleResearchRng->getName());
+						save->addFinishedResearch(ruleResearchRng->getLookup(), mod, hq, true);
+						Ufopaedia::openArticle(_game, ruleResearchRng->getLookup()->getName());
 					}
 					else
 					{
-						save->addFinishedResearch(mod->getResearch(ruleResearchRng->getLookup(), true), mod, hq, true);
-						Ufopaedia::openArticle(_game, ruleResearchRng->getLookup());
+						Ufopaedia::openArticle(_game, ruleResearchRng->getName());
 					}
 				}
 			}
@@ -4446,8 +4443,59 @@ void GeoscapeState::determineAlienMissions(bool isNewMonth, const RuleEvent* eve
 			}
 		}
 	}
+
+	// Alien race evolution
+	if (isNewMonth && month > 0)
+	{
+		for (auto* alienBase : *save->getAlienBases())
+		{
+			if (!alienBase->getDeployment()->getAlienRaceEvolution().empty())
+			{
+				std::ostringstream ss;
+				ss << "month: " << month;
+				ss << " baseId: " << alienBase->getId();
+				ss << " baseType: " << alienBase->getType();
+				ss << " deployment: " << alienBase->getDeployment()->getType();
+				ss << " old race: " << alienBase->getAlienRace();
+				int tries = 0;
+				while (attemptAlienRaceEvolution(month, alienBase))
+				{
+					ss << " new race: " << alienBase->getAlienRace();
+					if (++tries >= 100)
+					{
+						throw Exception("Alien race evolution: endless loop detected. It's not my fault. Crashing now!");
+					}
+				}
+				ss << " end.";
+				if (Options::oxceGeoscapeDebugLogMaxEntries > 0)
+				{
+					save->getGeoscapeDebugLog().push_back(ss.str());
+				}
+			}
+		}
+	}
 }
 
+/**
+ * Try to perform alien race evolution.
+ * @return whether the attempt was successful or not.
+ */
+bool GeoscapeState::attemptAlienRaceEvolution(int month, AlienBase* ab) const
+{
+	for (const auto& tuple : ab->getDeployment()->getAlienRaceEvolution())
+	{
+		if (std::get<0>(tuple) <= month && std::get<1>(tuple) == ab->getAlienRace())
+		{
+			auto* newRace = _game->getMod()->getAlienRace(std::get<2>(tuple), false);
+			if (newRace)
+			{
+				ab->setAlienRace(newRace->getId());
+				return true;
+			}
+		}
+	}
+	return false;
+}
 
 /**
  * Processes a directive to start up a mission, if possible.
@@ -4990,6 +5038,12 @@ void GeoscapeState::resize(int &dX, int &dY)
 	}
 	switch (Options::geoscapeScale)
 	{
+	case SCALE_SCREEN_DIV_10:
+		divisor = 10;
+		break;
+	case SCALE_SCREEN_DIV_8:
+		divisor = 8;
+		break;
 	case SCALE_SCREEN_DIV_6:
 		divisor = 6;
 		break;
@@ -5050,6 +5104,70 @@ bool GeoscapeState::buttonsDisabled()
 
 void GeoscapeState::updateSlackingIndicator()
 {
+	if (Options::oxceGeoEnableTrainingIndicator)
+	{
+		int freeGym = 0;
+		int freePsi = 0;
+		for (auto* xcomBase : *_game->getSavedGame()->getBases())
+		{
+			int facilityGym = xcomBase->getFreeTrainingSpace();
+			if (facilityGym > 0)
+			{
+				int soldGym = 0;
+				for (auto* soldier : *xcomBase->getSoldiers())
+				{
+					bool isTraining = soldier->isInTraining();
+					bool isQueued = !isTraining && soldier->getReturnToTrainingWhenHealed();
+					bool isDone = soldier->isFullyTrained();
+
+					if (isTraining || isQueued || isDone)
+					{
+						// ignore this guy
+					}
+					else
+					{
+						// can train, or can be queued for training
+						soldGym++;
+					}
+					if (soldGym >= facilityGym) break;
+				}
+				freeGym += soldGym;
+			}
+
+			int facilityPsi = xcomBase->getFreePsiLabs();
+			if (facilityPsi > 0)
+			{
+				int soldPsi = 0;
+				for (auto* soldier : *xcomBase->getSoldiers())
+				{
+					bool isTraining = soldier->isInPsiTraining();
+					bool isDone = soldier->isFullyPsiTrained();
+					bool isNotEligible = soldier->getRules()->getTrainingStatCaps().psiSkill <= 0;
+
+					if (isTraining || isDone || isNotEligible)
+					{
+						// ignore this guy
+					}
+					else
+					{
+						// can train
+						soldPsi++;
+					}
+					if (soldPsi >= facilityPsi) break;
+				}
+				freePsi += soldPsi;
+			}
+		}
+		if (freeGym > 0 || freePsi > 0)
+		{
+			_txtTraining->setText(tr("STR_TRAINING_INDICATOR").arg(freePsi).arg(freeGym));
+		}
+		else
+		{
+			_txtTraining->setText("");
+		}
+	}
+
 	if (!Options::oxceEnableSlackingIndicator)
 		return;
 

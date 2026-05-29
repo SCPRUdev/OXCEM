@@ -158,7 +158,7 @@ private:
 	int _toggleBrightness;
 	int _monthsPassed;
 	int _daysPassed;
-	int _vehiclesLost;
+	int _vehiclesLost, _craftLostDogfight, _craftLostMission;
 	std::string _graphRegionToggles;
 	std::string _graphCountryToggles;
 	std::string _graphFinanceToggles;
@@ -299,6 +299,8 @@ public:
 	const std::vector<ResearchDiaryEntry*> & getResearchDiary() const { return _researchDiary; }
 	/// Get the list of already discovered research projects
 	const std::vector<const RuleResearch*> & getDiscoveredResearch() const;
+	/// Does this item correspond to at least one research topic that can be researched now or in the future?
+	bool isResearchable(const RuleItem* item, const Mod* mod) const;
 	/// Get the list of ResearchProject which can be researched in a Base
 	void getAvailableResearchProjects(std::vector<RuleResearch*> & projects, const Mod *mod, Base *base, bool considerDebugMode = false) const;
 	/// Get the list of newly available research projects once a research has been completed.
@@ -429,6 +431,12 @@ public:
 	/// Return the vehicles lost counter.
 	int getVehiclesLost() const { return _vehiclesLost; }
 	void increaseVehiclesLost() { _vehiclesLost++; }
+	/// Return the craft lost in dogfight counter.
+	int getCraftLostDogfight() const { return _craftLostDogfight; }
+	void increaseCraftLostDogfight() { _craftLostDogfight++; }
+	/// Return the craft lost in mission counter.
+	int getCraftLostMission() const { return _craftLostMission; }
+	void increaseCraftLostMission() { _craftLostMission++; }
 	/// Return the GraphRegionToggles.
 	const std::string &getGraphRegionToggles() const;
 	/// Return the GraphCountryToggles.

@@ -118,6 +118,7 @@ private:
 	std::string _alert, _alertBackground, _alertDescription;
 	int _alertSound;
 	BriefingData _briefingData;
+	std::string _alienBaseDiscoveredMessage;
 	std::string _markerName, _objectivePopup, _objectiveCompleteText, _objectiveFailedText;
 	std::string _missionCompleteText, _missionFailedText;
 	WeightedOptions _genMission, _successEvents, _failureEvents, _despawnEvents;
@@ -135,6 +136,7 @@ private:
 	std::vector<std::pair<size_t, WeightedOptions*> > _alienBaseUpgrades;
 	bool _resetAlienBaseAgeAfterUpgrade, _resetAlienBaseAge;
 	std::string _upgradeRace;
+	std::vector<std::tuple<size_t, std::string, std::string> > _alienRaceEvolution;
 	bool _noWeaponPile;
 public:
 	/// Creates a blank Alien Deployment ruleset.
@@ -238,6 +240,8 @@ public:
 	int getAlertSound() const;
 	/// Gets the briefing data for this mission type.
 	BriefingData getBriefingData() const;
+	/// Gets the "alien base discovered" message for this mission type.
+	const std::string& getAlienBaseDiscoveredMessage() const { return _alienBaseDiscoveredMessage; }
 	/// Gets the marker name for this mission.
 	std::string getMarkerName() const;
 	/// Gets the marker icon for this mission.
@@ -313,6 +317,9 @@ public:
 	bool resetAlienBaseAge() const { return _resetAlienBaseAge; }
 	/// Gets the new race for an alien base after an upgrade (into this type).
 	const std::string& getUpgradeRace() const { return _upgradeRace; }
+
+	/// Gets the alien race evolution rules.
+	const auto& getAlienRaceEvolution() const { return _alienRaceEvolution; }
 
 	/// Should items on the "weapon pile" be hidden from the player?
 	bool getNoWeaponPile() const { return _noWeaponPile; }

@@ -118,10 +118,10 @@ CraftWeaponsState::CraftWeaponsState(Base *base, size_t craft, size_t weapon) : 
 	{
 		RuleCraftWeapon *w = _game->getMod()->getCraftWeapon(craftWeaponType);
 		const RuleCraft *c = _craft->getRules();
-		bool isResearched = true;
+		bool isResearched = _game->getSavedGame()->isResearched(w->getLauncherItem()->getRequirements());
 		if (w->getClipItem())
 		{
-			isResearched = _game->getSavedGame()->isResearched(w->getClipItem()->getRequirements());
+			isResearched = isResearched && _game->getSavedGame()->isResearched(w->getClipItem()->getRequirements());
 		}
 		if (isResearched && _base->getStorageItems()->getItem(w->getLauncherItem()) > 0 && c->isValidWeaponSlot(weapon, w->getWeaponType()))
 		{
@@ -332,7 +332,7 @@ void CraftWeaponsState::lstWeaponsMiddleClick(Action *)
 
 	if (rule != 0)
 	{
-		std::string articleId = rule->getType();
+		std::string articleId = rule->getUfopediaType();
 		Ufopaedia::openArticle(_game, articleId);
 	}
 }

@@ -153,6 +153,53 @@ namespace OpenXcom
 	/**
 	 * Constructor (only setting type of base class).
 	 */
+	ArticleDefinitionUnit::ArticleDefinitionUnit() : ArticleDefinition(UFOPAEDIA_TYPE_UNIT), unit_mode(0)
+	{
+	}
+
+	/**
+	 * Loads the article definition from a YAML file.
+	 * @param node YAML node.
+	 * @param listOrder The list weight for this article.
+	 */
+	void ArticleDefinitionUnit::load(const YAML::YamlNodeReader& reader, int listOrder)
+	{
+		ArticleDefinition::load(reader, listOrder);
+		reader.tryRead("unit_mode", unit_mode);
+		reader.tryRead("image_id", image_id);
+		if (image_id.find("_CPAL") != std::string::npos)
+			customPalette = true;
+		reader.tryRead("rect_stats", rect_stats);
+		reader.tryRead("rect_armor", rect_armor);
+		reader.tryRead("rect_text", rect_text);
+	}
+
+	/**
+	 * Constructor (only setting type of base class).
+	 */
+	ArticleDefinitionSoldier::ArticleDefinitionSoldier() : ArticleDefinition(UFOPAEDIA_TYPE_SOLDIER), psi_skill_mode(0)
+	{
+	}
+
+	/**
+	 * Loads the article definition from a YAML file.
+	 * @param node YAML node.
+	 * @param listOrder The list weight for this article.
+	 */
+	void ArticleDefinitionSoldier::load(const YAML::YamlNodeReader& reader, int listOrder)
+	{
+		ArticleDefinition::load(reader, listOrder);
+		reader.tryRead("psi_skill_mode", psi_skill_mode);
+		reader.tryRead("image_id", image_id);
+		if (image_id.find("_CPAL") != std::string::npos)
+			customPalette = true;
+		reader.tryRead("rect_stats", rect_stats);
+		reader.tryRead("rect_text", rect_text);
+	}
+
+	/**
+	 * Constructor (only setting type of base class).
+	 */
 	ArticleDefinitionCraft::ArticleDefinitionCraft() : ArticleDefinition(UFOPAEDIA_TYPE_CRAFT)
 	{}
 

@@ -152,6 +152,9 @@ struct RuleDamageType
 	///   TileDamageMethod==2: ((damage x RandomTile) * ToTile)
 	int TileDamageMethod;
 
+	/// Maximum final tile damage possible, regardless of Power, ToTile, RandomTile, TileDamageMethod, etc.
+	int TileDamageLimit;
+
 	/// Default constructor.
 	RuleDamageType();
 	/// Calculate random value of damage.

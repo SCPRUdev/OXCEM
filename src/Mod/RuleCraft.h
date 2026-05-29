@@ -18,8 +18,10 @@
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <vector>
+#include <map>
 #include <string>
 #include "../Engine/Yaml.h"
+#include "Unit.h"
 #include "RuleBaseFacilityFunctions.h"
 #include "ModScript.h"
 
@@ -207,6 +209,7 @@ private:
 	int _maxSmallSoldiers, _maxLargeSoldiers, _maxSmallVehicles, _maxLargeVehicles;
 	int _maxSmallUnits, _maxLargeUnits, _maxSoldiers, _maxVehicles;
 	int _monthlyBuyLimit;
+	std::string _monthlyBuyLimitMessage;
 	int _costBuy, _costRent, _costSell;
 	char _weaponTypes[WeaponMax][WeaponTypeMax];
 	const RuleItem* _refuelItem;
@@ -217,7 +220,7 @@ private:
 	RuleTerrain *_battlescapeTerrainData;
 	int _maxSkinIndex;
 	std::pair<int, int> _spriteSize;
-	bool _keepCraftAfterFailedMission, _allowLanding, _spacecraft, _notifyWhenRefueled, _autoPatrol, _undetectable;
+	bool _keepCraftAfterFailedMission, _allowLanding, _spacecraft, _notifyWhenRefueled, _autoPatrol, _undetectable, _patrolWithoutFuel;
 	int _missilePower;
 	int _listOrder, _maxAltitude;
 	std::string _defaultAltitude;
@@ -226,6 +229,7 @@ private:
 	std::vector<int> _groups;
 	std::vector<int> _allowedSoldierGroups;
 	std::vector<int> _allowedArmorGroups;
+	std::map<int, int> _limitArmorGroups;
 	bool _onlyOneSoldierGroupAllowed;
 	RuleCraftStats _stats;
 	int _shieldRechargeAtBase;
@@ -233,6 +237,9 @@ private:
 	bool _useAllStartTiles;
 	std::string _customPreview;
 	std::vector<int> _selectSound, _takeoffSound;
+	UnitStats _pilotMinStatsRequired;
+	std::vector<std::string> _pilotSoldierBonusesRequiredNames;
+	std::vector<const RuleSoldierBonus*> _pilotSoldierBonusesRequired;
 
 	ModScript::CraftScripts::Container _craftScripts;
 	ScriptValues<RuleCraft> _scriptValues;
@@ -312,6 +319,8 @@ public:
 	int getMaxVehicles() const { return _maxVehicles; }
 	/// Gets the craft's monthly buy limit.
 	int getMonthlyBuyLimit() const { return _monthlyBuyLimit; }
+	/// Gets the craft's monthly buy limit message.
+	const std::string& getMonthlyBuyLimitMessage() const { return _monthlyBuyLimitMessage; }
 	/// Gets the craft's cost.
 	int getBuyCost() const;
 	/// Gets the craft's rent for a month.
@@ -350,6 +359,8 @@ public:
 	bool canAutoPatrol() const;
 	/// Is this craft immune to detection by HKs and alien bases?
 	bool isUndetectable() const { return _undetectable; }
+	/// Can this craft patrol without fuel comsumption?
+	bool patrolWithoutFuel() const { return _patrolWithoutFuel; }
 	/// Is this craft a self-destruct missile?
 	bool isMissile() const { return (_missilePower != 0); }
 	/// Gets the missile power.
@@ -366,6 +377,8 @@ public:
 	const std::vector<int>& getAllowedSoldierGroups() const { return _allowedSoldierGroups; }
 	/// Gets the list of allowed armor groups.
 	const std::vector<int>& getAllowedArmorGroups() const { return _allowedArmorGroups; }
+	/// Gets the list of allowed armor groups.
+	const std::map<int, int>& getLimitArmorGroups() const { return _limitArmorGroups; }
 	/// Does this craft allow soldiers of the same group only?
 	bool isOnlyOneSoldierGroupAllowed() const { return _onlyOneSoldierGroupAllowed; }
 	/// Gets the item limit for this craft.
@@ -408,6 +421,11 @@ public:
 	/// Gets the sound played when a craft takes off from a base.
 	int getTakeoffSound() const;
 	const std::vector<int>& getTakeoffSoundRaw() const { return _takeoffSound; }
+
+	/// Gets the minimum stats a soldier needs to be eligible for piloting this craft
+	const UnitStats& getPilotMinStatsRequired() const { return _pilotMinStatsRequired; }
+	/// Gets the list of soldier bonuses a soldier needs to be eligible for piloting this craft
+	const std::vector<const RuleSoldierBonus*>& getPilotSoldierBonusesRequired() const { return _pilotSoldierBonusesRequired; }
 
 	/// Gets script.
 	template<typename Script>

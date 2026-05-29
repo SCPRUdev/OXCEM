@@ -33,7 +33,8 @@ namespace OpenXcom
 SoldierDiary::SoldierDiary() : _daysWoundedTotal(0), _totalShotByFriendlyCounter(0), _totalShotFriendlyCounter(0), _loneSurvivorTotal(0),
 	_monthsService(0), _unconciousTotal(0),	_shotAtCounterTotal(0), _hitCounterTotal(0), _ironManTotal(0), _longDistanceHitCounterTotal(0),
 	_lowAccuracyHitCounterTotal(0), _shotsFiredCounterTotal(0), _shotsLandedCounterTotal(0), _shotAtCounter10in1Mission(0), _hitCounter5in1Mission(0),
-	_timesWoundedTotal(0), _KIA(0), _allAliensKilledTotal(0), _allAliensStunnedTotal(0), _woundsHealedTotal(0), _allUFOs(0), _allMissionTypes(0),
+	_timesWoundedTotal(0), _KIA(0), _allAliensKilledTotal(0), _allAliensStunnedTotal(0),
+	_ufosShotDownTotal(0), _ufosDamageTotal(0), _woundsHealedTotal(0), _allUFOs(0), _allMissionTypes(0),
 	_statGainTotal(0), _revivedUnitTotal(0), _wholeMedikitTotal(0), _braveryGainTotal(0), _bestOfRank(0),
 	_MIA(0), _martyrKillsTotal(0), _postMortemKills(0), _slaveKillsTotal(0), _bestSoldier(false),
 	_revivedSoldierTotal(0), _revivedHostileTotal(0), _revivedNeutralTotal(0), _globeTrotter(false)
@@ -97,6 +98,8 @@ void SoldierDiary::load(const YAML::YamlNodeReader& node, const Mod *mod)
 	reader.tryRead("killedInAction", _KIA);
 	reader.tryRead("allAliensKilledTotal", _allAliensKilledTotal);
 	reader.tryRead("allAliensStunnedTotal", _allAliensStunnedTotal);
+	reader.tryRead("ufosShotDownTotal", _ufosShotDownTotal);
+	reader.tryRead("ufosDamageTotal", _ufosDamageTotal);
 	reader.tryRead("woundsHealedTotal", _woundsHealedTotal);
 	reader.tryRead("allUFOs", _allUFOs);
 	reader.tryRead("allMissionTypes", _allMissionTypes);
@@ -150,6 +153,8 @@ void SoldierDiary::save(YAML::YamlNodeWriter writer) const
 	if (_KIA) writer.write("killedInAction", _KIA);
 	if (_allAliensKilledTotal) writer.write("allAliensKilledTotal", _allAliensKilledTotal);
 	if (_allAliensStunnedTotal) writer.write("allAliensStunnedTotal", _allAliensStunnedTotal);
+	if (_ufosShotDownTotal) writer.write("ufosShotDownTotal", _ufosShotDownTotal);
+	if (_ufosDamageTotal) writer.write("ufosDamageTotal", _ufosDamageTotal);
 	if (_woundsHealedTotal) writer.write("woundsHealedTotal", _woundsHealedTotal);
 	if (_allUFOs) writer.write("allUFOs", _allUFOs);
 	if (_allMissionTypes) writer.write("allMissionTypes", _allMissionTypes);
@@ -260,12 +265,29 @@ std::vector<SoldierCommendations*> *SoldierDiary::getSoldierCommendations()
 }
 
 /**
+ * Checks whether the diary contains a given commendation.
+ */
+bool SoldierDiary::containsCommendation(const RuleCommendations* rule) const
+{
+	for (auto* comm : _commendations)
+	{
+		if (comm->getRule() == rule)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
  * Manage the soldier's commendations.
  * Award new ones, if deserved.
  * @return bool Has a commendation been awarded?
  */
-bool SoldierDiary::manageCommendations(Mod *mod, std::vector<MissionStatistics*> *missionStatistics)
+bool SoldierDiary::manageCommendations(const Mod* mod, SavedGame* save, const Soldier* soldier)
 {
+	std::vector<MissionStatistics*>* missionStatistics = save->getMissionStatistics();
+
 	const int BATTLE_TYPES = 13;
 	const std::string battleTypeArray[BATTLE_TYPES] = { "BT_NONE", "BT_FIREARM", "BT_AMMO", "BT_MELEE", "BT_GRENADE",
 		"BT_PROXIMITYGRENADE", "BT_MEDIKIT", "BT_SCANNER", "BT_MINDPROBE", "BT_PSIAMP", "BT_FLARE", "BT_CORPSE", "BT_END" };
@@ -284,6 +306,19 @@ bool SoldierDiary::manageCommendations(Mod *mod, std::vector<MissionStatistics*>
 	{
 		const auto& commType = (*iter).first;
 		const RuleCommendations* commRule = (*iter).second;
+
+		if (!commRule->isSupportedBy(soldier->getRules()))
+		{
+			// commendation does not apply to this soldier type
+			++iter;
+			continue;
+		}
+		if (!save->isResearched(commRule->getRequires(), false))
+		{
+			// commendation is not unlocked yet
+			++iter;
+			continue;
+		}
 
 		awardCommendationBool = true;
 		nextCommendationLevel.clear();
@@ -347,6 +382,8 @@ bool SoldierDiary::manageCommendations(Mod *mod, std::vector<MissionStatistics*>
 					(critName == "totalAlienBaseAssaults" && getAlienBaseAssaultTotal(missionStatistics) < nextLevelThreshold) ||
 					(critName == "totalAllAliensKilled" && _allAliensKilledTotal < nextLevelThreshold) ||
 					(critName == "totalAllAliensStunned" && _allAliensStunnedTotal < nextLevelThreshold) ||
+					(critName == "totalUfosShotDown" && _ufosShotDownTotal < nextLevelThreshold) ||
+					(critName == "totalUfosDamage" && _ufosDamageTotal < nextLevelThreshold) ||
 					(critName == "totalWoundsHealed" && _woundsHealedTotal < nextLevelThreshold) ||
 					(critName == "totalAllUFOs" && _allUFOs < nextLevelThreshold) ||
 					(critName == "totalAllMissionTypes" && _allMissionTypes < nextLevelThreshold) ||
@@ -965,6 +1002,15 @@ int SoldierDiary::getMonthsService() const
 }
 
 /**
+ * Update the pilot's UFO stats.
+ */
+void SoldierDiary::addUfoShotDown(int damage)
+{
+	_ufosShotDownTotal += 1;
+	_ufosDamageTotal += damage;
+}
+
+/**
  * Award special commendation to the original 8 soldiers.
  */
 void SoldierDiary::awardOriginalEightCommendation(const Mod* mod)
@@ -1026,7 +1072,7 @@ int SoldierDiary::getAccuracy() const
 /**
  *  Get trap kills total.
  */
-int SoldierDiary::getTrapKillTotal(Mod *mod) const
+int SoldierDiary::getTrapKillTotal(const Mod* mod) const
 {
 	int trapKillTotal = 0;
 
@@ -1045,7 +1091,7 @@ int SoldierDiary::getTrapKillTotal(Mod *mod) const
 /**
  *  Get reaction kill total.
  */
- int SoldierDiary::getReactionFireKillTotal(Mod *mod) const
+ int SoldierDiary::getReactionFireKillTotal(const Mod* mod) const
  {
 	int reactionFireKillTotal = 0;
 

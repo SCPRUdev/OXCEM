@@ -82,6 +82,7 @@ private:
 	int _daysWoundedTotal, _totalShotByFriendlyCounter, _totalShotFriendlyCounter, _loneSurvivorTotal, _monthsService, _unconciousTotal, _shotAtCounterTotal,
 		_hitCounterTotal, _ironManTotal, _longDistanceHitCounterTotal, _lowAccuracyHitCounterTotal, _shotsFiredCounterTotal, _shotsLandedCounterTotal,
 		_shotAtCounter10in1Mission,	_hitCounter5in1Mission, _timesWoundedTotal, _KIA, _allAliensKilledTotal, _allAliensStunnedTotal,
+		_ufosShotDownTotal, _ufosDamageTotal,
 		_woundsHealedTotal, _allUFOs, _allMissionTypes, _statGainTotal, _revivedUnitTotal, _wholeMedikitTotal, _braveryGainTotal, _bestOfRank, _MIA,
 		_martyrKillsTotal, _postMortemKills, _slaveKillsTotal, _bestSoldier, _revivedSoldierTotal, _revivedHostileTotal, _revivedNeutralTotal;
 	bool _globeTrotter;
@@ -130,12 +131,18 @@ public:
 	int getDaysWoundedTotal() const;
 	/// Get the solder's commendations.
 	std::vector<SoldierCommendations*> *getSoldierCommendations();
+	/// Checks whether the diary contains a given commendation.
+	bool containsCommendation(const RuleCommendations* rule) const;
 	/// Manage commendations, return true if a medal is awarded.
-	bool manageCommendations(Mod*, std::vector<MissionStatistics*>*);
+	bool manageCommendations(const Mod* mod, SavedGame* save, const Soldier* soldier);
 	/// Increment the soldier's service time.
 	void addMonthlyService();
 	/// Get the total months in service.
 	int getMonthsService() const;
+	/// Update the pilot's UFO stats.
+	void addUfoShotDown(int damage);
+	/// Get the total UFOs shot down.
+	int getUfosShotDown() const { return _ufosShotDownTotal; }
 	/// Get the mission id list.
 	std::vector<int> &getMissionIdList();
 	const std::vector<int>& getMissionIdList() const;
@@ -156,9 +163,9 @@ public:
 	/// Get the soldier's accuracy.
 	int getAccuracy() const;
 	/// Get the total number of trap kills.
-	int getTrapKillTotal(Mod*) const;
+	int getTrapKillTotal(const Mod* mod) const;
 	/// Get the total number of reaction fire kills.
-	int getReactionFireKillTotal(Mod*) const;
+	int getReactionFireKillTotal(const Mod* mod) const;
 	/// Get the total number of terror missions.
 	int getTerrorMissionTotal(std::vector<MissionStatistics*>*) const;
 	/// Get the total number of night missions.

@@ -68,7 +68,7 @@ BattleUnit::BattleUnit(const Mod *mod, Soldier *soldier, int depth, const RuleSt
 	_dontReselect(false), _aiMedikitUsed(false), _fire(0), _currentAIState(0), _visible(false),
 	_exp{ }, _expTmp{ },
 	_motionPoints(0), _scannedTurn(-1), _customMarker(0), _kills(0), _hitByFire(false), _hitByAnything(false), _alreadyExploded(false), _fireMaxHit(0), _smokeMaxHit(0),
-	_moraleRestored(0), _charging(0),
+	_moraleRestored(0), _notificationShown(0), _charging(0),
 	_statistics(), _murdererId(0), _mindControllerID(0), _fatalShotSide(SIDE_FRONT), _fatalShotBodyPart(BODYPART_HEAD), _armor(0),
 	_geoscapeSoldier(soldier), _unitRules(0), _rankInt(0), _turretType(-1), _hidingForTurn(false), _floorAbove(false), _respawn(false), _alreadyRespawned(false),
 	_isLeeroyJenkins(false), _summonedPlayerUnit(false), _resummonedFakeCivilian(false), _pickUpWeaponsMoreActively(false), _disableIndicators(false),
@@ -138,7 +138,7 @@ BattleUnit::BattleUnit(const Mod *mod, Soldier *soldier, int depth, const RuleSt
  * @param ruleArmor Pointer to the new Armor ruleset.
  * @param depth The depth of the battlefield.
  */
-void BattleUnit::updateArmorFromSoldier(const Mod *mod, Soldier *soldier, Armor *ruleArmor, int depth, bool nextStage, const RuleStartingCondition* sc)
+void BattleUnit::updateArmorFromSoldier(const Mod *mod, Soldier *soldier, const Armor *ruleArmor, int depth, bool nextStage, const RuleStartingCondition* sc)
 {
 	_armor = ruleArmor;
 
@@ -411,14 +411,14 @@ void BattleUnit::prepareBannedFlag(const RuleStartingCondition* sc)
  * @param diff difficulty level (for stat adjustment).
  * @param depth the depth of the battlefield (used to determine movement type in case of MT_FLOAT).
  */
-BattleUnit::BattleUnit(const Mod *mod, Unit *unit, UnitFaction faction, int id, const RuleEnviroEffects* enviro, Armor *armor, StatAdjustment *adjustment, int depth, const RuleStartingCondition* sc) :
+BattleUnit::BattleUnit(const Mod *mod, const Unit *unit, UnitFaction faction, int id, const RuleEnviroEffects* enviro, const Armor *armor, StatAdjustment *adjustment, int depth, const RuleStartingCondition* sc) :
 	_faction(faction), _originalFaction(faction), _killedBy(faction), _id(id),
 	_tile(0), _lastPos(Position()), _direction(0), _toDirection(0), _directionTurret(0),
 	_toDirectionTurret(0), _verticalDirection(0), _status(STATUS_STANDING), _wantsToSurrender(false), _isSurrendering(false), _walkPhase(0),
 	_fallPhase(0), _kneeled(false), _floating(false), _dontReselect(false), _aiMedikitUsed(false), _fire(0), _currentAIState(0),
 	_visible(false), _exp{ }, _expTmp{ },
 	_motionPoints(0), _scannedTurn(-1), _customMarker(0), _kills(0), _hitByFire(false), _hitByAnything(false), _alreadyExploded(false), _fireMaxHit(0), _smokeMaxHit(0),
-	_moraleRestored(0), _charging(0),
+	_moraleRestored(0), _notificationShown(0), _charging(0),
 	_statistics(), _murdererId(0), _mindControllerID(0), _fatalShotSide(SIDE_FRONT),
 	_fatalShotBodyPart(BODYPART_HEAD), _armor(armor), _geoscapeSoldier(0),  _unitRules(unit),
 	_rankInt(0), _turretType(-1), _hidingForTurn(false), _respawn(false), _alreadyRespawned(false),
@@ -502,7 +502,7 @@ BattleUnit::BattleUnit(const Mod *mod, Unit *unit, UnitFaction faction, int id, 
 /**
  * Updates BattleUnit's armor and related attributes (after a change/transformation of armor).
  */
-void BattleUnit::updateArmorFromNonSoldier(const Mod* mod, Armor* newArmor, int depth, bool nextStage, const RuleStartingCondition* sc)
+void BattleUnit::updateArmorFromNonSoldier(const Mod* mod, const Armor* newArmor, int depth, bool nextStage, const RuleStartingCondition* sc)
 {
 	_armor = newArmor;
 
@@ -644,6 +644,7 @@ void BattleUnit::load(const YAML::YamlNodeReader& node, const Mod *mod, const Sc
 	reader.tryRead("rankInt", _rankInt);
 	reader.tryRead("rankIntUnified", _rankIntUnified);
 	reader.tryRead("moraleRestored", _moraleRestored);
+	reader.tryRead("notificationShown", _notificationShown);
 	reader.tryRead("killedBy", _killedBy);
 	reader.tryRead("kills", _kills);
 	reader.tryRead("dontReselect", _dontReselect);
@@ -759,6 +760,8 @@ void BattleUnit::save(YAML::YamlNodeWriter writer, const ScriptGlobal *shared) c
 	writer.write("rankInt", _rankInt);
 	writer.write("rankIntUnified", _rankIntUnified);
 	writer.write("moraleRestored", _moraleRestored);
+	if (_notificationShown > 0)
+		writer.write("notificationShown", _notificationShown);
 	if (getAIModule())
 		getAIModule()->save(writer["AI"]);
 	writer.write("killedBy", _killedBy); // does not have a default value, must always be saved
@@ -2590,6 +2593,18 @@ int BattleUnit::getArmor(UnitSide side) const
 }
 
 /**
+ * Set the max armor value of a certain armor side.
+ * @param armor Amount of armor.
+ * @param side The side of the armor.
+ */
+void BattleUnit::setMaxArmor(int armor, UnitSide side)
+{
+	_maxArmor[side] = Clamp(armor, 0, UnitStats::BaseStatLimit);
+	_currentArmor[side] = Clamp(_currentArmor[side], 0, _maxArmor[side]);
+}
+
+
+/**
  * Get the max armor value of a certain armor side.
  * @param side The side of the armor.
  * @return Amount of armor.
@@ -2949,6 +2964,15 @@ int BattleUnit::getFire() const
  * @return pointer to vector.
  */
 std::vector<BattleItem*> *BattleUnit::getInventory()
+{
+	return &_inventory;
+}
+
+/**
+ * Get the pointer to the vector of inventory items.
+ * @return pointer to vector.
+ */
+const std::vector<BattleItem*> *BattleUnit::getInventory() const
 {
 	return &_inventory;
 }
@@ -5771,6 +5795,13 @@ void getArmorValueScript(const BattleUnit *bu, int &ret, int side)
 	}
 	ret = 0;
 }
+void setArmorValueMaxScript(BattleUnit *bu, int side, int value)
+{
+	if (bu && 0 <= side && side < SIDE_MAX)
+	{
+		bu->setMaxArmor(value, (UnitSide)side);
+	}
+}
 void getArmorValueMaxScript(const BattleUnit *bu, int &ret, int side)
 {
 	if (bu && 0 <= side && side < SIDE_MAX)
@@ -6392,6 +6423,22 @@ void getInventoryItemScript(BattleUnit* bu, BattleItem *&foundItem, const RuleIt
 	}
 }
 
+void getInventoryItemConstScript(const BattleUnit* bu, const BattleItem *&foundItem, const RuleItem *itemRules)
+{
+	foundItem = nullptr;
+	if (bu)
+	{
+		for (auto* i : *bu->getInventory())
+		{
+			if (i->getRules() == itemRules)
+			{
+				foundItem = i;
+				break;
+			}
+		}
+	}
+}
+
 void getInventoryItemScript1(BattleUnit* bu, BattleItem *&foundItem, const RuleInventory *inv, const RuleItem *itemRules)
 {
 	foundItem = nullptr;
@@ -6408,7 +6455,39 @@ void getInventoryItemScript1(BattleUnit* bu, BattleItem *&foundItem, const RuleI
 	}
 }
 
+void getInventoryItemConstScript1(const BattleUnit* bu, const BattleItem *&foundItem, const RuleInventory *inv, const RuleItem *itemRules)
+{
+	foundItem = nullptr;
+	if (bu)
+	{
+		for (auto* i : *bu->getInventory())
+		{
+			if (i->getSlot() == inv && i->getRules() == itemRules)
+			{
+				foundItem = i;
+				break;
+			}
+		}
+	}
+}
+
 void getInventoryItemScript2(BattleUnit* bu, BattleItem *&foundItem, const RuleInventory *inv)
+{
+	foundItem = nullptr;
+	if (bu)
+	{
+		for (auto* i : *bu->getInventory())
+		{
+			if (i->getSlot() == inv)
+			{
+				foundItem = i;
+				break;
+			}
+		}
+	}
+}
+
+void getInventoryItemConstScript2(const BattleUnit* bu, const BattleItem *&foundItem, const RuleInventory *inv)
 {
 	foundItem = nullptr;
 	if (bu)
@@ -6441,7 +6520,22 @@ void getListScript(BattleUnit* bu, BattleItem *&foundItem, int i)
 
 //TODO: move it to script bindings
 template<auto Member>
-void getListSizeScript(BattleUnit* bu, int& i)
+void getListConstScript(const BattleUnit* bu, const BattleItem *&foundItem, int i)
+{
+	foundItem = nullptr;
+	if (bu)
+	{
+		auto& ptr = (bu->*Member);
+		if ((size_t)i < std::size(ptr))
+		{
+			foundItem = ptr[i];
+		}
+	}
+}
+
+//TODO: move it to script bindings
+template<auto Member>
+void getListSizeScript(const BattleUnit* bu, int& i)
 {
 	i = 0;
 	if (bu)
@@ -6452,7 +6546,7 @@ void getListSizeScript(BattleUnit* bu, int& i)
 }
 
 template<auto Member>
-void getListSizeHackScript(BattleUnit* bu, int& i)
+void getListSizeHackScript(const BattleUnit* bu, int& i)
 {
 	i = 0;
 	if (bu)
@@ -6467,6 +6561,11 @@ void getListSizeHackScript(BattleUnit* bu, int& i)
 }
 
 bool filterItemScript(BattleUnit* unit, BattleItem* item)
+{
+	return item;
+}
+
+bool filterItemConstScript(const BattleUnit* unit, const BattleItem* item)
 {
 	return item;
 }
@@ -6620,6 +6719,7 @@ void BattleUnit::ScriptRegister(ScriptParserBase* parser)
 	bu.add<&setArmorValueScript>("setArmor", "first arg is side, second one is new value of armor");
 	bu.add<&addArmorValueScript>("addArmor", "first arg is side, second one is value to add to armor");
 	bu.add<&getArmorValueScript>("getArmor", "first arg return armor value, second arg is side");
+	bu.add<&setArmorValueMaxScript>("setArmorMax", "first arg is side, second one is new value of max armor");
 	bu.add<&getArmorValueMaxScript>("getArmorMax", "first arg return max armor value, second arg is side");
 
 	bu.add<&BattleUnit::getFatalWounds>("getFatalwoundsTotal", "sum for every body part");
@@ -6668,12 +6768,19 @@ void BattleUnit::ScriptRegister(ScriptParserBase* parser)
 	bu.add<&getInventoryItemScript>("getInventoryItem");
 	bu.add<&getInventoryItemScript1>("getInventoryItem");
 	bu.add<&getInventoryItemScript2>("getInventoryItem");
+	bu.add<&getInventoryItemConstScript>("getInventoryItem");
+	bu.add<&getInventoryItemConstScript1>("getInventoryItem");
+	bu.add<&getInventoryItemConstScript2>("getInventoryItem");
 	bu.add<&getListSizeScript<&BattleUnit::_inventory>>("getInventoryItem.size");
 	bu.add<&getListScript<&BattleUnit::_inventory>>("getInventoryItem");
+	bu.add<&getListConstScript<&BattleUnit::_inventory>>("getInventoryItem");
 	bu.addList<&filterItemScript, &BattleUnit::_inventory>("getInventoryItem");
+	bu.addList<&filterItemConstScript, &BattleUnit::_inventory>("getInventoryItem");
 	bu.add<&getListSizeHackScript<&BattleUnit::_specWeapon>>("getSpecialItem.size");
 	bu.add<&getListScript<&BattleUnit::_specWeapon>>("getSpecialItem");
+	bu.add<&getListConstScript<&BattleUnit::_specWeapon>>("getSpecialItem");
 	bu.addList<&filterItemScript, &BattleUnit::_specWeapon>("getSpecialItem");
+	bu.addList<&filterItemConstScript, &BattleUnit::_specWeapon>("getSpecialItem");
 
 	bu.add<&getPositionXScript>("getPosition.getX");
 	bu.add<&getPositionYScript>("getPosition.getY");

@@ -515,7 +515,7 @@ void CraftArmorState::lstSoldiersClick(Action *action)
 		{
 			SavedGame *save;
 			save = _game->getSavedGame();
-			Armor *a = _game->getMod()->getArmor(save->getLastSelectedArmor());
+			Armor *a = _game->isCtrlPressed(true) ? s->getRules()->getDefaultArmor() : _game->getMod()->getArmor(save->getLastSelectedArmor());
 			bool armorUnlocked = true;
 			if (a && a->getRequiredResearch() && !_game->getSavedGame()->isResearched(a->getRequiredResearch()))
 			{
@@ -530,7 +530,12 @@ void CraftArmorState::lstSoldiersClick(Action *action)
 					_game->pushState(new ErrorMessageState(tr("STR_NOT_ENOUGH_CRAFT_SPACE"), _palette, _game->getMod()->getInterface("soldierInfo")->getElement("errorMessage")->color, "BACK01.SCR", _game->getMod()->getInterface("soldierInfo")->getElement("errorPalette")->color));
 				}
 			}
-			if (armorUnlocked && a && a->getCanBeUsedBy(s->getRules()))
+			//if (armorUnlocked && a && a->getRequiredBonus())
+			{
+				// refresh soldier's _bonusCache, needed below in Armor::getCanBeUsedBy()
+				//s->getBonuses(_game->getMod());
+			}
+			if (armorUnlocked && a && a->getCanBeUsedBy(s))
 			{
 				if (save->getMonthsPassed() != -1)
 				{

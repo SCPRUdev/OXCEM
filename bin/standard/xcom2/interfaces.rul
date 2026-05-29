@@ -1052,6 +1052,10 @@ interfaces: #done
         color: 1     # white
         color2: 239  # light blue
         custom: -12  # above Intercept button
+      - id: trainingIndicator
+        color: 1     # white
+        color2: 239  # light blue
+        custom: 4  # below standard visible area
       - id: genericWindow
         color: 1
       - id: genericText
@@ -1149,6 +1153,7 @@ interfaces: #done
         color: 6     # brown
       - id: errorMessage
         color: 1   # pink
+        color2: 244
   - type: manageContainment
     backgroundImage: BACK05.SCR
     elements:
@@ -2161,6 +2166,10 @@ interfaces: #done
         color: 47
         color2: 63
         border: 54
+      - id: infoBoxText
+        color: 47
+        color2: 80
+        border: 54
       - id: grenadeMenu
         color: 47
         color2: 63
@@ -2304,6 +2313,10 @@ interfaces: #done
         color2: 0
   - type: stats
     elements:
+      - id: numMaxHealth
+        color: 96
+        pos: [278, 0]    # only X counts, Y is ignored (because it's dynamic)
+        custom: 2        # 0 + 1(=show also when current hp is equal to max hp) + 2(=show '/' prefix)
       - id: textName
         color: 48
       - id: barTUs
@@ -2378,11 +2391,11 @@ interfaces: #done
   - type: medikit
     elements:
       - id: textPK
-        pos: [181, 33]
+        pos: [151, 33]
       - id: textStim
-        pos: [181, 69]
+        pos: [151, 69]
       - id: textHeal
-        pos: [181, 105]
+        pos: [151, 105]
       - id: buttonPK
         pos: [186, 44]
         size: [21, 21]

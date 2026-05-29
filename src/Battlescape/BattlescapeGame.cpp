@@ -879,7 +879,7 @@ void BattlescapeGame::checkForCasualties(const RuleDamageType *damageType, Battl
 					int winnerMod = _save->getFactionMoraleModifier(victim->getOriginalFaction() == FACTION_HOSTILE);
 					for (auto* bu : *_save->getUnits())
 					{
-						if (!bu->isOut() && (bu->isSmallUnit() || bu->getGeoscapeSoldier())) // soldier in 2x2 armors should feel dread too
+						if (!bu->isOut())
 						{
 							// the losing squad all get a morale loss
 							if (bu->getOriginalFaction() == victim->getOriginalFaction())
@@ -953,7 +953,7 @@ void BattlescapeGame::checkForCasualties(const RuleDamageType *damageType, Battl
 
 						for (auto* winner : *_save->getUnits())
 						{
-							if (!winner->isOut() && winner->isSmallUnit() && winner->getOriginalFaction() == murderer->getOriginalFaction())
+							if (!winner->isOut() && winner->getOriginalFaction() == murderer->getOriginalFaction())
 							{
 								// the winning squad gets a morale increase (the losing squad is NOT affected)
 								winner->moraleChange(10);
@@ -2422,7 +2422,7 @@ void BattlescapeGame::spawnFromPrimedItems()
  */
 void BattlescapeGame::removeSummonedPlayerUnits()
 {
-	std::vector<Unit*> resummonAsCivilians;
+	std::vector<const Unit*> resummonAsCivilians;
 
 	auto buIt = _save->getUnits()->begin();
 	while (buIt != _save->getUnits()->end())

@@ -111,7 +111,8 @@ SavedGame::SavedGame() :
 	_difficulty(DIFF_BEGINNER), _end(END_NONE), _ironman(false), _globeLon(0.0), _globeLat(0.0), _globeZoom(0),
 	_battleGame(0), _previewBase(nullptr), _debug(false), _warned(false),
 	_togglePersonalLight(true), _toggleNightVision(false), _toggleBrightness(0),
-	_monthsPassed(-1), _daysPassed(0), _vehiclesLost(0), _selectedBase(0), _autosales(), _disableSoldierEquipment(false), _alienContainmentChecked(false)
+	_monthsPassed(-1), _daysPassed(0), _vehiclesLost(0), _craftLostDogfight(0), _craftLostMission(0),
+	_selectedBase(0), _autosales(), _disableSoldierEquipment(false), _alienContainmentChecked(false)
 {
 	_time = new GameTime(6, 1, 1, 1999, 12, 0, 0);
 	_alienStrategy = new AlienStrategy();
@@ -396,6 +397,8 @@ void SavedGame::load(const std::string &filename, Mod *mod, Language *lang)
 	reader.tryRead("monthsPassed", _monthsPassed);
 	reader.tryRead("daysPassed", _daysPassed);
 	reader.tryRead("vehiclesLost", _vehiclesLost);
+	reader.tryRead("craftLostDogfight", _craftLostDogfight);
+	reader.tryRead("craftLostMission", _craftLostMission);
 	reader.tryRead("graphRegionToggles", _graphRegionToggles);
 	reader.tryRead("graphCountryToggles", _graphCountryToggles);
 	reader.tryRead("graphFinanceToggles", _graphFinanceToggles);
@@ -784,6 +787,8 @@ void SavedGame::save(const std::string &filename, Mod *mod) const
 	writer.write("monthsPassed", _monthsPassed);
 	writer.write("daysPassed", _daysPassed);
 	writer.write("vehiclesLost", _vehiclesLost);
+	writer.write("craftLostDogfight", _craftLostDogfight);
+	writer.write("craftLostMission", _craftLostMission);
 	writer.write("graphRegionToggles", _graphRegionToggles);
 	writer.write("graphCountryToggles", _graphCountryToggles);
 	writer.write("graphFinanceToggles", _graphFinanceToggles);
@@ -1686,6 +1691,50 @@ void SavedGame::addResearchDiaryEntry(ResearchDiaryEntry* entry)
 const std::vector<const RuleResearch *> & SavedGame::getDiscoveredResearch() const
 {
 	return _discovered;
+}
+
+/**
+ * Does this item correspond to at least one research topic that can be researched now or in the future?
+ */
+bool SavedGame::isResearchable(const RuleItem* item, const Mod* mod) const
+{
+	for (const auto& pair : mod->getResearchMap())
+	{
+		if (pair.second->needItem() && pair.second->getNeededItem() == item)
+		{
+			// This research topic is "permanently" disabled, ignore it!
+			if (isResearchRuleStatusDisabled(pair.first))
+			{
+				continue;
+			}
+
+			if (isResearched(pair.second, false))
+			{
+				if (hasUndiscoveredGetOneFree(pair.second, false))
+				{
+					// This research topic still has some more undiscovered non-disabled "getOneFree" topics, keep it!
+					return true;
+				}
+				else if (hasUndiscoveredProtectedUnlock(pair.second))
+				{
+					// This research topic still has one or more undiscovered non-disabled "protected unlocks", keep it!
+					return true;
+				}
+				else
+				{
+					// This topic can't give you anything else anymore, ignore it!
+					continue;
+				}
+			}
+			else
+			{
+				// This research topic is not yet researched, keep it!
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 /**
@@ -3317,9 +3366,9 @@ bool SavedGame::handleResearchUnlockedByMissions(const RuleResearch* research, c
 	researchVec.push_back(research);
 	addResearchDiaryEntryForMission(research, DiscoverySourceType::MISSION, deployment, nullptr);
 	addFinishedResearch(research, mod, base, true);
-	if (!research->getLookup().empty())
+	if (research->getLookup())
 	{
-		researchVec.push_back(mod->getResearch(research->getLookup(), true));
+		researchVec.push_back(research->getLookup());
 		addResearchDiaryEntryForMission(researchVec.back(), DiscoverySourceType::MISSION, deployment, nullptr);
 		addFinishedResearch(researchVec.back(), mod, base, true);
 	}
@@ -3329,9 +3378,9 @@ bool SavedGame::handleResearchUnlockedByMissions(const RuleResearch* research, c
 		researchVec.push_back(bonus);
 		addResearchDiaryEntryForMission(bonus, DiscoverySourceType::FREE_FROM, nullptr, research);
 		addFinishedResearch(bonus, mod, base, true);
-		if (!bonus->getLookup().empty())
+		if (bonus->getLookup())
 		{
-			researchVec.push_back(mod->getResearch(bonus->getLookup(), true));
+			researchVec.push_back(bonus->getLookup());
 			addResearchDiaryEntryForMission(researchVec.back(), DiscoverySourceType::FREE_FROM, nullptr, research);
 			addFinishedResearch(researchVec.back(), mod, base, true);
 		}
@@ -3406,6 +3455,18 @@ void SavedGame::handlePrimaryResearchSideEffects(const std::vector<const RuleRes
 		// 3l. handle spawned events
 		RuleEvent* spawnedEventRule = mod->getEvent(myResearchRule->getSpawnedEvent());
 		spawnEvent(spawnedEventRule);
+		// try also the weighted list of events, it's the modder's responsibility to use only one or the other
+		{
+			const std::string choice = myResearchRule->chooseEvent();
+			if (!choice.empty())
+			{
+				RuleEvent* eventToSpawn = mod->getEvent(choice, false);
+				if (eventToSpawn)
+				{
+					spawnEvent(eventToSpawn);
+				}
+			}
+		}
 		// 3m. handle counters
 		for (auto& inc : myResearchRule->getIncreaseCounter())
 		{

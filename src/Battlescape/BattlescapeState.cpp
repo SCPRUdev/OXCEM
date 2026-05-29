@@ -2339,13 +2339,16 @@ void BattlescapeState::updateSoldierInfo(bool checkFOV)
 		for (auto* bu : *_save->getUnits())
 		{
 			if (j >= VISIBLE_MAX) break; // loop finished
-			if (bu->getFaction() == FACTION_PLAYER && bu->getStatus() != STATUS_DEAD && !bu->isIgnored() && bu->getFatalWounds() > 0 && bu->indicatorsAreEnabled())
+			if (bu->getFaction() == FACTION_PLAYER && bu->getStatus() != STATUS_DEAD && !bu->isIgnored() && bu->indicatorsAreEnabled())
 			{
-				_btnVisibleUnit[j]->setTooltip(_txtVisibleUnitTooltip[VISIBLE_MAX]);
-				_btnVisibleUnit[j]->setVisible(true);
-				_numVisibleUnit[j]->setVisible(true);
-				_visibleUnit[j] = bu;
-				++j;
+				if (bu->getFatalWounds() > 0 || (Options::oxceShowBurningAsWounded && bu->getFire() > 0))
+				{
+					_btnVisibleUnit[j]->setTooltip(_txtVisibleUnitTooltip[VISIBLE_MAX]);
+					_btnVisibleUnit[j]->setVisible(true);
+					_numVisibleUnit[j]->setVisible(true);
+					_visibleUnit[j] = bu;
+					++j;
+				}
 			}
 		}
 	}
@@ -2753,6 +2756,39 @@ inline void BattlescapeState::handle(Action *action)
 
 					_game->pushState(new BriefingState(ycraft, 0, true));
 				}
+				// "ctrl-c" - camera: toggle show single map level
+				else if (key == SDLK_c && ctrlPressed)
+				{
+					_map->getCamera()->toggleShowSingleLayer();
+
+					if (_map->getCamera()->getShowSingleLayer())
+						warningLongRaw(tr("STR_SINGLE_MAP_LAYER_ACTIVATED"));
+					else
+						warning("STR_SINGLE_MAP_LAYER_DEACTIVATED");
+				}
+				// "ctrl-f" - show fatal wounds
+				else if (key == SDLK_f && ctrlPressed)
+				{
+					if (_save->getSide() == FACTION_PLAYER)
+					{
+						auto* bu = _save->getSelectedUnit();
+						if (bu)
+						{
+							std::ostringstream ss;
+							ss << tr("STR_FATAL_WOUNDS");
+							ss << "\n";
+							for (int i = 0; i < BODYPART_MAX; ++i)
+							{
+								if (bu->getFatalWound((UnitBodyPart)i))
+								{
+									ss << "\n";
+									ss << _game->getLanguage()->getString(PARTS_STRING[i]);
+								}
+							}
+							_game->pushState(new InfoboxState(ss.str()));
+						}
+					}
+				}
 				// "ctrl-h" - show hit log
 				else if (key == SDLK_h && ctrlPressed)
 				{
@@ -2802,17 +2838,35 @@ inline void BattlescapeState::handle(Action *action)
 				// "ctrl-s" - switch xcom unit speed to max and back
 				else if (key == SDLK_s && ctrlPressed)
 				{
-					if (Options::battleXcomSpeedOrig >= 1 && Options::battleXcomSpeedOrig <= 40)
+					if (_save->getSide() == FACTION_PLAYER)
 					{
-						Options::battleXcomSpeed = Options::battleXcomSpeedOrig;
-						Options::battleXcomSpeedOrig = -1;
-						warning("STR_QUICK_MODE_DEACTIVATED");
+						if (Options::battleXcomSpeedOrig >= 1 && Options::battleXcomSpeedOrig <= 40)
+						{
+							Options::battleXcomSpeed = Options::battleXcomSpeedOrig;
+							Options::battleXcomSpeedOrig = -1;
+							warning("STR_QUICK_MODE_DEACTIVATED");
+						}
+						else
+						{
+							Options::battleXcomSpeedOrig = Options::battleXcomSpeed;
+							Options::battleXcomSpeed = 1;
+							warningLongRaw(tr("STR_QUICK_MODE_ACTIVATED"));
+						}
 					}
 					else
 					{
-						Options::battleXcomSpeedOrig = Options::battleXcomSpeed;
-						Options::battleXcomSpeed = 1;
-						warningLongRaw(tr("STR_QUICK_MODE_ACTIVATED"));
+						if (Options::battleAlienSpeedOrig >= 1 && Options::battleAlienSpeedOrig <= 40)
+						{
+							Options::battleAlienSpeed = Options::battleAlienSpeedOrig;
+							Options::battleAlienSpeedOrig = -1;
+							warning("STR_QUICK_MODE_DEACTIVATED");
+						}
+						else
+						{
+							Options::battleAlienSpeedOrig = Options::battleAlienSpeed;
+							Options::battleAlienSpeed = 1;
+							warning("STR_QUICK_MODE_ACTIVATED");
+						}
 					}
 				}
 				// "ctrl-x" - mute/unmute unit response sounds
@@ -2847,7 +2901,10 @@ inline void BattlescapeState::handle(Action *action)
 								if (bu->getGeoscapeSoldier() && !bu->hasGainedAnyExperience())
 								{
 									if (!first) ss << ", ";
-									ss << bu->getName(_game->getLanguage());
+									if (bu == _save->getSelectedUnit())
+										ss << Unicode::TOK_COLOR_FLIP << bu->getName(_game->getLanguage()) << Unicode::TOK_COLOR_FLIP;
+									else
+										ss << bu->getName(_game->getLanguage());
 									first = false;
 								}
 							}
@@ -3956,6 +4013,12 @@ void BattlescapeState::resize(int &dX, int &dY)
 	}
 	switch (Options::battlescapeScale)
 	{
+	case SCALE_SCREEN_DIV_10:
+		divisor = 10;
+		break;
+	case SCALE_SCREEN_DIV_8:
+		divisor = 8;
+		break;
 	case SCALE_SCREEN_DIV_6:
 		divisor = 6;
 		break;

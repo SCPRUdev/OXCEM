@@ -43,7 +43,9 @@ namespace OpenXcom
 		UFOPAEDIA_TYPE_TFTD_ITEM          = 14,
 		UFOPAEDIA_TYPE_TFTD_ARMOR         = 15,
 		UFOPAEDIA_TYPE_TFTD_BASE_FACILITY = 16,
-		UFOPAEDIA_TYPE_TFTD_USO           = 17
+		UFOPAEDIA_TYPE_TFTD_USO           = 17,
+		UFOPAEDIA_TYPE_SOLDIER            = 18,
+		UFOPAEDIA_TYPE_UNIT               = 19
 	};
 
 	/**
@@ -174,6 +176,45 @@ namespace OpenXcom
 		int x_offset;
 		int y_offset;
 		std::string facility;
+	};
+
+	/**
+	 * ArticleDefinitionUnit defines articles for unit types, e.g. STR_SECTOID_LEADER.
+	 * They have a large background image, a stats block, an armor block and a description positioned differently.
+	 */
+
+	class ArticleDefinitionUnit : public ArticleDefinition
+	{
+	public:
+		/// Constructor.
+		ArticleDefinitionUnit();
+		/// Loads the article from YAML.
+		void load(const YAML::YamlNodeReader& reader, int listOrder) override;
+
+		int unit_mode;
+		std::string image_id;
+		ArticleDefinitionRect rect_stats;
+		ArticleDefinitionRect rect_armor;
+		ArticleDefinitionRect rect_text;
+	};
+
+	/**
+	 * ArticleDefinitionSoldier defines articles for soldier types, e.g. STR_SOLDIER.
+	 * They have a large background image, a stats block and a description positioned differently.
+	 */
+
+	class ArticleDefinitionSoldier : public ArticleDefinition
+	{
+	public:
+		/// Constructor.
+		ArticleDefinitionSoldier();
+		/// Loads the article from YAML.
+		void load(const YAML::YamlNodeReader& reader, int listOrder) override;
+
+		int psi_skill_mode;
+		std::string image_id;
+		ArticleDefinitionRect rect_stats;
+		ArticleDefinitionRect rect_text;
 	};
 
 	/**

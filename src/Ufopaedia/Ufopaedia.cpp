@@ -31,9 +31,11 @@
 #include "ArticleStateCraftWeapon.h"
 #include "ArticleStateItem.h"
 #include "ArticleStateArmor.h"
+#include "ArticleStateSoldier.h"
 #include "ArticleStateText.h"
 #include "ArticleStateTextImage.h"
 #include "ArticleStateUfo.h"
+#include "ArticleStateUnit.h"
 #include "ArticleStateVehicle.h"
 #include "ArticleStateTFTD.h"
 #include "ArticleStateTFTDArmor.h"
@@ -116,6 +118,10 @@ namespace OpenXcom
 		ArticleDefinition *article = state->getCurrentArticle();
 		switch (article->getType())
 		{
+			case UFOPAEDIA_TYPE_UNIT:
+				return new ArticleStateUnit(dynamic_cast<ArticleDefinitionUnit *>(article), std::move(state));
+			case UFOPAEDIA_TYPE_SOLDIER:
+				return new ArticleStateSoldier(dynamic_cast<ArticleDefinitionSoldier *>(article), std::move(state));
 			case UFOPAEDIA_TYPE_CRAFT:
 				return new ArticleStateCraft(dynamic_cast<ArticleDefinitionCraft *>(article), std::move(state));
 			case UFOPAEDIA_TYPE_CRAFT_WEAPON:

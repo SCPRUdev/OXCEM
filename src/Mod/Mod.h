@@ -227,6 +227,7 @@ private:
 	int _maxStaticLightDistance, _maxDynamicLightDistance, _enhancedLighting;
 	int _costHireEngineer, _costHireScientist;
 	int _costEngineer, _costScientist, _timePersonnel, _hireByCountryOdds, _hireByRegionOdds, _initialFunding;
+	int _globalTransferCostMult, _globalTransferCostDiv;
 
 	int _aiUseDelayBlaster, _aiUseDelayFirearm, _aiUseDelayGrenade, _aiUseDelayProxy, _aiUseDelayMelee, _aiUseDelayPsionic, _aiUseDelayMedikit;
 	int _aiFireChoiceIntelCoeff, _aiFireChoiceAggroCoeff;
@@ -471,11 +472,13 @@ public:
 	static int EXTENDED_MOVEMENT_COST_ROUNDING;
 	static bool EXTENDED_HWP_LOAD_ORDER;
 	static int EXTENDED_SPOT_ON_HIT_FOR_SNIPING;
+	static int EXTENDED_BERSERK_WITH_AIMED;
 	static int EXTENDED_MELEE_REACTIONS;
 	static int EXTENDED_TERRAIN_MELEE;
 	static int EXTENDED_UNDERWATER_THROW_FACTOR;
 	static bool EXTENDED_EXPERIENCE_AWARD_SYSTEM;
 	static bool EXTENDED_FORCE_SPAWN;
+	static int EXTENDED_SMOKE_OFFSET;
 
 
 	/// Return `true` when given string is empty or pseudo null value.
@@ -659,6 +662,10 @@ public:
 		else if constexpr (std::is_same_v<T, RuleEvent>)
 		{
 			rule = getEvent(name, true);
+		}
+		else if constexpr (std::is_same_v<T, RuleCommendations>)
+		{
+			rule = getCommendation(name, true);
 		}
 		else
 		{
@@ -846,6 +853,11 @@ public:
 	int getHireByCountryOdds() const { return _hireByCountryOdds; }
 	/// Gets the odds of hiring soldiers by region.
 	int getHireByRegionOdds() const { return _hireByRegionOdds; }
+
+	/// Gets the global transfer cost multiplier.
+	int getGlobalTransferCostMultiplier() const { return _globalTransferCostMult; }
+	/// Gets the global transfer cost divider.
+	int getGlobalTransferCostDivider() const { return _globalTransferCostDiv; }
 
 	/// Gets first turn when AI can use Blaster launcher.
 	int getAIUseDelayBlaster() const  {return _aiUseDelayBlaster;}
