@@ -419,6 +419,7 @@ void UnitWalkBState::think()
 
 		// calculateFOV is unreliable for setting the unitSpotted bool, as it can be called from various other places
 		// in the code, ie: doors opening, and this messes up the result.
+		_terrain->calculateLighting(LL_UNITS, _unit->getPosition());
 		_terrain->calculateFOV(_unit);
 		unitSpotted = (!_action.ignoreSpottedEnemies && !_falling && !_action.desperate && _parent->getPanicHandled() && _numUnitsSpotted != _unit->getUnitsSpottedThisTurn().size());
 

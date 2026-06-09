@@ -130,7 +130,7 @@ private:
 	BattleUnit* _movingUnit = nullptr;
 
 	/// Add light source.
-	void addLight(MapSubset gs, Position center, int power, LightLayers layer);
+	void addLight(MapSubset gs, Position center, int power, LightLayers layer, int coneSize = 0, int direction = 0);
 	/// Calculate blockage amount.
 	int blockage(Tile *tile, const TilePart part, ItemDamageType type, int direction = -1, bool checkingFromOrigin = false);
 
@@ -145,6 +145,8 @@ private:
 	void calculateTerrainItems(MapSubset gs);
 	/// Recalculates lighting of the battlescape for units.
 	void calculateUnitLighting(MapSubset gs);
+	/// Adds unit directional lighting.
+	void calculateUnitDirectionalLighting(MapSubset gs, BattleUnit* unit, const BattleItem* w);
 
 	/// Checks validity of a snap shot to this position.
 	ReactionScore determineReactionType(BattleUnit *unit, BattleUnit *target);

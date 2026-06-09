@@ -227,6 +227,8 @@ public:
 	bool getGlow() const;
 	/// Gets range of glow in tiles.
 	int getGlowRange() const;
+	/// Gets cone for item (from 1 to 4).
+	int getItemConeSize() const { return _rules->getConeSize(); };
 	/// Calculate range need to be updated by changing this weapon.
 	int getVisibilityUpdateRange() const;
 	/// Sets a flag on the item indicating if this is a clip in a weapon or not.
