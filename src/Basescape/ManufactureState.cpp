@@ -143,6 +143,15 @@ void ManufactureState::init()
 	State::init();
 	fillProductionList(0);
 
+	if (!_game->getMod()->getTradingUnlockResearch().empty())
+	{
+		bool tradingUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getTradingUnlockResearch(), true);
+		if (!tradingUnlocked)
+		{
+			_txtFunds->setVisible(false);
+		}
+	}
+
 	if (Options::oxceManufactureScrollSpeed > 0 || Options::oxceManufactureScrollSpeedWithCtrl > 0)
 	{
 		// 140 +/- 20

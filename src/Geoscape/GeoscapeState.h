@@ -205,6 +205,7 @@ private:
 	/// Process each individual mission script command.
 	bool processCommand(RuleMissionScript *command);
 	bool buttonsDisabled();
+	void updateResearchLockedUi();
 	void updateSlackingIndicator();
 };
 

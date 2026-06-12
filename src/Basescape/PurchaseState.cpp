@@ -178,6 +178,16 @@ PurchaseState::PurchaseState(Base *base, CannotReequipState *parent) : _base(bas
 	_cats.push_back("STR_ALL_ITEMS");
 	_cats.push_back("STR_FILTER_HIDDEN");
 	_cats.push_back("STR_FILTER_EQUIPPED");
+
+	if (!_game->getMod()->getTradingUnlockResearch().empty())
+	{
+		bool tradingUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getTradingUnlockResearch(), true);
+		if (!tradingUnlocked)
+		{
+			_txtFunds->setVisible(false);
+		}
+	}
+
 	if (!_missingItemsMap.empty())
 	{
 		_cats.push_back("STR_FILTER_MISSING");

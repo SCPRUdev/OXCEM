@@ -284,6 +284,21 @@ MonthlyReportState::MonthlyReportState(Globe *globe) : _gameOver(0), _ratingTota
 
 	_txtDesc->setText(ss5.str());
 
+	if (!_game->getMod()->getTradingUnlockResearch().empty())
+	{
+		bool tradingUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getTradingUnlockResearch(), true);
+		if (!tradingUnlocked)
+		{
+			_txtMonth->setVisible(false);
+			_txtRating->setVisible(false);
+			_txtIncome->setVisible(false);
+			_txtMaintenance->setVisible(false);
+			_txtBalance->setVisible(false);
+			_txtBonus->setVisible(false);
+			_txtDesc->setVisible(false);
+		}
+	}
+
 	// Give modders some handles on political situation
 	for (const auto& traitorName : _pactList)
 	{
@@ -397,23 +412,6 @@ void MonthlyReportState::btnOkClick(Action *)
 			_btnBigOk->setVisible(true);
 			_txtFailure->setVisible(true);
 	//		_game->getMod()->playMusic("GMLOSE"); //Removed gameover music from MonthlyReportState to avoid double playback in cutscenes
-
- 		if (!_game->getMod()->getNewBaseUnlockResearch().empty())
-			{
-				bool newBasesUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getNewBaseUnlockResearch(), true);
-				if (!newBasesUnlocked)
-				{
-					_txtRating->setVisible(false);
-					_txtIncome->setVisible(false);
-					_txtMaintenance->setVisible(false);
-					_txtBalance->setVisible(false);
-					_txtBonus->setVisible(false);
-					_txtDesc->setVisible(false);
-				}
-			}
-
-
-
 		}
 	}
 }

@@ -175,6 +175,16 @@ ManageAlienContainmentState::ManageAlienContainmentState(Base *base, int prisonT
 	_timerInc->onTimer((StateHandler)&ManageAlienContainmentState::increase);
 	_timerDec = new Timer(250);
 	_timerDec->onTimer((StateHandler)&ManageAlienContainmentState::decrease);
+
+	if (!_game->getMod()->getTradingUnlockResearch().empty())
+	{
+		bool tradingUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getTradingUnlockResearch(), true);
+		if (!tradingUnlocked)
+		{
+			_btnSell->setVisible(false);
+			_btnTransfer->setVisible(false);
+		}
+	}
 }
 
 /**

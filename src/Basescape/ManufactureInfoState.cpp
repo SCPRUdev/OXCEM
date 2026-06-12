@@ -188,6 +188,15 @@ void ManufactureInfoState::buildUi()
 	_btnOk->onKeyboardPress((ActionHandler)&ManufactureInfoState::btnOkClick, Options::keyOk);
 	_btnOk->onKeyboardPress((ActionHandler)&ManufactureInfoState::btnOkClick, Options::keyCancel);
 
+	if (!_game->getMod()->getTradingUnlockResearch().empty())
+	{
+		bool tradingUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getTradingUnlockResearch(), true);
+		if (!tradingUnlocked)
+		{
+			_btnSell->setVisible(false);
+		}
+	}
+
 	if (!_item && _production)
 	{
 		if (_production->getRules()->getRefund())

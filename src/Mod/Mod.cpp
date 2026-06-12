@@ -3505,6 +3505,7 @@ void Mod::loadFile(const FileMap::FileRecord &filerec, ModScript &parsers)
 	reader.tryRead("psiUnlockResearch", _psiUnlockResearch);
 	reader.tryRead("fakeUnderwaterBaseUnlockResearch", _fakeUnderwaterBaseUnlockResearch);
 	reader.tryRead("newBaseUnlockResearch", _newBaseUnlockResearch);
+	reader.tryRead("tradingUnlockResearch", _tradingUnlockResearch);
 	reader.tryRead("hireScientistsUnlockResearch", _hireScientistsUnlockResearch);
 	reader.tryRead("hireEngineersUnlockResearch", _hireEngineersUnlockResearch);
 	loadBaseFunction("mod", _hireScientistsRequiresBaseFunc, reader["hireScientistsRequiresBaseFunc"]);

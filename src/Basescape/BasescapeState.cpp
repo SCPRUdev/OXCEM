@@ -249,23 +249,17 @@ void BasescapeState::init()
 		}
 	}
 
-	/*if (!_game->getMod()->getPurchaseUnlockResearch().empty())
+	if (!_game->getMod()->getTradingUnlockResearch().empty())
 	{
-		bool purchaseUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getPurchaseUnlockResearch(), true);
-		if (!purchaseUnlocked)
+		bool tradingUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getTradingUnlockResearch(), true);
+		if (!tradingUnlocked)
 		{
+			_txtFunds->setVisible(false);
+			_btnTransfer->setVisible(false);
 			_btnPurchase->setVisible(false);
-		}
-	}
-
-	if (!_game->getMod()->getSellUnlockResearch().empty())
-	{
-		bool sellUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getSellUnlockResearch(), true);
-		if (!sellUnlocked)
-		{
 			_btnSell->setVisible(false);
 		}
-	}*/
+	}
 }
 
 /**

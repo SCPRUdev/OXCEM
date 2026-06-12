@@ -194,6 +194,17 @@ void SellState::delayedInit()
 		_cats.push_back("STR_FILTER_RESEARCHABLE");
 	}
 
+	if (!_game->getMod()->getTradingUnlockResearch().empty())
+	{
+		bool tradingUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getTradingUnlockResearch(), true);
+		if (!tradingUnlocked)
+		{
+			_txtFunds->setVisible(false);
+			_btnOk->setVisible(false);
+			_btnTransfer->setVisible(false);
+		}
+	}
+
 	for (auto* soldier : *_base->getSoldiers())
 	{
 		if (_debriefingState) break;

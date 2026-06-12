@@ -110,6 +110,16 @@ DismantleFacilityState::DismantleFacilityState(Base *base, BaseView *view, BaseF
 		_txtRefundValue->setText(tr("STR_REFUND_VALUE").arg(Unicode::formatFunding(refundValue)));
 	}
 	_txtRefundValue->setVisible(refundValue != 0);
+
+	if (!_game->getMod()->getTradingUnlockResearch().empty())
+	{
+		bool tradingUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getTradingUnlockResearch(), true);
+		if (!tradingUnlocked)
+		{
+			_txtRefundValue->setVisible(false);
+			_btnOk->setVisible(false);
+		}
+	}
 }
 
 /**

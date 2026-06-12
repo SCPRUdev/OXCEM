@@ -112,7 +112,19 @@ GlobalManufactureState::GlobalManufactureState(bool openedFromBasescape) : _open
 	_lstManufacture->setWordWrap(true);
 	_lstManufacture->onMouseClick((ActionHandler)&GlobalManufactureState::onSelectBase, SDL_BUTTON_LEFT);
 	_lstManufacture->onMouseClick((ActionHandler)&GlobalManufactureState::onOpenTechTreeViewer, SDL_BUTTON_MIDDLE);
+
+
+	if (!_game->getMod()->getTradingUnlockResearch().empty())
+	{
+		bool tradingUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getTradingUnlockResearch(), true);
+		if (!tradingUnlocked)
+		{
+			_txtFunds->setVisible(false);
+		}
+	}
 }
+
+
 
 /**
  *

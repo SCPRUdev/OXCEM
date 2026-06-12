@@ -365,6 +365,17 @@ void DebriefingState::applyVisibility()
 	// Set text on toggle button accordingly
 	_btnSell->setVisible(showItems && _showSellButton);
 	_btnTransfer->setVisible(showItems && _showSellButton && _game->getSavedGame()->getBases()->size() > 1);
+
+	if (!_game->getMod()->getTradingUnlockResearch().empty())
+	{
+		bool tradingUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getTradingUnlockResearch(), true);
+		if (!tradingUnlocked)
+		{
+			_btnSell->setVisible(false);
+			_btnTransfer->setVisible(false);
+		}
+	}
+
 	if (showScore)
 	{
 		_btnStats->setText(tr("STR_STATS"));

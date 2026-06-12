@@ -426,6 +426,8 @@ GeoscapeState::GeoscapeState() : _pause(false), _pauseActive(false), _zoomInEffe
 	_txtSlacking->setAlign(ALIGN_RIGHT);
 	_txtTraining->setAlign(ALIGN_RIGHT);
 
+	updateResearchLockedUi();
+
 	if (Options::showFundsOnGeoscape)
 	{
 		_txtHour->setY(_txtHour->getY()+6);
@@ -725,6 +727,7 @@ void GeoscapeState::init()
 {
 	State::init();
 	timeDisplay();
+	updateResearchLockedUi();
 	updateSlackingIndicator();
 
 	_globe->onMouseClick((ActionHandler)&GeoscapeState::globeClick);
@@ -5100,6 +5103,16 @@ void GeoscapeState::resize(int &dX, int &dY)
 bool GeoscapeState::buttonsDisabled()
 {
 	return _zoomInEffectTimer->isRunning() || _zoomOutEffectTimer->isRunning();
+}
+
+void GeoscapeState::updateResearchLockedUi()
+{
+	bool tradingUnlocked = _game->getMod()->getTradingUnlockResearch().empty()
+		|| _game->getSavedGame()->isResearched(_game->getMod()->getTradingUnlockResearch(), true);
+
+	_txtFunds->setVisible(Options::showFundsOnGeoscape && tradingUnlocked);
+	_btnGraphs->setVisible(tradingUnlocked);
+	_btnFunding->setVisible(tradingUnlocked);
 }
 
 void GeoscapeState::updateSlackingIndicator()

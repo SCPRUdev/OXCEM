@@ -157,6 +157,15 @@ BaseInfoState::BaseInfoState(Base *base, BasescapeState *state) : _base(base), _
 
 	centerAllSurfaces();
 
+	if (!_game->getMod()->getTradingUnlockResearch().empty())
+	{
+		bool tradingUnlocked = _game->getSavedGame()->isResearched(_game->getMod()->getTradingUnlockResearch(), true);
+		if (!tradingUnlocked)
+		{
+			_btnMonthlyCosts->setVisible(false);
+		}
+	}
+
 	// Set up objects
 	std::ostringstream ss;
 	if (Options::storageLimitsEnforced)
