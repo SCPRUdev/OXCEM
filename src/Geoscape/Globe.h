@@ -52,6 +52,14 @@ private:
 	static const int CITY_MARKER = 8;
 	static const double ROTATE_LONGITUDE;
 	static const double ROTATE_LATITUDE;
+	enum GlobeDetailLevel
+	{
+		DETAIL_ALL,
+		DETAIL_NO_LABELS,
+		DETAIL_NO_CITY_MARKERS,
+		DETAIL_NONE,
+		DETAIL_LEVELS
+	};
 
 	RuleGlobe *_rules;
 	Sint16 _cenX, _cenY;
@@ -62,6 +70,7 @@ private:
 	Game *_game;
 	Surface *_markers, *_countries, *_radars;
 	bool _hover, _craft;
+	GlobeDetailLevel _detailLevel;
 	int _blink;
 	Timer *_blinkTimer, *_rotTimer;
 	std::list<Polygon*> _cacheLand;
@@ -101,6 +110,12 @@ private:
 	void drawPath(Surface *surface, double lon1, double lat1, double lon2, double lat2);
 	/// Draw target marker.
 	void drawTarget(Target *target, Surface *surface);
+	/// Checks if text labels should be drawn.
+	bool showDetailLabels() const;
+	/// Checks if city markers should be drawn.
+	bool showDetailCityMarkers() const;
+	/// Checks if decorative map borders should be drawn.
+	bool showDetailBorders() const;
 	/// Set up the radius of earth and stuff.
 	void setupRadii(int width, int height);
 public:

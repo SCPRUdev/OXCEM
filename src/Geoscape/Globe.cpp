@@ -331,7 +331,7 @@ struct CreateShadowWithoutCache
  * @param x X position in pixels.
  * @param y Y position in pixels.
  */
-Globe::Globe(Game* game, int cenX, int cenY, int width, int height, int x, int y) : InteractiveSurface(width, height, x, y), _cenX(cenX), _cenY(cenY), _rotLon(0.0), _rotLat(0.0), _hoverLon(0.0), _hoverLat(0.0), _craftLon(0.0), _craftLat(0.0), _craftRange(0.0), _game(game), _hover(false), _craft(false), _blink(-1),
+Globe::Globe(Game* game, int cenX, int cenY, int width, int height, int x, int y) : InteractiveSurface(width, height, x, y), _cenX(cenX), _cenY(cenY), _rotLon(0.0), _rotLat(0.0), _hoverLon(0.0), _hoverLat(0.0), _craftLon(0.0), _craftLat(0.0), _craftRange(0.0), _game(game), _hover(false), _craft(false), _detailLevel(Options::globeDetail ? DETAIL_ALL : DETAIL_NONE), _blink(-1),
 																					_isMouseScrolling(false), _isMouseScrolled(false), _xBeforeMouseScrolling(0), _yBeforeMouseScrolling(0), _lonBeforeMouseScrolling(0.0), _latBeforeMouseScrolling(0.0), _mouseScrollingStartTime(0), _totalMouseMoveX(0), _totalMouseMoveY(0), _mouseMovedOverThreshold(false)
 {
 	_rules = game->getMod()->getGlobe();
@@ -750,8 +750,40 @@ bool Globe::insideFakeUnderwaterTexture(double lon, double lat) const
  */
 void Globe::toggleDetail()
 {
-	Options::globeDetail = !Options::globeDetail;
+	if (!Options::globeDetail)
+	{
+		_detailLevel = DETAIL_NONE;
+	}
+	_detailLevel = static_cast<GlobeDetailLevel>((_detailLevel + 1) % DETAIL_LEVELS);
+	Options::globeDetail = (_detailLevel != DETAIL_NONE);
 	drawDetail();
+}
+
+/**
+ * Checks if text labels should be drawn.
+ * @return True if labels are enabled.
+ */
+bool Globe::showDetailLabels() const
+{
+	return _detailLevel == DETAIL_ALL;
+}
+
+/**
+ * Checks if city markers should be drawn.
+ * @return True if city markers are enabled.
+ */
+bool Globe::showDetailCityMarkers() const
+{
+	return _detailLevel <= DETAIL_NO_LABELS;
+}
+
+/**
+ * Checks if decorative map borders should be drawn.
+ * @return True if borders are enabled.
+ */
+bool Globe::showDetailBorders() const
+{
+	return _detailLevel <= DETAIL_NO_CITY_MARKERS;
 }
 
 /**
@@ -1362,11 +1394,11 @@ void Globe::drawDetail()
 {
 	_countries->clear();
 
-	if (!Options::globeDetail)
+	if (!Options::globeDetail || _detailLevel == DETAIL_NONE)
 		return;
 
 	// Draw the country borders
-	if (_zoom >= 1)
+	if (_zoom >= 1 && showDetailBorders())
 	{
 		// Lock the surface
 		_countries->lock();
@@ -1393,7 +1425,7 @@ void Globe::drawDetail()
 	}
 
 	// Draw the country names
-	if (_zoom >= 2)
+	if (_zoom >= 2 && showDetailLabels())
 	{
 		Text *label = new Text(150, 9, 0, 0);
 		label->setPalette(getPalette());
@@ -1425,6 +1457,7 @@ void Globe::drawDetail()
 	}
 
 	// Draw extra globe labels
+	if (showDetailLabels())
 	{
 		Text *label = new Text(120, 18, 0, 0);
 		label->setPalette(getPalette());
@@ -1458,24 +1491,31 @@ void Globe::drawDetail()
 		delete label;
 	}
 
-	// Draw the city and base markers
+	// Draw city markers and city/base labels
 	if (_zoom >= 3)
 	{
-		Text *label = new Text(100, 9, 0, 0);
-		label->setPalette(getPalette());
-		label->initText(_game->getMod()->getFont("FONT_BIG"), _game->getMod()->getFont("FONT_SMALL"), _game->getLanguage());
-		label->setAlign(ALIGN_CENTER);
-		label->setColor(CITY_LABEL_COLOR);
+		Text *label = 0;
+		if (showDetailLabels())
+		{
+			label = new Text(100, 9, 0, 0);
+			label->setPalette(getPalette());
+			label->initText(_game->getMod()->getFont("FONT_BIG"), _game->getMod()->getFont("FONT_SMALL"), _game->getLanguage());
+			label->setAlign(ALIGN_CENTER);
+			label->setColor(CITY_LABEL_COLOR);
+		}
 
 		Sint16 x, y;
 		for (auto* region : *_game->getSavedGame()->getRegions())
 		{
 			for (auto* city : *region->getRules()->getCities())
 			{
-				drawTarget(city, _countries);
+				if (showDetailCityMarkers())
+				{
+					drawTarget(city, _countries);
+				}
 
 				// Don't draw if city is facing back
-				if (pointBack(city->getLongitude(), city->getLatitude()))
+				if (!label || pointBack(city->getLongitude(), city->getLatitude()))
 					continue;
 
 				// Convert coordinates
@@ -1488,16 +1528,19 @@ void Globe::drawDetail()
 			}
 		}
 		// Draw bases names
-		for (auto* xbase : *_game->getSavedGame()->getBases())
+		if (label)
 		{
-			if (xbase->getMarker() == -1 || pointBack(xbase->getLongitude(), xbase->getLatitude()))
-				continue;
-			polarToCart(xbase->getLongitude(), xbase->getLatitude(), &x, &y);
-			label->setX(x - 50);
-			label->setY(y + 2);
-			label->setColor(BASE_LABEL_COLOR);
-			label->setText(xbase->getName());
-			label->blit(_countries->getSurface());
+			for (auto* xbase : *_game->getSavedGame()->getBases())
+			{
+				if (xbase->getMarker() == -1 || pointBack(xbase->getLongitude(), xbase->getLatitude()))
+					continue;
+				polarToCart(xbase->getLongitude(), xbase->getLatitude(), &x, &y);
+				label->setX(x - 50);
+				label->setY(y + 2);
+				label->setColor(BASE_LABEL_COLOR);
+				label->setText(xbase->getName());
+				label->blit(_countries->getSurface());
+			}
 		}
 
 		delete label;
