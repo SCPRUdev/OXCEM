@@ -27,6 +27,7 @@ namespace OpenXcom
 
 RuleResearch::RuleResearch(const std::string &name, int listOrder) :
 	_name(name), _spawnedItemCount(1), _cost(0), _points(0),
+	_tension(0),
 	_sequentialGetOneFree(false), _needItem(false), _destroyItem(false), _unlockFinalMission(false), _repeatable(false),
 	_listOrder(listOrder)
 {
@@ -59,6 +60,7 @@ void RuleResearch::load(const YAML::YamlNodeReader& node, Mod* mod, const ModScr
 	}
 	reader.tryRead("cost", _cost);
 	reader.tryRead("points", _points);
+	reader.tryRead("tension", _tension);
 	mod->loadUnorderedNames(_name, _dependenciesName, reader["dependencies"]);
 	mod->loadUnorderedNames(_name, _unlocksName, reader["unlocks"]);
 	mod->loadUnorderedNames(_name, _disablesName, reader["disables"]);
@@ -236,6 +238,15 @@ const std::vector<const RuleResearch*> &RuleResearch::getReenabled() const
 int RuleResearch::getPoints() const
 {
 	return _points;
+}
+
+/**
+ * Get the tension changed for this ResearchProject.
+ * @return The tension changed for this ResearchProject.
+ */
+int RuleResearch::getTension() const
+{
+	return _tension;
 }
 
 /**

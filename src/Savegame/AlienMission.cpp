@@ -1046,7 +1046,7 @@ void AlienMission::ufoLifting(Ufo &ufo, SavedGame &game)
 	case Ufo::IGNORE_ME:
 		{
 			// base missions only get points when they are completed.
-			if (_rule.getPoints() > 0 && _rule.getObjective() != OBJECTIVE_BASE)
+			if ((_rule.getPoints() > 0 || _rule.getTension() != 0) && _rule.getObjective() != OBJECTIVE_BASE)
 			{
 				addScore(ufo.getLongitude(), ufo.getLatitude(), game);
 			}
@@ -1134,6 +1134,7 @@ void AlienMission::addScore(double lon, double lat, SavedGame &game) const
 		if (region->getRules()->insideRegion(lon, lat))
 		{
 			region->addActivityAlien(_rule.getPoints());
+			region->addTension(_rule.getTension());
 			break;
 		}
 	}
@@ -1142,6 +1143,7 @@ void AlienMission::addScore(double lon, double lat, SavedGame &game) const
 		if (country->getRules()->insideCountry(lon, lat))
 		{
 			country->addActivityAlien(_rule.getPoints());
+			country->addTension(_rule.getTension());
 			break;
 		}
 	}

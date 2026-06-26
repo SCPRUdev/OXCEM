@@ -322,6 +322,10 @@ productionProgress_e Production::step(Base * b, SavedGame * g, const Mod *m, Lan
 				// yes, negative points are allowed too
 				g->addResearchScore(_rules->getPoints());
 			}
+			if (_rules->getTension() != 0)
+			{
+				g->addResearchTension(_rules->getTension());
+			}
 			count++;
 			if (count < produced)
 			{

@@ -40,7 +40,7 @@ private:
 	std::vector<std::string> _regionList;
 	bool _alignBottom;
 	bool _city;
-	int _points, _funds;
+	int _points, _tension, _funds;
 	std::string _spawnedCraftType;
 	int _spawnedPersons;
 	std::string _spawnedPersonType, _spawnedPersonName;
@@ -85,6 +85,8 @@ public:
 	bool isCitySpecific() const { return _city; }
 	/// Gets the amount of score points awarded when this event pops up.
 	int getPoints() const { return _points; }
+	/// Gets the amount of tension changed when this event pops up.
+	int getTension() const { return _tension; }
 	/// Gets the amount of funds awarded when this event pops up.
 	int getFunds() const { return _funds; }
 

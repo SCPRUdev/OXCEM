@@ -537,6 +537,8 @@ ru:
   STR_DAY_SHORT: "{0} д"
   STR_HOUR_SHORT: "{0} ч"
   STR_PERFORMANCE_BONUS: "Бонус за результативность"
+  STR_TENSION: "Напряженность"
+  STR_MONTHLY_TENSION: "Напряженность> {ALT}{0}"
   STR_COUNTRY_HAS_CANCELLED_A_SECRET_PACT: "Страна {0} расторгла пакт с пришельцами и теперь может возобновить участие в проекте."
   STR_COUNTRIES_HAVE_CANCELLED_A_SECRET_PACT: "{0} расторгли пакт с пришельцами и теперь могут возобновить участие в проекте."
   STR_WE_CAN_NOW_RENT: "Мы теперь можем арендовать"

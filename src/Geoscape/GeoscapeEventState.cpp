@@ -196,6 +196,7 @@ void GeoscapeEventState::eventLogic()
 			if (region->getRules() == regionRule)
 			{
 				region->addActivityXcom(rule.getPoints());
+				region->addTension(rule.getTension());
 				break;
 			}
 		}
@@ -203,6 +204,7 @@ void GeoscapeEventState::eventLogic()
 	else
 	{
 		save->addResearchScore(rule.getPoints());
+		save->addResearchTension(rule.getTension());
 	}
 
 	// 2. give/take funds

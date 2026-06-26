@@ -49,7 +49,7 @@ class RuleResearch
 	int _spawnedItemCount;
 	std::vector<std::string> _spawnedItemList;
 	std::vector<std::string> _decreaseCounter, _increaseCounter;
-	int _cost, _points;
+	int _cost, _points, _tension;
 	std::vector<std::string> _dependenciesName, _unlocksName, _disablesName, _reenablesName, _getOneFreeName, _requiresName;
 	RuleBaseFacilityFunctions _requiresBaseFunc;
 	std::vector<const RuleResearch*> _dependencies, _unlocks, _disables, _reenables, _getOneFree, _requires;
@@ -113,6 +113,8 @@ public:
 	const std::vector<const RuleResearch*> &getReenabled() const;
 	/// Gets the points earned for discovering this ResearchProject.
 	int getPoints() const;
+	/// Gets the tension changed for discovering this ResearchProject.
+	int getTension() const;
 	/// Gets the list of ResearchProjects granted at random for free by this research.
 	const std::vector<const RuleResearch*> &getGetOneFree() const;
 	/// Gets the list(s) of ResearchProjects granted at random for free by this research (if a defined prerequisite is met).

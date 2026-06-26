@@ -105,6 +105,7 @@ private:
 	int _itemId;
 	EscapeType _vipEscapeType;
 	int _vipSurvivalPercentage, _vipsSaved, _vipsLost, _vipsWaitingOutside, _vipsSavedScore, _vipsLostScore, _vipsWaitingOutsideScore;
+	int _vipsSavedTension, _vipsLostTension, _vipsWaitingOutsideTension;
 	int _objectiveType, _objectivesDestroyed, _objectivesNeeded;
 	std::vector<BattleUnit*> _exposedUnits;
 	std::list<BattleUnit*> _fallingUnits;
@@ -598,19 +599,23 @@ public:
 	/// Gets the percentage of VIPs that must survive in order to accomplish the mission.
 	int getVIPSurvivalPercentage() const;
 	/// Increase the saved VIPs counter.
-	void addSavedVIP(int score);
+	void addSavedVIP(int score, int tension = 0);
 	/// Gets the saved VIPs counter.
 	int getSavedVIPs() const;
 	/// Gets the saved VIPs total score.
 	int getSavedVIPsScore() const;
+	/// Gets the saved VIPs total tension.
+	int getSavedVIPsTension() const;
 	/// Increase the lost VIPs counter.
-	void addLostVIP(int score);
+	void addLostVIP(int score, int tension = 0);
 	/// Gets the lost VIPs counter.
 	int getLostVIPs() const;
 	/// Gets the lost VIPs total score.
 	int getLostVIPsScore() const;
+	/// Gets the lost VIPs total tension.
+	int getLostVIPsTension() const;
 	/// Increase the waiting outside VIPs counter.
-	void addWaitingOutsideVIP(int score);
+	void addWaitingOutsideVIP(int score, int tension = 0);
 	/// Corrects the VIP stats based on the final mission outcome.
 	void correctVIPStats(bool success, bool retreated);
 

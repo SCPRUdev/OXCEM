@@ -1179,6 +1179,7 @@ void GeoscapeState::time5Seconds()
 					if (country->getRules()->insideCountry(xcraft->getLongitude(), xcraft->getLatitude()))
 					{
 						country->addActivityXcom(-xcraft->getRules()->getScore());
+						country->addTension(-xcraft->getRules()->getTension());
 						break;
 					}
 				}
@@ -1187,6 +1188,7 @@ void GeoscapeState::time5Seconds()
 					if (region->getRules()->insideRegion(xcraft->getLongitude(), xcraft->getLatitude()))
 					{
 						region->addActivityXcom(-xcraft->getRules()->getScore());
+						region->addTension(-xcraft->getRules()->getTension());
 						break;
 					}
 				}
@@ -1880,17 +1882,20 @@ bool GeoscapeState::processMissionSite(MissionSite *site)
 	}
 
 	int score = removeSite ? site->getDeployment()->getDespawnPenalty() : site->getDeployment()->getPoints();
+	int tension = removeSite ? site->getDeployment()->getDespawnTension() : site->getDeployment()->getTension();
 
 	Region *region = _game->getSavedGame()->locateRegion(*site);
 	if (region)
 	{
 		region->addActivityAlien(score);
+		region->addTension(tension);
 	}
 	for (auto* country : *_game->getSavedGame()->getCountries())
 	{
 		if (country->getRules()->insideCountry(site->getLongitude(), site->getLatitude()))
 		{
 			country->addActivityAlien(score);
+			country->addTension(tension);
 			break;
 		}
 	}
@@ -2025,10 +2030,12 @@ void GeoscapeState::time30Minutes()
 		}
 
 		int points = ufo->getRules()->getMissionScore(); //one point per UFO in-flight per half hour
+		int tension = ufo->getRules()->getMissionTension();
 		switch (ufo->getStatus())
 		{
 		case Ufo::LANDED:
 			points *= 2;
+			tension *= 2;
 			FALLTHROUGH;
 		case Ufo::FLYING:
 			// Get area
@@ -2037,6 +2044,7 @@ void GeoscapeState::time30Minutes()
 				if (region->getRules()->insideRegion(ufo->getLongitude(), ufo->getLatitude()))
 				{
 					region->addActivityAlien(points);
+					region->addTension(tension);
 					break;
 				}
 			}
@@ -2046,6 +2054,7 @@ void GeoscapeState::time30Minutes()
 				if (country->getRules()->insideCountry(ufo->getLongitude(), ufo->getLatitude()))
 				{
 					country->addActivityAlien(points);
+					country->addTension(tension);
 					break;
 				}
 			}
@@ -2788,6 +2797,7 @@ void GeoscapeState::time1Day()
 			if (region->getRules()->insideRegion(ab->getLongitude(), ab->getLatitude()))
 			{
 				region->addActivityAlien(ab->getDeployment()->getPoints());
+				region->addTension(ab->getDeployment()->getTension());
 				break;
 			}
 		}
@@ -2796,6 +2806,7 @@ void GeoscapeState::time1Day()
 			if (country->getRules()->insideCountry(ab->getLongitude(), ab->getLatitude()))
 			{
 				country->addActivityAlien(ab->getDeployment()->getPoints());
+				country->addTension(ab->getDeployment()->getTension());
 				break;
 			}
 		}

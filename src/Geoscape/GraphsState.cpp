@@ -49,6 +49,9 @@ struct GraphButInfo
 	bool _pushed;
 	GraphButInfo(const LocalizedText& name, Uint8 color): _name(name), _color(color), _pushed(false) {}
 };
+
+static const int FINANCE_LINE_COUNT = 6;
+
 /**
  * Initializes all the elements in the Graphs screen.
  * @param game Pointer to the core game.
@@ -175,7 +178,7 @@ GraphsState::GraphsState() : _butRegionsOffset(0), _butCountriesOffset(0), _zoom
 	add(_btnCountryTotal, "button", "graphs");
 
 
-	for (int iter = 0; iter != 5; ++iter)
+	for (int iter = 0; iter != FINANCE_LINE_COUNT; ++iter)
 	{
 		offset = iter;
 		_btnFinances.push_back(new ToggleTextButton(88, 11, 0, offset*11));
@@ -192,6 +195,7 @@ GraphsState::GraphsState() : _butRegionsOffset(0), _butCountriesOffset(0), _zoom
 	_btnFinances.at(2)->setText(tr("STR_MAINTENANCE"));
 	_btnFinances.at(3)->setText(tr("STR_BALANCE"));
 	_btnFinances.at(4)->setText(tr("STR_SCORE"));
+	_btnFinances.at(5)->setText(tr("STR_TENSION"));
 
 	// load back the button state
 	std::string graphRegionToggles = _game->getSavedGame()->getGraphRegionToggles();
@@ -1065,6 +1069,7 @@ void GraphsState::drawFinanceLines()
 	int64_t expendTotals[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	int64_t maintTotals[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	int scoreTotals[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	int tensionTotals[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	maintTotals[0] = _game->getSavedGame()->getBaseMaintenance() / 1000;
 
 	// start filling those arrays with score value
@@ -1075,6 +1080,7 @@ void GraphsState::drawFinanceLines()
 		maintTotals[entry] += _game->getSavedGame()->getMaintenances().at(invertedEntry) / 1000;
 		balanceTotals[entry] = _game->getSavedGame()->getFundsList().at(invertedEntry) / 1000;
 		scoreTotals[entry] = _game->getSavedGame()->getResearchScores().at(invertedEntry);
+		tensionTotals[entry] = _game->getSavedGame()->getTension(invertedEntry);
 
 		for (auto* region : *_game->getSavedGame()->getRegions())
 		{
@@ -1112,6 +1118,17 @@ void GraphsState::drawFinanceLines()
 			if (scoreTotals[entry] < lowerLimit)
 			{
 				lowerLimit = scoreTotals[entry];
+			}
+		}
+		if (_financeToggles.at(5))
+		{
+			if (tensionTotals[entry] > upperLimit)
+			{
+				upperLimit = tensionTotals[entry];
+			}
+			if (tensionTotals[entry] < lowerLimit)
+			{
+				lowerLimit = tensionTotals[entry];
 			}
 		}
 	}
@@ -1152,7 +1169,7 @@ void GraphsState::drawFinanceLines()
 		}
 	}
 	//toggle screen
-	for (int button = 0; button != 5; ++button)
+	for (int button = 0; button != FINANCE_LINE_COUNT; ++button)
 	{
 		_financeLines.at(button)->setVisible(_financeToggles.at(button));
 		_financeLines.at(button)->clear();
@@ -1160,7 +1177,7 @@ void GraphsState::drawFinanceLines()
 	range = upperLimit - lowerLimit;
 	//figure out how many units to the pixel, then plot the points for the graph and connect the dots.
 	double units = range / 126;
-	for (int button = 0; button != 5; ++button)
+	for (int button = 0; button != FINANCE_LINE_COUNT; ++button)
 	{
 		std::vector<Sint16> newLineVector;
 		for (int iter = 0; iter != 12; ++iter)
@@ -1184,6 +1201,9 @@ void GraphsState::drawFinanceLines()
 				break;
 			case 4:
 				reduction = scoreTotals[iter] / units;
+				break;
+			case 5:
+				reduction = tensionTotals[iter] / units;
 				break;
 			}
 			y -= reduction;

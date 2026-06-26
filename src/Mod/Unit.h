@@ -457,7 +457,7 @@ private:
 	int _standHeight, _kneelHeight, _floatHeight;
 	std::vector<int> _deathSound, _panicSound, _berserkSound, _aggroSound;
 	std::vector<int> _selectUnitSound, _startMovingSound, _selectWeaponSound, _annoyedSound;
-	int _value, _moraleLossWhenKilled, _moveSound;
+	int _value, _tension, _moraleLossWhenKilled, _moveSound;
 	int _intelligence, _aggression, _spotter, _sniper, _energyRecovery;
 	SpecialAbility _specab;
 	const RuleItem* _liveAlien = nullptr;
@@ -524,6 +524,8 @@ public:
 	std::string getRank() const;
 	/// Gets the value - for score calculation.
 	int getValue() const;
+	/// Gets the tension - for tension calculation.
+	int getTension() const;
 	/// Percentage modifier for morale loss when this unit is killed.
 	int getMoraleLossWhenKilled() const { return _moraleLossWhenKilled; };
 	/// Gets the death sound id.

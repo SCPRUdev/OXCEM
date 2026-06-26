@@ -69,6 +69,7 @@ SavedBattleGame::SavedBattleGame(Mod *rule, Language *lang, bool isPreview) :
 	_globalShade(0), _side(FACTION_PLAYER), _turn(0), _bughuntMinTurn(20), _animFrame(0), _nameDisplay(false),
 	_debugMode(false), _bughuntMode(false), _aborted(false), _itemId(0),
 	_vipEscapeType(ESCAPE_NONE), _vipSurvivalPercentage(0), _vipsSaved(0), _vipsLost(0), _vipsWaitingOutside(0), _vipsSavedScore(0), _vipsLostScore(0), _vipsWaitingOutsideScore(0),
+	_vipsSavedTension(0), _vipsLostTension(0), _vipsWaitingOutsideTension(0),
 	_objectiveType(-1), _objectivesDestroyed(0), _objectivesNeeded(0),
 	_unitsFalling(false), _cheating(false), _tuReserved(BA_NONE), _kneelReserved(false), _depth(0),
 	_ambience(-1), _ambientVolume(0.5), _minAmbienceRandomDelay(20), _maxAmbienceRandomDelay(60), _currentAmbienceDelay(0),
@@ -400,6 +401,9 @@ void SavedBattleGame::load(const YAML::YamlNodeReader& node, Mod *mod, SavedGame
 	reader.tryRead("vipsSavedScore", _vipsSavedScore);
 	reader.tryRead("vipsLostScore", _vipsLostScore);
 	reader.tryRead("vipsWaitingOutsideScore", _vipsWaitingOutsideScore);
+	reader.tryRead("vipsSavedTension", _vipsSavedTension);
+	reader.tryRead("vipsLostTension", _vipsLostTension);
+	reader.tryRead("vipsWaitingOutsideTension", _vipsWaitingOutsideTension);
 	reader.tryRead("objectiveType", _objectiveType);
 	reader.tryRead("objectivesDestroyed", _objectivesDestroyed);
 	reader.tryRead("objectivesNeeded", _objectivesNeeded);
@@ -495,6 +499,9 @@ void SavedBattleGame::save(YAML::YamlNodeWriter writer) const
 		writer.write("vipsSavedScore", _vipsSavedScore);
 		writer.write("vipsLostScore", _vipsLostScore);
 		writer.write("vipsWaitingOutsideScore", _vipsWaitingOutsideScore);
+		writer.write("vipsSavedTension", _vipsSavedTension);
+		writer.write("vipsLostTension", _vipsLostTension);
+		writer.write("vipsWaitingOutsideTension", _vipsWaitingOutsideTension);
 	}
 	if (_objectivesNeeded)
 	{
@@ -3180,10 +3187,11 @@ int SavedBattleGame::getVIPSurvivalPercentage() const
 /**
  * Increase the saved VIPs counter and score.
  */
-void SavedBattleGame::addSavedVIP(int score)
+void SavedBattleGame::addSavedVIP(int score, int tension)
 {
 	_vipsSaved++;
 	_vipsSavedScore += score;
+	_vipsSavedTension += tension;
 }
 
 /**
@@ -3203,12 +3211,21 @@ int SavedBattleGame::getSavedVIPsScore() const
 }
 
 /**
+ * Gets the saved VIPs total tension.
+ */
+int SavedBattleGame::getSavedVIPsTension() const
+{
+	return _vipsSavedTension;
+}
+
+/**
  * Increase the lost VIPs counter and score.
  */
-void SavedBattleGame::addLostVIP(int score)
+void SavedBattleGame::addLostVIP(int score, int tension)
 {
 	_vipsLost++;
 	_vipsLostScore -= score;
+	_vipsLostTension -= tension;
 }
 
 /**
@@ -3228,12 +3245,21 @@ int SavedBattleGame::getLostVIPsScore() const
 }
 
 /**
+ * Gets the lost VIPs total tension.
+ */
+int SavedBattleGame::getLostVIPsTension() const
+{
+	return _vipsLostTension;
+}
+
+/**
  * Increase the waiting outside VIPs counter and score.
  */
-void SavedBattleGame::addWaitingOutsideVIP(int score)
+void SavedBattleGame::addWaitingOutsideVIP(int score, int tension)
 {
 	_vipsWaitingOutside++;
 	_vipsWaitingOutsideScore += score;
+	_vipsWaitingOutsideTension += tension;
 }
 
 /**
@@ -3249,6 +3275,8 @@ void SavedBattleGame::correctVIPStats(bool success, bool retreated)
 
 		_vipsSavedScore += _vipsWaitingOutsideScore;
 		_vipsWaitingOutsideScore = 0;
+		_vipsSavedTension += _vipsWaitingOutsideTension;
+		_vipsWaitingOutsideTension = 0;
 	}
 	else
 	{
@@ -3258,6 +3286,8 @@ void SavedBattleGame::correctVIPStats(bool success, bool retreated)
 
 		_vipsLostScore -= _vipsWaitingOutsideScore;
 		_vipsWaitingOutsideScore = 0;
+		_vipsLostTension -= _vipsWaitingOutsideTension;
+		_vipsWaitingOutsideTension = 0;
 
 		if (retreated)
 		{
@@ -3271,6 +3301,8 @@ void SavedBattleGame::correctVIPStats(bool success, bool retreated)
 
 			_vipsLostScore -= _vipsSavedScore;
 			_vipsSavedScore = 0;
+			_vipsLostTension -= _vipsSavedTension;
+			_vipsSavedTension = 0;
 		}
 	}
 }

@@ -217,6 +217,7 @@ private:
 	std::string _weaponStrings[WeaponMax];
 	std::string _fixedWeaponNames[WeaponMax];
 	int _repairRate, _refuelRate, _transferTime, _score;
+	int _tension;
 	RuleTerrain *_battlescapeTerrainData;
 	int _maxSkinIndex;
 	std::pair<int, int> _spriteSize;
@@ -343,6 +344,8 @@ public:
 	int getTransferTime() const;
 	/// Gets the craft's score.
 	int getScore() const;
+	/// Gets the craft's tension.
+	int getTension() const;
 	/// Gets the craft's terrain data.
 	RuleTerrain *getBattlescapeTerrainData() const;
 	/// Gets the craft's maximum skin index.

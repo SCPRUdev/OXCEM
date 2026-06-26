@@ -78,7 +78,7 @@ private:
 	std::string _monthlyBuyLimitMessage;
 	int _costBuy, _costSalary, _costSalarySquaddie, _costSalarySergeant, _costSalaryCaptain, _costSalaryColonel, _costSalaryCommander;
 	int _standHeight, _kneelHeight, _floatHeight;
-	int _femaleFrequency, _value, _transferTime, _moraleLossWhenKilled;
+	int _femaleFrequency, _value, _tension, _transferTime, _moraleLossWhenKilled;
 	int _manaMissingWoundThreshold = -1;
 	int _healthMissingWoundThreshold = -1;
 	std::vector<int> _deathSoundMale, _deathSoundFemale;
@@ -208,6 +208,8 @@ public:
 	int getTotalSoldierNamePoolWeight() const { return _totalSoldierNamePoolWeight; }
 	/// Gets the value - for score calculation.
 	int getValue() const;
+	/// Gets the tension - for tension calculation.
+	int getTension() const;
 	/// Gets the soldier's transfer time.
 	int getTransferTime() const;
 	/// Percentage modifier for morale loss when this unit is killed.

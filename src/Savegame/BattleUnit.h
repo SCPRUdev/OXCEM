@@ -156,7 +156,7 @@ private:
 	int _lastReloadSound;
 	std::vector<int> _deathSound, _aggroSound;
 	std::vector<int> _selectUnitSound, _startMovingSound, _selectWeaponSound, _annoyedSound;
-	int _value, _moveSound;
+	int _value, _tension, _moveSound;
 	int _intelligence, _aggression;
 	int _maxViewDistanceAtDark, _maxViewDistanceAtDay;
 	int _maxViewDistanceAtDarkSquared;
@@ -587,6 +587,8 @@ public:
 	int getLoftemps(int entry = 0) const;
 	/// Get the unit's value.
 	int getValue() const;
+	/// Get the unit's tension.
+	int getTension() const;
 	/// Get the reload sound (of the last reloaded weapon).
 	int getReloadSound() const { return _lastReloadSound; }
 	/// Get the unit's death sounds.

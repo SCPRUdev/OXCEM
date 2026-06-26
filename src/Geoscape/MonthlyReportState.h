@@ -41,10 +41,10 @@ private:
 	TextButton *_btnOk, *_btnBigOk;
 	Window *_window;
 	Text *_txtTitle, *_txtMonth, *_txtRating;
-	Text *_txtIncome, *_txtMaintenance, *_txtBalance, *_txtBonus;
+	Text *_txtIncome, *_txtMaintenance, *_txtBalance, *_txtBonus, *_txtTension;
 	Text *_txtDesc, *_txtFailure;
 	int _gameOver;
-	int _ratingTotal, _fundingDiff, _lastMonthsRating;
+	int _ratingTotal, _tensionTotal, _fundingDiff, _lastMonthsRating;
 	std::vector<std::string> _happyList, _sadList, _pactList, _cancelPactList;
 	Globe *_globe;
 	std::vector<Soldier*> _soldiersMedalled;

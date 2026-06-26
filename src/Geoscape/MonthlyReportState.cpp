@@ -50,7 +50,7 @@ namespace OpenXcom
  * @param psi Show psi training afterwards?
  * @param globe Pointer to the globe.
  */
-MonthlyReportState::MonthlyReportState(Globe *globe) : _gameOver(0), _ratingTotal(0), _fundingDiff(0), _lastMonthsRating(0), _happyList(0), _sadList(0), _pactList(0), _cancelPactList(0)
+MonthlyReportState::MonthlyReportState(Globe *globe) : _gameOver(0), _ratingTotal(0), _tensionTotal(0), _fundingDiff(0), _lastMonthsRating(0), _happyList(0), _sadList(0), _pactList(0), _cancelPactList(0)
 {
 	_globe = globe;
 	// Create objects
@@ -64,7 +64,8 @@ MonthlyReportState::MonthlyReportState(Globe *globe) : _gameOver(0), _ratingTota
 	_txtMaintenance = new Text(130, 9, 16, 40);
 	_txtBalance = new Text(160, 9, 146, 40);
 	_txtBonus = new Text(300, 9, 16, 48);
-	_txtDesc = new Text(280, 124, 16, 56);
+	_txtTension = new Text(300, 9, 16, 56);
+	_txtDesc = new Text(280, 116, 16, 64);
 	_txtFailure = new Text(290, 160, 15, 10);
 
 	// Set palette
@@ -80,6 +81,7 @@ MonthlyReportState::MonthlyReportState(Globe *globe) : _gameOver(0), _ratingTota
 	add(_txtMaintenance, "text1", "monthlyReport");
 	add(_txtBalance, "text1", "monthlyReport");
 	add(_txtBonus, "text1", "monthlyReport");
+	add(_txtTension, "text1", "monthlyReport");
 	add(_txtDesc, "text2", "monthlyReport");
 	add(_txtFailure, "text2", "monthlyReport");
 
@@ -216,8 +218,12 @@ MonthlyReportState::MonthlyReportState(Globe *globe) : _gameOver(0), _ratingTota
 	{
 		// vanilla view
 		_txtBonus->setVisible(false);
-		_txtDesc->setY(_txtBonus->getY());
 	}
+
+	_txtTension->setText(tr("STR_MONTHLY_TENSION").arg(_tensionTotal));
+	_txtTension->setY(_txtBonus->getVisible() ? 56 : 48);
+	_txtDesc->setY(_txtTension->getY() + 8);
+	_txtDesc->setHeight(180 - _txtDesc->getY());
 
 	std::ostringstream ss3;
 	ss3 << tr("STR_BALANCE") << "> " << Unicode::TOK_COLOR_FLIP << Unicode::formatFunding(_game->getSavedGame()->getFunds());
@@ -295,6 +301,7 @@ MonthlyReportState::MonthlyReportState(Globe *globe) : _gameOver(0), _ratingTota
 			_txtMaintenance->setVisible(false);
 			_txtBalance->setVisible(false);
 			_txtBonus->setVisible(false);
+			_txtTension->setVisible(false);
 			_txtDesc->setVisible(false);
 		}
 	}
@@ -407,6 +414,7 @@ void MonthlyReportState::btnOkClick(Action *)
 			_txtMaintenance->setVisible(false);
 			_txtBalance->setVisible(false);
 			_txtBonus->setVisible(false);
+			_txtTension->setVisible(false);
 			_txtDesc->setVisible(false);
 			_btnOk->setVisible(false);
 			_btnBigOk->setVisible(true);
@@ -426,6 +434,7 @@ void MonthlyReportState::calculateChanges()
 {
 	// initialize all our variables.
 	_lastMonthsRating = 0;
+	_tensionTotal = 0;
 	int xcomSubTotal = 0;
 	int xcomTotal = 0;
 	int alienTotal = 0;
@@ -443,6 +452,7 @@ void MonthlyReportState::calculateChanges()
 		xcomSubTotal += region->getActivityXcom().at(monthOffset);
 		alienTotal += region->getActivityAlien().at(monthOffset);
 	}
+	_tensionTotal = _game->getSavedGame()->getTension(monthOffset);
 	// apply research bonus AFTER calculating our total, because this bonus applies to the council ONLY,
 	// and shouldn't influence each country's decision.
 
@@ -459,9 +469,11 @@ void MonthlyReportState::calculateChanges()
 	// and have them make their decisions weighted on the council's perspective.
 	const RuleAlienMission *infiltration = _game->getMod()->getRandomMission(OBJECTIVE_INFILTRATION, _game->getSavedGame()->getMonthsPassed());
 	int pactScore = 0;
+	int pactTension = 0;
 	if (infiltration)
 	{
 		pactScore = infiltration->getPoints();
+		pactTension = infiltration->getTension();
 	}
 	int averageFunding = _game->getSavedGame()->getCountryFunding() / _game->getSavedGame()->getCountries()->size() / 1000 * 1000;
 	for (auto* country : *_game->getSavedGame()->getCountries())
@@ -471,7 +483,7 @@ void MonthlyReportState::calculateChanges()
 
 		// determine satisfaction level, sign pacts, adjust funding
 		// and update activity meters,
-		country->newMonth(xcomTotal, alienTotal, pactScore, averageFunding, _game->getSavedGame());
+		country->newMonth(xcomTotal, alienTotal, pactScore, pactTension, averageFunding, _game->getSavedGame());
 		// and after they've made their decisions, calculate the difference, and add
 		// them to the appropriate lists.
 		_fundingDiff += country->getFunding().back() - country->getFunding().at(country->getFunding().size()-2);

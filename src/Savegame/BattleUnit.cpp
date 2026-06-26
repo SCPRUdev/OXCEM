@@ -98,6 +98,7 @@ BattleUnit::BattleUnit(const Mod *mod, Soldier *soldier, int depth, const RuleSt
 	}
 
 	_value = soldier->getRules()->getValue() + soldier->getMissions() + rankbonus;
+	_tension = soldier->getRules()->getTension();
 
 
 	for (int i = 0; i < BODYPART_MAX; ++i)
@@ -463,6 +464,7 @@ BattleUnit::BattleUnit(const Mod *mod, const Unit *unit, UnitFaction faction, in
 	}
 
 	_value = unit->getValue();
+	_tension = unit->getTension();
 
 
 	for (int i = 0; i < BODYPART_MAX; ++i)
@@ -4433,6 +4435,15 @@ int BattleUnit::getLoftemps(int entry) const
 int BattleUnit::getValue() const
 {
 	return _value;
+}
+
+/**
+  * Get the unit's tension. Used for tension at debriefing.
+  * @return tension
+  */
+int BattleUnit::getTension() const
+{
+	return _tension;
 }
 
 /**

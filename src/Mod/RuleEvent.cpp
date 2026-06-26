@@ -24,7 +24,7 @@ namespace OpenXcom
 
 RuleEvent::RuleEvent(const std::string &name) :
 	_name(name), _background("BACK13.SCR"), _alignBottom(false),
-	_city(false), _points(0), _funds(0), _spawnedPersons(0), _timer(30), _timerRandom(0), _invert(false)
+	_city(false), _points(0), _tension(0), _funds(0), _spawnedPersons(0), _timer(30), _timerRandom(0), _invert(false)
 {
 }
 
@@ -48,6 +48,7 @@ void RuleEvent::load(const YAML::YamlNodeReader& node)
 	reader.tryRead("regionList", _regionList);
 	reader.tryRead("city", _city);
 	reader.tryRead("points", _points);
+	reader.tryRead("tension", _tension);
 	reader.tryRead("funds", _funds);
 	reader.tryRead("spawnedCraftType", _spawnedCraftType);
 	reader.tryRead("spawnedPersons", _spawnedPersons);
