@@ -62,7 +62,7 @@ private:
 	std::unordered_set<std::string> _alreadyAvailableResearch, _alreadyAvailableManufacture, _alreadyAvailableFacilities, _alreadyAvailableCrafts;
 	std::unordered_set<std::string> _protectedItems, _alreadyAvailableItems;
 	std::unordered_set<std::string> _listArcScripts, _listEventScripts, _listMissionScripts, _listAdhocScripts;
-	int _currMonth, _currScore;
+	int _currMonth, _currScore, _currTension;
 	GameDifficulty _currDiff;
 	int64_t _currFunds;
 	SavedGame *_save;
@@ -78,6 +78,7 @@ private:
 	bool isValidMonthTrigger(const RuleArcScript *ruleArc = 0, const RuleEventScript *ruleEvent = 0, const RuleMissionScript *ruleMission = 0) const;
 	bool isValidDiffTrigger(const RuleArcScript *ruleArc = 0, const RuleEventScript *ruleEvent = 0, const RuleMissionScript *ruleMission = 0) const;
 	bool isValidScoreTrigger(const RuleArcScript *ruleArc = 0, const RuleEventScript *ruleEvent = 0, const RuleMissionScript *ruleMission = 0) const;
+	bool isValidTensionTrigger(const RuleArcScript *ruleArc = 0, const RuleEventScript *ruleEvent = 0, const RuleMissionScript *ruleMission = 0) const;
 	bool isValidFundsTrigger(const RuleArcScript *ruleArc = 0, const RuleEventScript *ruleEvent = 0, const RuleMissionScript *ruleMission = 0) const;
 	bool isValidCounterTrigger(const RuleArcScript *ruleArc = 0, const RuleEventScript *ruleEvent = 0, const RuleMissionScript *ruleMission = 0) const;
 	bool isPossibleArc(const RuleArcScript* ruleArc) const;

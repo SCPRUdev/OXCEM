@@ -131,6 +131,7 @@ TechTreeViewerState::TechTreeViewerState(const RuleResearch *r, const RuleManufa
 	_save = _game->getSavedGame();
 	_currMonth = _save->getMonthsPassed();
 	_currScore = _save->getCurrentScore(_currMonth);
+	_currTension = _save->getCurrentTension(_currMonth);
 	_currDiff = _save->getDifficulty();
 	_currFunds = _save->getFunds();
 
@@ -2124,7 +2125,27 @@ void TechTreeViewerState::handleArcScript()
 	_leftFlags.push_back(TTV_NONE);
 	row++; bTrigger.str(""); bTrigger.clear();
 
-	// 1e. Min/Max Funds
+	// 1e. Min/Max Tension
+	bTrigger << "  " << tr("STR_TRIGGER_TENSION") << " ";
+	if (rule->getMinTension() == INT_MIN && rule->getMaxTension() == INT_MAX)
+		bTrigger << tr("STR_TRTENSION_NONE");
+	else
+	{
+		if (rule->getMinTension() > INT_MIN) bTrigger << rule->getMinTension() << " ";
+		else bTrigger << tr("STR_TRSIGN_UP") << " ";
+		if (rule->getMinTension() > INT_MIN && rule->getMaxTension() < INT_MAX)
+			bTrigger << tr("STR_TRSIGN_MID") << " ";
+		if (rule->getMaxTension() < INT_MAX) bTrigger << rule->getMaxTension();
+		else bTrigger << tr("STR_TRSIGN_UP");
+	}
+	isValidTrigger = isValidTensionTrigger(rule);
+	_lstLeft->addRow(1, bTrigger.str().c_str());
+	_lstLeft->setRowColor(row, isValidTrigger ? _purple : _pink);
+	_leftTopics.push_back("-");
+	_leftFlags.push_back(TTV_NONE);
+	row++; bTrigger.str(""); bTrigger.clear();
+
+	// 1f. Min/Max Funds
 	bTrigger << "  " << tr("STR_TRIGGER_FUNDS") << " ";
 	if (rule->getMinFunds() == INT64_MIN && rule->getMaxFunds() == INT64_MAX)
 		bTrigger << tr("STR_TRFUNDS_NONE");
@@ -2146,7 +2167,7 @@ void TechTreeViewerState::handleArcScript()
 	_leftFlags.push_back(TTV_NONE);
 	row++; bTrigger.str(""); bTrigger.clear();
 
-	// 1f. Min/Max Counter
+	// 1g. Min/Max Counter
 	bTrigger << "  " << tr("STR_TRIGGER_COUNTER") << " ";
 	if (rule->getMissionVarName().empty() && rule->getMissionMarkerName().empty())
 		bTrigger << tr("STR_TRCOUNT_NONE");
@@ -2167,7 +2188,7 @@ void TechTreeViewerState::handleArcScript()
 	_leftFlags.push_back(TTV_NONE);
 	row++; bTrigger.str(""); bTrigger.clear();
 
-	// 1g. Max Arcs Limit
+	// 1h. Max Arcs Limit
 	const auto& arcSeqResearch = rule->getSequentialArcs();
 	const auto& arcRandResearch = rule->getRandomArcs();
 	bTrigger << "  " << tr("STR_TRIGGER_ARCLIMIT") << " ";
@@ -2501,7 +2522,27 @@ void TechTreeViewerState::handleEventScript()
 	_leftFlags.push_back(TTV_NONE);
 	row++; bTrigger.str(""); bTrigger.clear();
 
-	// 1e. Min/Max Funds
+	// 1e. Min/Max Tension
+	bTrigger << "  " << tr("STR_TRIGGER_TENSION") << " ";
+	if (rule->getMinTension() == INT_MIN && rule->getMaxTension() == INT_MAX)
+		bTrigger << tr("STR_TRTENSION_NONE");
+	else
+	{
+		if (rule->getMinTension() > INT_MIN) bTrigger << rule->getMinTension() << " ";
+		else bTrigger << tr("STR_TRSIGN_UP") << " ";
+		if (rule->getMinTension() > INT_MIN && rule->getMaxTension() < INT_MAX)
+			bTrigger << tr("STR_TRSIGN_MID") << " ";
+		if (rule->getMaxTension() < INT_MAX) bTrigger << rule->getMaxTension();
+		else bTrigger << tr("STR_TRSIGN_UP");
+	}
+	isValidTrigger = isValidTensionTrigger(0, rule);
+	_lstLeft->addRow(1, bTrigger.str().c_str());
+	_lstLeft->setRowColor(row, isValidTrigger ? _purple : _pink);
+	_leftTopics.push_back("-");
+	_leftFlags.push_back(TTV_NONE);
+	row++; bTrigger.str(""); bTrigger.clear();
+
+	// 1f. Min/Max Funds
 	bTrigger << "  " << tr("STR_TRIGGER_FUNDS") << " ";
 	if (rule->getMinFunds() == INT64_MIN && rule->getMaxFunds() == INT64_MAX)
 		bTrigger << tr("STR_TRFUNDS_NONE");
@@ -2523,7 +2564,7 @@ void TechTreeViewerState::handleEventScript()
 	_leftFlags.push_back(TTV_NONE);
 	row++; bTrigger.str(""); bTrigger.clear();
 
-	// 1f. Min/Max Counter
+	// 1g. Min/Max Counter
 	bTrigger << "  " << tr("STR_TRIGGER_COUNTER") << " ";
 	if (rule->getMissionVarName().empty() && rule->getMissionMarkerName().empty())
 		bTrigger << tr("STR_TRCOUNT_NONE");
@@ -2932,7 +2973,27 @@ void TechTreeViewerState::handleMissionScript()
 	_leftFlags.push_back(TTV_NONE);
 	row++; bTrigger.str(""); bTrigger.clear();
 
-	// 1e. Min/Max Funds
+	// 1e. Min/Max Tension
+	bTrigger << "  " << tr("STR_TRIGGER_TENSION") << " ";
+	if (rule->getMinTension() == INT_MIN && rule->getMaxTension() == INT_MAX)
+		bTrigger << tr("STR_TRTENSION_NONE");
+	else
+	{
+		if (rule->getMinTension() > INT_MIN) bTrigger << rule->getMinTension() << " ";
+		else bTrigger << tr("STR_TRSIGN_UP") << " ";
+		if (rule->getMinTension() > INT_MIN && rule->getMaxTension() < INT_MAX)
+			bTrigger << tr("STR_TRSIGN_MID") << " ";
+		if (rule->getMaxTension() < INT_MAX) bTrigger << rule->getMaxTension();
+		else bTrigger << tr("STR_TRSIGN_UP");
+	}
+	isValidTrigger = isValidTensionTrigger(0, 0, rule);
+	_lstLeft->addRow(1, bTrigger.str().c_str());
+	_lstLeft->setRowColor(row, isValidTrigger ? _purple : _pink);
+	_leftTopics.push_back("-");
+	_leftFlags.push_back(TTV_NONE);
+	row++; bTrigger.str(""); bTrigger.clear();
+
+	// 1f. Min/Max Funds
 	bTrigger << "  " << tr("STR_TRIGGER_FUNDS") << " ";
 	if (rule->getMinFunds() == INT64_MIN && rule->getMaxFunds() == INT64_MAX)
 		bTrigger << tr("STR_TRFUNDS_NONE");
@@ -2954,7 +3015,7 @@ void TechTreeViewerState::handleMissionScript()
 	_leftFlags.push_back(TTV_NONE);
 	row++; bTrigger.str(""); bTrigger.clear();
 
-	// 1f. Min/Max Counter
+	// 1g. Min/Max Counter
 	bTrigger << "  " << tr("STR_TRIGGER_COUNTER") << " ";
 	if (rule->getMissionVarName().empty() && rule->getMissionMarkerName().empty())
 		bTrigger << tr("STR_TRCOUNT_NONE");
@@ -3476,6 +3537,29 @@ bool TechTreeViewerState::isValidScoreTrigger(const RuleArcScript *ruleArc, cons
 }
 
 /**
+* Is tension trigger for Arc/Event/Mission Script valid?
+*/
+bool TechTreeViewerState::isValidTensionTrigger(const RuleArcScript *ruleArc, const RuleEventScript *ruleEvent, const RuleMissionScript *ruleMission) const
+{
+	if (ruleArc != 0)
+	{
+		return (ruleArc->getMinTension() <= _currTension &&
+			ruleArc->getMaxTension() >= _currTension);
+	}
+	else if (ruleEvent != 0)
+	{
+		return (ruleEvent->getMinTension() <= _currTension &&
+			ruleEvent->getMaxTension() >= _currTension);
+	}
+	else if (ruleMission != 0)
+	{
+		return (ruleMission->getMinTension() <= _currTension &&
+			ruleMission->getMaxTension() >= _currTension);
+	}
+	return false;
+}
+
+/**
 * Is funds trigger for Arc/Event/Mission Script valid?
 */
 bool TechTreeViewerState::isValidFundsTrigger(const RuleArcScript *ruleArc, const RuleEventScript *ruleEvent, const RuleMissionScript *ruleMission) const
@@ -3781,6 +3865,7 @@ bool TechTreeViewerState::isGuaranteedArc(const std::string &strArc) const
 	if (isValidDiffTrigger(ruleArc) &&
 		isValidMonthTrigger(ruleArc) &&
 		isValidScoreTrigger(ruleArc) &&
+		isValidTensionTrigger(ruleArc) &&
 		isValidFundsTrigger(ruleArc))
 		return true;
 	return false;
@@ -3797,6 +3882,7 @@ bool TechTreeViewerState::isGuaranteedEvent(const std::string &strEvent) const
 	if (isValidDiffTrigger(0, ruleEvent) &&
 		isValidMonthTrigger(0, ruleEvent) &&
 		isValidScoreTrigger(0, ruleEvent) &&
+		isValidTensionTrigger(0, ruleEvent) &&
 		isValidFundsTrigger(0, ruleEvent))
 		return true;
 	return false;
@@ -3813,6 +3899,7 @@ bool TechTreeViewerState::isGuaranteedMission(const std::string &strMission) con
 	if (isValidDiffTrigger(0, 0, ruleMission) &&
 		isValidMonthTrigger(0, 0, ruleMission) &&
 		isValidScoreTrigger(0, 0, ruleMission) &&
+		isValidTensionTrigger(0, 0, ruleMission) &&
 		isValidFundsTrigger(0, 0, ruleMission))
 		return true;
 	return false;

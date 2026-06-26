@@ -220,6 +220,8 @@ ru:
   STR_TRDIFF_LVL_4: "Супер."
   STR_TRIGGER_SCORE: "Очки:"
   STR_TRSCORE_NONE: "Неопределенно"
+  STR_TRIGGER_TENSION: "Напряженность:"
+  STR_TRTENSION_NONE: "Неопределенно"
   STR_TRIGGER_FUNDS: "Финансы:"
   STR_TRFUNDS_NONE: "Неопределенно"
   STR_TRIGGER_COUNTER: "Счетчик:"

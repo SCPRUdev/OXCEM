@@ -261,6 +261,8 @@ en-GB:
   STR_TRDIFF_LVL_4: "Super."
   STR_TRIGGER_SCORE: "Score:"
   STR_TRSCORE_NONE: "Undefined"
+  STR_TRIGGER_TENSION: "Tension:"
+  STR_TRTENSION_NONE: "Undefined"
   STR_TRIGGER_FUNDS: "Funds:"
   STR_TRFUNDS_NONE: "Undefined"
   STR_TRIGGER_COUNTER: "Counter:"

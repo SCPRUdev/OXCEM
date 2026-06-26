@@ -3247,6 +3247,15 @@ int SavedGame::getCurrentScore(int monthsPassed) const
 }
 
 /**
+ * Gets the current tension based on non-geographic and regional tension.
+ */
+int SavedGame::getCurrentTension(int) const
+{
+	size_t invertedEntry = _funds.size() - 1;
+	return getTension(invertedEntry);
+}
+
+/**
  * Clear links for the given alien base. Use this before deleting the alien base.
  */
 void SavedGame::clearLinksForAlienBase(AlienBase* alienBase, const Mod* mod)

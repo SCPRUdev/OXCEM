@@ -3770,6 +3770,7 @@ void GeoscapeState::determineAlienMissions(bool isNewMonth, const RuleEvent* eve
 	Mod *mod = _game->getMod();
 	int month = _game->getSavedGame()->getMonthsPassed();
 	int currentScore = save->getCurrentScore(month); // _monthsPassed was already increased by 1
+	int currentTension = save->getCurrentTension(month);
 	int performanceBonus = mod->getPerformanceBonus(currentScore);
 	if (performanceBonus < 0)
 	{
@@ -3823,6 +3824,8 @@ void GeoscapeState::determineAlienMissions(bool isNewMonth, const RuleEvent* eve
 				// and make sure we satisfy the difficulty restrictions
 				(month < 1 || arcScript->getMinScore() <= currentScore) &&
 				(month < 1 || arcScript->getMaxScore() >= currentScore) &&
+				(month < 1 || arcScript->getMinTension() <= currentTension) &&
+				(month < 1 || arcScript->getMaxTension() >= currentTension) &&
 				(month < 1 || arcScript->getMinFunds() <= currentFunds) &&
 				(month < 1 || arcScript->getMaxFunds() >= currentFunds) &&
 				arcScript->getMinDifficulty() <= save->getDifficulty() &&
@@ -4046,6 +4049,8 @@ void GeoscapeState::determineAlienMissions(bool isNewMonth, const RuleEvent* eve
 			// and make sure we satisfy the difficulty restrictions
 			(month < 1 || command->getMinScore() <= currentScore) &&
 			(month < 1 || command->getMaxScore() >= currentScore) &&
+			(month < 1 || command->getMinTension() <= currentTension) &&
+			(month < 1 || command->getMaxTension() >= currentTension) &&
 			(month < 1 || command->getMinFunds() <= currentFunds) &&
 			(month < 1 || command->getMaxFunds() >= currentFunds) &&
 			command->getMinDifficulty() <= save->getDifficulty() &&
@@ -4245,6 +4250,8 @@ void GeoscapeState::determineAlienMissions(bool isNewMonth, const RuleEvent* eve
 				// and make sure we satisfy the difficulty restrictions
 				(month < 1 || eventScript->getMinScore() <= currentScore) &&
 				(month < 1 || eventScript->getMaxScore() >= currentScore) &&
+				(month < 1 || eventScript->getMinTension() <= currentTension) &&
+				(month < 1 || eventScript->getMaxTension() >= currentTension) &&
 				(month < 1 || eventScript->getMinFunds() <= currentFunds) &&
 				(month < 1 || eventScript->getMaxFunds() >= currentFunds) &&
 				eventScript->getMinDifficulty() <= save->getDifficulty() &&
