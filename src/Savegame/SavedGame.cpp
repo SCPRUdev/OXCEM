@@ -1141,7 +1141,7 @@ void SavedGame::monthlyFunding()
 	_incomes.push_back(countryFunding);
 	_expenditures.push_back(baseMaintenance);
 	_researchScores.push_back(0);
-	_researchTensions.push_back(0);
+	_researchTensions.push_back(_researchTensions.back());
 
 	if (_incomes.size() > 12)
 		_incomes.erase(_incomes.begin());

@@ -299,7 +299,7 @@ void Country::newMonth(int xcomTotal, int alienTotal, int pactScore, int pactTen
 
 	_activityAlien.push_back(0);
 	_activityXcom.push_back(0);
-	_tension.push_back(0);
+	_tension.push_back(_tension.back());
 	if (_activityAlien.size() > 12)
 		_activityAlien.erase(_activityAlien.begin());
 	if (_activityXcom.size() > 12)
