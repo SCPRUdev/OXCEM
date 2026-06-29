@@ -1716,19 +1716,20 @@ void DebriefingState::prepareDebriefing()
 			}
 			else if (oldFaction == FACTION_NEUTRAL && !ignoreLivingCivilians)
 			{
+				int livingCivilianTension = 0;
 				// if mission fails, all civilians die
 				if ((aborted && !success) || playersSurvived == 0)
 				{
 					if (!bunit->isResummonedFakeCivilian() && !bunit->isCosmetic())
 					{
-						addStat("STR_CIVILIANS_KILLED_BY_ALIENS", 1, -value, -tension);
+						addStat("STR_CIVILIANS_KILLED_BY_ALIENS", 1, -value, livingCivilianTension);
 					}
 				}
 				else
 				{
 					if (!bunit->isResummonedFakeCivilian() && !bunit->isCosmetic())
 					{
-						addStat("STR_CIVILIANS_SAVED", 1, value, tension);
+						addStat("STR_CIVILIANS_SAVED", 1, value, livingCivilianTension);
 					}
 					recoverCivilian(bunit, base, craft);
 				}
