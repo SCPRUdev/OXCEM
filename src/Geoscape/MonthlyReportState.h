@@ -42,7 +42,7 @@ private:
 	Window *_window;
 	Text *_txtTitle, *_txtMonth, *_txtRating;
 	Text *_txtIncome, *_txtMaintenance, *_txtBalance, *_txtBonus, *_txtTension;
-	Text *_txtDesc, *_txtFailure;
+	Text *_txtSatisfaction, *_txtDesc, *_txtFailure;
 	int _gameOver;
 	int _ratingTotal, _tensionTotal, _fundingDiff, _lastMonthsRating;
 	std::vector<std::string> _happyList, _sadList, _pactList, _cancelPactList;

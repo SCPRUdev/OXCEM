@@ -65,7 +65,8 @@ MonthlyReportState::MonthlyReportState(Globe *globe) : _gameOver(0), _ratingTota
 	_txtBalance = new Text(160, 9, 146, 40);
 	_txtBonus = new Text(300, 9, 16, 48);
 	_txtTension = new Text(300, 9, 16, 56);
-	_txtDesc = new Text(280, 116, 16, 64);
+	_txtSatisfaction = new Text(280, 24, 16, 64);
+	_txtDesc = new Text(280, 92, 16, 88);
 	_txtFailure = new Text(290, 160, 15, 10);
 
 	// Set palette
@@ -82,6 +83,7 @@ MonthlyReportState::MonthlyReportState(Globe *globe) : _gameOver(0), _ratingTota
 	add(_txtBalance, "text1", "monthlyReport");
 	add(_txtBonus, "text1", "monthlyReport");
 	add(_txtTension, "text1", "monthlyReport");
+	add(_txtSatisfaction, "text2", "monthlyReport");
 	add(_txtDesc, "text2", "monthlyReport");
 	add(_txtFailure, "text2", "monthlyReport");
 
@@ -221,19 +223,21 @@ MonthlyReportState::MonthlyReportState(Globe *globe) : _gameOver(0), _ratingTota
 	}
 
 	_txtTension->setText(tr("STR_MONTHLY_TENSION").arg(_tensionTotal));
-	_txtTension->setY(_txtBonus->getVisible() ? 56 : 48);
-	_txtDesc->setY(_txtTension->getY() + 8);
-	_txtDesc->setHeight(180 - _txtDesc->getY());
+	_txtTension->setY(_txtBonus->getVisible() ? _txtMaintenance->getY() + 8 : _txtBonus->getY());
+	_txtSatisfaction->setY(_txtTension->getY() + 8);
+	_txtDesc->setY(_txtSatisfaction->getY() + _txtSatisfaction->getHeight());
+	_txtDesc->setHeight(_btnOk->getY() - _txtDesc->getY());
 
 	std::ostringstream ss3;
 	ss3 << tr("STR_BALANCE") << "> " << Unicode::TOK_COLOR_FLIP << Unicode::formatFunding(_game->getSavedGame()->getFunds());
 	_txtBalance->setText(ss3.str());
 
+	_txtSatisfaction->setWordWrap(true);
 	_txtDesc->setWordWrap(true);
 	_txtDesc->setScrollable(true);
 
 	// calculate satisfaction
-	std::ostringstream ss5;
+	std::ostringstream ss5, ssCountries;
 	std::string satisFactionString = tr("STR_COUNCIL_IS_DISSATISFIED");
 	bool resetWarning = true;
 	if (_ratingTotal > difficulty_threshold)
@@ -283,12 +287,26 @@ MonthlyReportState::MonthlyReportState(Globe *globe) : _gameOver(0), _ratingTota
 		_game->getSavedGame()->setWarned(false);
 	}
 
-	ss5 << countryList(_happyList, "STR_COUNTRY_IS_PARTICULARLY_PLEASED", "STR_COUNTRIES_ARE_PARTICULARLY_HAPPY");
-	ss5 << countryList(_sadList, "STR_COUNTRY_IS_UNHAPPY_WITH_YOUR_ABILITY", "STR_COUNTRIES_ARE_UNHAPPY_WITH_YOUR_ABILITY");
-	ss5 << countryList(_pactList, "STR_COUNTRY_HAS_SIGNED_A_SECRET_PACT", "STR_COUNTRIES_HAVE_SIGNED_A_SECRET_PACT");
-	ss5 << countryList(_cancelPactList, "STR_COUNTRY_HAS_CANCELLED_A_SECRET_PACT", "STR_COUNTRIES_HAVE_CANCELLED_A_SECRET_PACT");
+	ssCountries << countryList(_happyList, "STR_COUNTRY_IS_PARTICULARLY_PLEASED", "STR_COUNTRIES_ARE_PARTICULARLY_HAPPY");
+	ssCountries << countryList(_sadList, "STR_COUNTRY_IS_UNHAPPY_WITH_YOUR_ABILITY", "STR_COUNTRIES_ARE_UNHAPPY_WITH_YOUR_ABILITY");
+	ssCountries << countryList(_pactList, "STR_COUNTRY_HAS_SIGNED_A_SECRET_PACT", "STR_COUNTRIES_HAVE_SIGNED_A_SECRET_PACT");
+	ssCountries << countryList(_cancelPactList, "STR_COUNTRY_HAS_CANCELLED_A_SECRET_PACT", "STR_COUNTRIES_HAVE_CANCELLED_A_SECRET_PACT");
 
-	_txtDesc->setText(ss5.str());
+	_txtSatisfaction->setText(ss5.str());
+	int satisfactionHeight = _txtSatisfaction->getTextHeight();
+	if (satisfactionHeight < 8)
+	{
+		satisfactionHeight = 8;
+	}
+	_txtSatisfaction->setHeight(satisfactionHeight);
+	_txtDesc->setY(_txtSatisfaction->getY() + _txtSatisfaction->getHeight());
+	int descHeight = _btnOk->getY() - _txtDesc->getY();
+	if (descHeight < 8)
+	{
+		descHeight = 8;
+	}
+	_txtDesc->setHeight(descHeight);
+	_txtDesc->setText(ssCountries.str());
 
 	if (!_game->getMod()->getTradingUnlockResearch().empty())
 	{
@@ -302,6 +320,7 @@ MonthlyReportState::MonthlyReportState(Globe *globe) : _gameOver(0), _ratingTota
 			_txtBalance->setVisible(false);
 			_txtBonus->setVisible(false);
 			_txtTension->setVisible(false);
+			_txtSatisfaction->setVisible(false);
 			_txtDesc->setVisible(false);
 		}
 	}
@@ -415,6 +434,7 @@ void MonthlyReportState::btnOkClick(Action *)
 			_txtBalance->setVisible(false);
 			_txtBonus->setVisible(false);
 			_txtTension->setVisible(false);
+			_txtSatisfaction->setVisible(false);
 			_txtDesc->setVisible(false);
 			_btnOk->setVisible(false);
 			_btnBigOk->setVisible(true);
