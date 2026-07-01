@@ -446,7 +446,7 @@ private:
 	int _woundRecovery, _healthRecovery, _stunRecovery, _energyRecovery, _manaRecovery, _moraleRecovery;
 	float _painKillerRecovery;
 
-	int _recoveryPoints;
+	int _recoveryPoints, _recoveryTension;
 	int _armor;
 	int _turretType;
 	int _aiUseDelay, _aiMeleeHitCount;
@@ -884,6 +884,8 @@ public:
 	int getExplosionRadius(BattleActionAttack::ReadOnly attack) const;
 	/// Gets the recovery points score
 	int getRecoveryPoints() const;
+	/// Gets the recovery tension
+	int getRecoveryTension() const;
 	/// Gets the item's armor.
 	int getArmor() const;
 	/// Check if item is normal inventory item.

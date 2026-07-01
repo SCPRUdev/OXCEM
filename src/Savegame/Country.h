@@ -45,7 +45,7 @@ public:
 private:
 	RuleCountry *_rules;
 	bool _pact, _newPact, _cancelPact;
-	std::vector<int> _funding, _activityXcom, _activityAlien;
+	std::vector<int> _funding, _activityXcom, _activityAlien, _tension;
 	Satisfaction _satisfaction;
 	ScriptValues<Country> _scriptValues;
 
@@ -70,12 +70,16 @@ public:
 	void addActivityXcom(int activity);
 	/// add alien activity in this country
 	void addActivityAlien(int activity);
+	/// add tension in this country
+	void addTension(int tension);
 	/// get xcom activity to this country
 	std::vector<int> &getActivityXcom();
 	/// get xcom activity to this country
 	std::vector<int> &getActivityAlien();
+	/// get tension to this country
+	std::vector<int> &getTension();
 	/// store last month's counters, start new counters, set this month's change.
-	void newMonth(int xcomTotal, int alienTotal, int pactScore, int averageFunding, const SavedGame* save);
+	void newMonth(int xcomTotal, int alienTotal, int pactScore, int pactTension, int averageFunding, const SavedGame* save);
 	/// are we signing a new pact?
 	bool getNewPact() const;
 	/// sign a pact at the end of this month.
@@ -95,6 +99,7 @@ private:
 	int getCurrentFunding() const { return _funding.back(); }
 	int getCurrentActivityAlien()  const { return _activityAlien.back(); }
 	int getCurrentActivityXcom() const { return _activityXcom.back(); }
+	int getCurrentTension() const { return _tension.back(); }
 };
 
 }

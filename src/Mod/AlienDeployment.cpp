@@ -39,6 +39,7 @@ AlienDeployment::AlienDeployment(const std::string &type) :
 	_markerName("STR_TERROR_SITE"), _markerIcon(-1), _durationMin(0), _durationMax(0), _minDepth(0), _maxDepth(0),
 	_genMissionFrequency(0), _genMissionLimit(1000), _genMissionRaceFromAlienBase(true),
 	_objectiveType(-1), _objectivesRequired(0), _objectiveCompleteScore(0), _objectiveFailedScore(0), _despawnPenalty(0), _abortPenalty(0), _points(0),
+	_objectiveCompleteTension(0), _objectiveFailedTension(0), _despawnTension(0), _abortTension(0), _tension(0),
 	_turnLimit(0), _cheatTurn(20), _chronoTrigger(FORCE_LOSE), _keepCraftAfterFailedMission(false), _allowObjectiveRecovery(false), _escapeType(ESCAPE_NONE), _vipSurvivalPercentage(0),
 	_baseDetectionRange(0), _baseDetectionChance(100), _huntMissionMaxFrequency(60), _huntMissionRaceFromAlienBase(true),
 	_resetAlienBaseAgeAfterUpgrade(false), _resetAlienBaseAge(false), _noWeaponPile(false)
@@ -144,12 +145,22 @@ void AlienDeployment::load(const YAML::YamlNodeReader& node, Mod *mod)
 	{
 		_objectiveCompleteText = reader["objectiveComplete"][0].readVal(_objectiveCompleteText);
 		_objectiveCompleteScore = reader["objectiveComplete"][1].readVal(_objectiveCompleteScore);
+		if (reader["objectiveComplete"].childrenCount() > 2)
+		{
+			_objectiveCompleteTension = reader["objectiveComplete"][2].readVal(_objectiveCompleteTension);
+		}
 	}
 	if (reader["objectiveFailed"])
 	{
 		_objectiveFailedText = reader["objectiveFailed"][0].readVal(_objectiveFailedText);
 		_objectiveFailedScore = reader["objectiveFailed"][1].readVal(_objectiveFailedScore);
+		if (reader["objectiveFailed"].childrenCount() > 2)
+		{
+			_objectiveFailedTension = reader["objectiveFailed"][2].readVal(_objectiveFailedTension);
+		}
 	}
+	reader.tryRead("objectiveCompleteTension", _objectiveCompleteTension);
+	reader.tryRead("objectiveFailedTension", _objectiveFailedTension);
 	reader.tryRead("missionCompleteText", _missionCompleteText);
 	reader.tryRead("missionFailedText", _missionFailedText);
 	if (reader["successEvents"])
@@ -165,8 +176,11 @@ void AlienDeployment::load(const YAML::YamlNodeReader& node, Mod *mod)
 		_failureEvents.load(reader["failureEvents"]);
 	}
 	reader.tryRead("despawnPenalty", _despawnPenalty);
+	reader.tryRead("despawnTension", _despawnTension);
 	reader.tryRead("abortPenalty", _abortPenalty);
+	reader.tryRead("abortTension", _abortTension);
 	reader.tryRead("points", _points);
+	reader.tryRead("tension", _tension);
 	reader.tryRead("cheatTurn", _cheatTurn);
 	reader.tryRead("turnLimit", _turnLimit);
 	reader.tryRead("chronoTrigger", _chronoTrigger);
@@ -643,13 +657,15 @@ const std::string &AlienDeployment::getObjectivePopup() const
  * Fills out the variables associated with mission success, and returns if those variables actually contain anything.
  * @param &text a reference to the text we wish to alter.
  * @param &score a reference to the score we wish to alter.
+ * @param &tension a reference to the tension we wish to alter.
  * @param &missionText a reference to the custom mission text we wish to alter.
  * @return if there is anything worthwhile processing.
  */
-bool AlienDeployment::getObjectiveCompleteInfo(std::string &text, int &score, std::string &missionText) const
+bool AlienDeployment::getObjectiveCompleteInfo(std::string &text, int &score, int &tension, std::string &missionText) const
 {
 	text = _objectiveCompleteText;
 	score = _objectiveCompleteScore;
+	tension = _objectiveCompleteTension;
 	missionText = _missionCompleteText;
 	return !text.empty();
 }
@@ -658,13 +674,15 @@ bool AlienDeployment::getObjectiveCompleteInfo(std::string &text, int &score, st
  * Fills out the variables associated with mission failure, and returns if those variables actually contain anything.
  * @param &text a reference to the text we wish to alter.
  * @param &score a reference to the score we wish to alter.
+ * @param &tension a reference to the tension we wish to alter.
  * @param &missionText a reference to the custom mission text we wish to alter.
  * @return if there is anything worthwhile processing.
  */
-bool AlienDeployment::getObjectiveFailedInfo(std::string &text, int &score, std::string &missionText) const
+bool AlienDeployment::getObjectiveFailedInfo(std::string &text, int &score, int &tension, std::string &missionText) const
 {
 	text = _objectiveFailedText;
 	score = _objectiveFailedScore;
+	tension = _objectiveFailedTension;
 	missionText = _missionFailedText;
 	return !text.empty();
 }

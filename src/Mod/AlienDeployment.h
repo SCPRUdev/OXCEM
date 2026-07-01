@@ -125,6 +125,7 @@ private:
 	int _markerIcon, _durationMin, _durationMax, _minDepth, _maxDepth, _genMissionFrequency, _genMissionLimit;
 	bool _genMissionRaceFromAlienBase;
 	int _objectiveType, _objectivesRequired, _objectiveCompleteScore, _objectiveFailedScore, _despawnPenalty, _abortPenalty, _points, _turnLimit, _cheatTurn;
+	int _objectiveCompleteTension, _objectiveFailedTension, _despawnTension, _abortTension, _tension;
 	ChronoTrigger _chronoTrigger;
 	bool _keepCraftAfterFailedMission, _allowObjectiveRecovery;
 	EscapeType _escapeType;
@@ -263,15 +264,21 @@ public:
 	/// Gets the string to pop up when the mission objectives are complete.
 	const std::string &getObjectivePopup() const;
 	/// Fills out the objective complete info.
-	bool getObjectiveCompleteInfo(std::string &text, int &score, std::string &missionText) const;
+	bool getObjectiveCompleteInfo(std::string &text, int &score, int &tension, std::string &missionText) const;
 	/// Fills out the objective failed info.
-	bool getObjectiveFailedInfo(std::string &text, int &score, std::string &missionText) const;
+	bool getObjectiveFailedInfo(std::string &text, int &score, int &tension, std::string &missionText) const;
 	/// Gets the score penalty XCom receives for ignoring this site.
 	int getDespawnPenalty() const;
+	/// Gets the tension change for ignoring this site.
+	int getDespawnTension() const { return _despawnTension; }
 	/// Gets the score penalty XCom receives for aborting this mission.
 	int getAbortPenalty() const { return _abortPenalty; }
+	/// Gets the tension change for aborting this mission.
+	int getAbortTension() const { return _abortTension; }
 	/// Gets the (half hourly) score penalty XCom receives for this site existing.
 	int getPoints() const;
+	/// Gets the (half hourly) tension change for this site existing.
+	int getTension() const { return _tension; }
 	/// Gets the turn limit for this deployment.
 	int getTurnLimit() const;
 	/// Gets the action that triggers when the timer runs out.

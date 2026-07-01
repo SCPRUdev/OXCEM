@@ -127,7 +127,7 @@ private:
 	GameTime *_time;
 	std::vector<std::string> _userNotes;
 	std::vector<std::string> _geoscapeDebugLog;
-	std::vector<int> _researchScores;
+	std::vector<int> _researchScores, _researchTensions;
 	std::vector<int64_t> _funds, _maintenance, _incomes, _expenditures;
 	double _globeLon, _globeLat;
 	int _globeZoom;
@@ -377,6 +377,12 @@ public:
 	void addResearchScore(int score);
 	/// gets the list of research scores
 	std::vector<int> &getResearchScores();
+	/// adds to this month's non-geographic tension.
+	void addResearchTension(int tension);
+	/// gets the list of non-geographic tension values.
+	std::vector<int> &getResearchTensions();
+	/// gets the total tension for a month history entry.
+	int getTension(size_t entry) const;
 	/// gets the list of incomes.
 	std::vector<int64_t> &getIncomes();
 	/// gets the list of expenditures.
@@ -521,6 +527,8 @@ public:
 	bool isManaUnlocked(Mod *mod) const;
 	/// Gets the current score based on research score and xcom/alien activity in regions.
 	int getCurrentScore(int monthsPassed) const;
+	/// Gets the current tension based on non-geographic and regional tension.
+	int getCurrentTension(int monthsPassed) const;
 	/// Clear links for the given alien base. Use this before deleting the alien base.
 	void clearLinksForAlienBase(AlienBase* alienBase, const Mod* mod);
 	/// Delete the given retaliation mission.

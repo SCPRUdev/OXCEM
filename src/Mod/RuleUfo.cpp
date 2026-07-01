@@ -34,6 +34,7 @@ RuleUfo::RuleUfo(const std::string &type) :
 	_radius(-1), _visibility(0), _blobSize(-1),
 	_sprite(-1), _marker(-1), _markerLand(-1), _markerCrash(-1),
 	_power(0), _range(0), _score(0), _reload(0), _breakOffTime(0), _missionScore(1),
+	_tension(0), _missionTension(0),
 	_hunterKillerPercentage(0), _huntMode(0), _huntSpeed(100), _huntBehavior(2), _softlockThreshold(100),
 	_missilePower(0), _missileStopChance(0),
 	_unmanned(false), _instaHyper(false), _noAlert(false),
@@ -96,9 +97,11 @@ void RuleUfo::load(const YAML::YamlNodeReader& node, Mod *mod, const ModScript &
 	reader.tryRead("power", _power);
 	reader.tryRead("range", _range);
 	reader.tryRead("score", _score);
+	reader.tryRead("tension", _tension);
 	reader.tryRead("reload", _reload);
 	reader.tryRead("breakOffTime", _breakOffTime);
 	reader.tryRead("missionScore", _missionScore);
+	reader.tryRead("missionTension", _missionTension);
 	reader.tryRead("hunterKillerPercentage", _hunterKillerPercentage);
 	reader.tryRead("huntMode", _huntMode);
 	reader.tryRead("huntSpeed", _huntSpeed);
@@ -323,6 +326,15 @@ int RuleUfo::getScore() const
 }
 
 /**
+ * Gets the amount of tension the UFO changes when shot down.
+ * @return The tension.
+ */
+int RuleUfo::getTension() const
+{
+	return _tension;
+}
+
+/**
  * Gets the terrain data needed to draw the UFO in the battlescape.
  * @return The RuleTerrain.
  */
@@ -422,6 +434,16 @@ const std::map<std::string, RuleUfoStats> &RuleUfo::getRaceBonusRaw() const
 int RuleUfo::getMissionScore() const
 {
 	return _missionScore;
+}
+
+/**
+ * Gets the amount of tension awarded every 30 minutes
+ * while the UFO is on a mission (doubled when landed).
+ * @return Tension.
+ */
+int RuleUfo::getMissionTension() const
+{
+	return _missionTension;
 }
 
 /**

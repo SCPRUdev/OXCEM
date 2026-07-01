@@ -171,7 +171,7 @@ RuleItem::RuleItem(const std::string &type, int listOrder) :
 	_defaultInvSlotX(0), _defaultInvSlotY(0), _waypoints(0), _invWidth(1), _invHeight(1),
 	_painKiller(0), _heal(0), _stimulant(0), _medikitType(BMT_NORMAL), _medikitTargetSelf(false), _medikitTargetImmune(false), _medikitTargetMatrix(63),
 	_woundRecovery(0), _healthRecovery(0), _stunRecovery(0), _energyRecovery(0), _manaRecovery(0), _moraleRecovery(0), _painKillerRecovery(1.0f),
-	_recoveryPoints(0), _armor(20), _turretType(-1),
+	_recoveryPoints(0), _recoveryTension(0), _armor(20), _turretType(-1),
 	_aiUseDelay(-1), _aiMeleeHitCount(25),
 															 _recover(true), _recoverCorpse(true), _ignoreInBaseDefense(false), _ignoreInCraftEquip(true), _liveAlien(false), _canBeSoldNormally(true), _canBeTransferredNormally(true),
 	_liveAlienPrisonType(0), _attraction(0), _flatUse(0, 1), _flatThrow(0, 1), _flatPrime(0, 1), _flatUnprime(0, 1), _arcingShot(false),
@@ -593,6 +593,7 @@ void RuleItem::load(const YAML::YamlNodeReader& node, Mod *mod, const ModScript&
 	reader.tryRead("medikitBackground", _medikitBackground);
 
 	reader.tryRead("recoveryPoints", _recoveryPoints);
+	reader.tryRead("recoveryTension", _recoveryTension);
 	reader.tryRead("armor", _armor);
 	reader.tryRead("turretType", _turretType);
 	if (const auto& nodeAI = reader["ai"])
@@ -2017,6 +2018,16 @@ int RuleItem::getExplosionRadius(BattleActionAttack::ReadOnly attack) const
 int RuleItem::getRecoveryPoints() const
 {
 	return _recoveryPoints;
+}
+
+/**
+ * Returns the item's recovery tension.
+ * This is used during the battlescape debriefing tension calculation.
+ * @return The recovery tension.
+ */
+int RuleItem::getRecoveryTension() const
+{
+	return _recoveryTension;
 }
 
 /**

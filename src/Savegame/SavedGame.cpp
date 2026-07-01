@@ -119,6 +119,7 @@ SavedGame::SavedGame() :
 	_funds.push_back(0);
 	_maintenance.push_back(0);
 	_researchScores.push_back(0);
+	_researchTensions.push_back(0);
 	_incomes.push_back(0);
 	_expenditures.push_back(0);
 	_lastselectedArmor="STR_NONE_UC";
@@ -407,6 +408,19 @@ void SavedGame::load(const std::string &filename, Mod *mod, Language *lang)
 	reader.tryRead("userNotes", _userNotes);
 	reader.tryRead("geoscapeDebugLog", _geoscapeDebugLog);
 	reader.tryRead("researchScores", _researchScores);
+	reader.tryRead("researchTensions", _researchTensions);
+	if (_researchTensions.empty())
+	{
+		_researchTensions.push_back(0);
+	}
+	while (_researchTensions.size() < _researchScores.size())
+	{
+		_researchTensions.insert(_researchTensions.begin(), 0);
+	}
+	while (_researchTensions.size() > _researchScores.size())
+	{
+		_researchTensions.erase(_researchTensions.begin());
+	}
 	reader.tryRead("incomes", _incomes);
 	reader.tryRead("expenditures", _expenditures);
 	reader.tryRead("warned", _warned);
@@ -806,6 +820,7 @@ void SavedGame::save(const std::string &filename, Mod *mod) const
 	}
 
 	writer.write("researchScores", _researchScores);
+	writer.write("researchTensions", _researchTensions);
 	writer.write("incomes", _incomes);
 	writer.write("expenditures", _expenditures);
 	writer.write("warned", _warned);
@@ -1126,6 +1141,7 @@ void SavedGame::monthlyFunding()
 	_incomes.push_back(countryFunding);
 	_expenditures.push_back(baseMaintenance);
 	_researchScores.push_back(0);
+	_researchTensions.push_back(_researchTensions.back());
 
 	if (_incomes.size() > 12)
 		_incomes.erase(_incomes.begin());
@@ -1133,6 +1149,8 @@ void SavedGame::monthlyFunding()
 		_expenditures.erase(_expenditures.begin());
 	if (_researchScores.size() > 12)
 		_researchScores.erase(_researchScores.begin());
+	if (_researchTensions.size() > 12)
+		_researchTensions.erase(_researchTensions.begin());
 	if (_funds.size() > 12)
 		_funds.erase(_funds.begin());
 	if (_maintenance.size() > 12)
@@ -1586,6 +1604,7 @@ void SavedGame::addFinishedResearch(const RuleResearch * research, const Mod * m
 			if (score)
 			{
 				addResearchScore(currentQueueItem->getPoints());
+				addResearchTension(currentQueueItem->getTension());
 			}
 			// process "disables"
 			for (const auto* dis : currentQueueItem->getDisabled())
@@ -2594,6 +2613,37 @@ std::vector<int> &SavedGame::getResearchScores()
 }
 
 /**
+ * adds to this month's non-geographic tension.
+ * @param tension the amount to add.
+ */
+void SavedGame::addResearchTension(int tension)
+{
+	_researchTensions.back() += tension;
+}
+
+/**
+ * return the list of non-geographic tension values.
+ * @return list of non-geographic tension values.
+ */
+std::vector<int> &SavedGame::getResearchTensions()
+{
+	return _researchTensions;
+}
+
+/**
+ * Gets the total tension for a month history entry.
+ */
+int SavedGame::getTension(size_t entry) const
+{
+	int tensionTotal = _researchTensions.at(entry);
+	for (auto* region : _regions)
+	{
+		tensionTotal += region->getTension().at(entry);
+	}
+	return tensionTotal;
+}
+
+/**
  * return the list of income scores
  * @return list of income scores.
  */
@@ -3194,6 +3244,15 @@ int SavedGame::getCurrentScore(int monthsPassed) const
 		scoreTotal += region->getActivityXcom().at(invertedEntry) - region->getActivityAlien().at(invertedEntry);
 	}
 	return scoreTotal;
+}
+
+/**
+ * Gets the current tension based on non-geographic and regional tension.
+ */
+int SavedGame::getCurrentTension(int) const
+{
+	size_t invertedEntry = _funds.size() - 1;
+	return getTension(invertedEntry);
 }
 
 /**

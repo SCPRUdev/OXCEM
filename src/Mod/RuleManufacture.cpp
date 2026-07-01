@@ -32,7 +32,7 @@ namespace OpenXcom
  * @param name The unique manufacture name.
  */
 RuleManufacture::RuleManufacture(const std::string& name, int listOrder)
-	: _name(name), _space(0), _time(0), _cost(0), _points(0), _refund(false), _producedCraft(0), _listOrder(listOrder)
+	: _name(name), _space(0), _time(0), _cost(0), _points(0), _tension(0), _refund(false), _producedCraft(0), _listOrder(listOrder)
 {
 	_producedItemsNames[name] = 1;
 }
@@ -57,6 +57,7 @@ void RuleManufacture::load(const YAML::YamlNodeReader& node, Mod* mod)
 	reader.tryRead("time", _time);
 	reader.tryRead("cost", _cost);
 	reader.tryRead("points", _points);
+	reader.tryRead("tension", _tension);
 	reader.tryRead("refund", _refund);
 	mod->loadUnorderedNamesToInt(_name, _requiredItemsNames, reader["requiredItems"]);
 	mod->loadUnorderedNamesToInt(_name, _producedItemsNames, reader["producedItems"]);

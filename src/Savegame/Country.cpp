@@ -39,6 +39,7 @@ Country::Country(RuleCountry *rules, bool gen) : _rules(rules), _pact(false), _n
 	}
 	_activityAlien.push_back(0);
 	_activityXcom.push_back(0);
+	_tension.push_back(0);
 }
 
 /**
@@ -57,9 +58,23 @@ void Country::load(const YAML::YamlNodeReader& reader, const ScriptGlobal* share
 	reader.tryRead("funding", _funding);
 	reader.tryRead("activityXcom", _activityXcom);
 	reader.tryRead("activityAlien", _activityAlien);
+	reader.tryRead("tension", _tension);
 	reader.tryRead("pact", _pact);
 	reader.tryRead("newPact", _newPact);
 	reader.tryRead("cancelPact", _cancelPact);
+
+	if (_tension.empty())
+	{
+		_tension.push_back(0);
+	}
+	while (_tension.size() < _activityXcom.size())
+	{
+		_tension.insert(_tension.begin(), 0);
+	}
+	while (_tension.size() > _activityXcom.size())
+	{
+		_tension.erase(_tension.begin());
+	}
 
 	_scriptValues.load(reader, shared);
 }
@@ -75,6 +90,7 @@ void Country::save(YAML::YamlNodeWriter writer, const ScriptGlobal* shared) cons
 	writer.write("funding", _funding);
 	writer.write("activityXcom", _activityXcom);
 	writer.write("activityAlien", _activityAlien);
+	writer.write("tension", _tension);
 	if (_pact)
 	{
 		writer.write("pact", _pact);
@@ -145,6 +161,15 @@ void Country::addActivityAlien(int activity)
 }
 
 /**
+ * Adds to the country's tension level.
+ * @param tension how many points to add.
+ */
+void Country::addTension(int tension)
+{
+	_tension.back() += tension;
+}
+
+/**
  * Gets the country's xcom activity level.
  * @return activity level.
  */
@@ -163,16 +188,26 @@ std::vector<int> &Country::getActivityAlien()
 }
 
 /**
+ * Gets the country's tension level.
+ * @return tension level.
+ */
+std::vector<int> &Country::getTension()
+{
+	return _tension;
+}
+
+/**
  * reset all the counters,
  * calculate this month's funding,
  * set the change value for the month.
  * @param xcomTotal the council's xcom score
  * @param alienTotal the council's alien score
- * @param pactScore the penalty for signing a pact
+ * @param pactScore the score penalty for signing a pact
+ * @param pactTension the tension change for signing a pact
  * @param averageFunding current average funding across all countries (including withdrawn countries)
  */
 
-void Country::newMonth(int xcomTotal, int alienTotal, int pactScore, int averageFunding, const SavedGame* save)
+void Country::newMonth(int xcomTotal, int alienTotal, int pactScore, int pactTension, int averageFunding, const SavedGame* save)
 {
 	// Note: this is a TEMPORARY variable! it's not saved in the save file, i.e. we don't know the value from the previous month!
 	_satisfaction = Satisfaction::SATISFIED;
@@ -245,6 +280,7 @@ void Country::newMonth(int xcomTotal, int alienTotal, int pactScore, int average
 	{
 		_pact = true;
 		addActivityAlien(pactScore);
+		addTension(pactTension);
 	}
 	else if (_cancelPact)
 	{
@@ -263,10 +299,13 @@ void Country::newMonth(int xcomTotal, int alienTotal, int pactScore, int average
 
 	_activityAlien.push_back(0);
 	_activityXcom.push_back(0);
+	_tension.push_back(_tension.back());
 	if (_activityAlien.size() > 12)
 		_activityAlien.erase(_activityAlien.begin());
 	if (_activityXcom.size() > 12)
 		_activityXcom.erase(_activityXcom.begin());
+	if (_tension.size() > 12)
+		_tension.erase(_tension.begin());
 	if (_funding.size() > 12)
 		_funding.erase(_funding.begin());
 }
@@ -390,6 +429,7 @@ void Country::ScriptRegister(ScriptParserBase* parser)
 	c.add<&Country::getCurrentFunding>("getCurrentFunding", "Get the country's current funding.");
 	c.add<&Country::getCurrentActivityAlien>("getCurrentActivityAlien", "Get the country's current alien activity.");
 	c.add<&Country::getCurrentActivityXcom>("getCurrentActivityXcom", "Get the country's current xcom activity.");
+	c.add<&Country::getCurrentTension>("getCurrentTension", "Get the country's current tension.");
 
 	c.addScriptValue<&Country::_scriptValues>();
 	c.addDebugDisplay<&debugDisplayScript>();

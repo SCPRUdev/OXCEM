@@ -23,7 +23,7 @@ namespace OpenXcom
 {
 
 RuleAlienMission::RuleAlienMission(const std::string &type) :
-	_type(type), _skipScoutingPhase(false), _points(0), _objective(OBJECTIVE_SCORE), _spawnZone(-1),
+	_type(type), _skipScoutingPhase(false), _points(0), _tension(0), _objective(OBJECTIVE_SCORE), _spawnZone(-1),
 	_retaliationOdds(-1), _endlessInfiltration(true), _multiUfoRetaliation(false), _multiUfoRetaliationExtra(false),
 	_ignoreBaseDefenses(false), _instaHyper(false),
 	_despawnEvenIfTargeted(false), _respawnUfoAfterSiteDespawn(false), _showAlienBase(false),
@@ -60,6 +60,7 @@ void RuleAlienMission::load(const YAML::YamlNodeReader& node)
 	}
 
 	reader.tryRead("points", _points);
+	reader.tryRead("tension", _tension);
 	reader.tryRead("waves", _waves);
 	reader.tryRead("objective", _objective);
 	reader.tryRead("spawnUfo", _spawnUfo);
@@ -176,6 +177,15 @@ std::string RuleAlienMission::generateRace(const size_t monthsPassed) const
 int RuleAlienMission::getPoints() const
 {
 	return _points;
+}
+
+/**
+ * Returns the Alien tension for this mission.
+ * @return Amount of tension.
+ */
+int RuleAlienMission::getTension() const
+{
+	return _tension;
 }
 
 /**

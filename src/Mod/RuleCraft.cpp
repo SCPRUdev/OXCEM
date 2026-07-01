@@ -38,7 +38,7 @@ RuleCraft::RuleCraft(const std::string &type, int listOrder) :
 	_maxSmallSoldiers(-1), _maxLargeSoldiers(-1), _maxSmallVehicles(-1), _maxLargeVehicles(-1),
 	_maxSmallUnits(-1), _maxLargeUnits(-1), _maxSoldiers(-1), _maxVehicles(-1),
 	_monthlyBuyLimit(0), _costBuy(0), _costRent(0), _costSell(0), _repairRate(1), _refuelRate(1),
-	_transferTime(24), _score(0), _battlescapeTerrainData(0), _maxSkinIndex(0), _spriteSize(32, 40),
+	_transferTime(24), _score(0), _tension(0), _battlescapeTerrainData(0), _maxSkinIndex(0), _spriteSize(32, 40),
 	_keepCraftAfterFailedMission(false), _allowLanding(true), _spacecraft(false), _notifyWhenRefueled(false), _autoPatrol(false), _undetectable(false),
 	_patrolWithoutFuel(false),
 	_missilePower(0),
@@ -136,6 +136,7 @@ void RuleCraft::load(const YAML::YamlNodeReader& node, Mod *mod, const ModScript
 	reader.tryRead("refuelRate", _refuelRate);
 	reader.tryRead("transferTime", _transferTime);
 	reader.tryRead("score", _score);
+	reader.tryRead("tension", _tension);
 	if (const auto& terrain = reader["battlescapeTerrainData"])
 	{
 		RuleTerrain *rule = new RuleTerrain(terrain["name"].readVal<std::string>());
@@ -508,6 +509,15 @@ int RuleCraft::getTransferTime() const
 int RuleCraft::getScore() const
 {
 	return _score;
+}
+
+/**
+ * Gets the number of tension points changed when this craft is destroyed.
+ * @return The tension.
+ */
+int RuleCraft::getTension() const
+{
+	return _tension;
 }
 
 /**

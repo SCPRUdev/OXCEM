@@ -73,6 +73,7 @@ private:
 	int _radius, _visibility, _blobSize;
 	int _sprite, _marker, _markerLand, _markerCrash;
 	int _power, _range, _score, _reload, _breakOffTime, _missionScore;
+	int _tension, _missionTension;
 	int _hunterKillerPercentage, _huntMode, _huntSpeed, _huntBehavior, _softlockThreshold;
 	int _missilePower;
 	int _missileStopChance;
@@ -130,6 +131,8 @@ public:
 	int getWeaponRange() const;
 	/// Gets the UFO's score.
 	int getScore() const;
+	/// Gets the UFO's tension.
+	int getTension() const;
 	/// Sets the battlescape terrain data ruleset for this UFO
 	RuleTerrain *getBattlescapeTerrainData() const;
 	/// Gets the reload time of the UFO's weapon.
@@ -155,6 +158,8 @@ public:
 	const std::map<std::string, RuleUfoStats> &getRaceBonusRaw() const;
 	/// Gets the UFO's mission score.
 	int getMissionScore() const;
+	/// Gets the UFO's mission tension.
+	int getMissionTension() const;
 	/// Gets the UFO's chance to become a hunter-killer.
 	int getHunterKillerPercentage() const;
 	/// Gets the UFO's hunting preferences.

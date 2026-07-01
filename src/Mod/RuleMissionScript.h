@@ -35,6 +35,7 @@ private:
 	std::string _type, _varName;
 	int _firstMonth, _lastMonth, _label, _executionOdds, _targetBaseOdds, _minDifficulty, _maxDifficulty, _maxRuns, _avoidRepeats, _delay, _randomDelay;
 	int _minScore, _maxScore;
+	int _minTension, _maxTension;
 	int64_t _minFunds, _maxFunds;
 	std::string _missionVarName, _missionMarkerName;
 	int _counterMin, _counterMax;
@@ -104,6 +105,10 @@ public:
 	int getMinScore() const { return _minScore; }
 	/// Gets the maximum score (from last month) for this command to run.
 	int getMaxScore() const { return _maxScore; }
+	/// Gets the minimum tension (from last month) for this command to run.
+	int getMinTension() const { return _minTension; }
+	/// Gets the maximum tension (from last month) for this command to run.
+	int getMaxTension() const { return _maxTension; }
 	/// Gets the minimum funds (from current month) for this command to run.
 	int64_t getMinFunds() const { return _minFunds; }
 	/// Gets the maximum funds (from current month) for this command to run.

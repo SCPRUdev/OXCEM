@@ -1179,6 +1179,7 @@ void GeoscapeState::time5Seconds()
 					if (country->getRules()->insideCountry(xcraft->getLongitude(), xcraft->getLatitude()))
 					{
 						country->addActivityXcom(-xcraft->getRules()->getScore());
+						country->addTension(-xcraft->getRules()->getTension());
 						break;
 					}
 				}
@@ -1187,6 +1188,7 @@ void GeoscapeState::time5Seconds()
 					if (region->getRules()->insideRegion(xcraft->getLongitude(), xcraft->getLatitude()))
 					{
 						region->addActivityXcom(-xcraft->getRules()->getScore());
+						region->addTension(-xcraft->getRules()->getTension());
 						break;
 					}
 				}
@@ -1880,17 +1882,20 @@ bool GeoscapeState::processMissionSite(MissionSite *site)
 	}
 
 	int score = removeSite ? site->getDeployment()->getDespawnPenalty() : site->getDeployment()->getPoints();
+	int tension = removeSite ? site->getDeployment()->getDespawnTension() : site->getDeployment()->getTension();
 
 	Region *region = _game->getSavedGame()->locateRegion(*site);
 	if (region)
 	{
 		region->addActivityAlien(score);
+		region->addTension(tension);
 	}
 	for (auto* country : *_game->getSavedGame()->getCountries())
 	{
 		if (country->getRules()->insideCountry(site->getLongitude(), site->getLatitude()))
 		{
 			country->addActivityAlien(score);
+			country->addTension(tension);
 			break;
 		}
 	}
@@ -2025,10 +2030,12 @@ void GeoscapeState::time30Minutes()
 		}
 
 		int points = ufo->getRules()->getMissionScore(); //one point per UFO in-flight per half hour
+		int tension = ufo->getRules()->getMissionTension();
 		switch (ufo->getStatus())
 		{
 		case Ufo::LANDED:
 			points *= 2;
+			tension *= 2;
 			FALLTHROUGH;
 		case Ufo::FLYING:
 			// Get area
@@ -2037,6 +2044,7 @@ void GeoscapeState::time30Minutes()
 				if (region->getRules()->insideRegion(ufo->getLongitude(), ufo->getLatitude()))
 				{
 					region->addActivityAlien(points);
+					region->addTension(tension);
 					break;
 				}
 			}
@@ -2046,6 +2054,7 @@ void GeoscapeState::time30Minutes()
 				if (country->getRules()->insideCountry(ufo->getLongitude(), ufo->getLatitude()))
 				{
 					country->addActivityAlien(points);
+					country->addTension(tension);
 					break;
 				}
 			}
@@ -2788,6 +2797,7 @@ void GeoscapeState::time1Day()
 			if (region->getRules()->insideRegion(ab->getLongitude(), ab->getLatitude()))
 			{
 				region->addActivityAlien(ab->getDeployment()->getPoints());
+				region->addTension(ab->getDeployment()->getTension());
 				break;
 			}
 		}
@@ -2796,6 +2806,7 @@ void GeoscapeState::time1Day()
 			if (country->getRules()->insideCountry(ab->getLongitude(), ab->getLatitude()))
 			{
 				country->addActivityAlien(ab->getDeployment()->getPoints());
+				country->addTension(ab->getDeployment()->getTension());
 				break;
 			}
 		}
@@ -3759,6 +3770,7 @@ void GeoscapeState::determineAlienMissions(bool isNewMonth, const RuleEvent* eve
 	Mod *mod = _game->getMod();
 	int month = _game->getSavedGame()->getMonthsPassed();
 	int currentScore = save->getCurrentScore(month); // _monthsPassed was already increased by 1
+	int currentTension = save->getCurrentTension(month);
 	int performanceBonus = mod->getPerformanceBonus(currentScore);
 	if (performanceBonus < 0)
 	{
@@ -3812,6 +3824,8 @@ void GeoscapeState::determineAlienMissions(bool isNewMonth, const RuleEvent* eve
 				// and make sure we satisfy the difficulty restrictions
 				(month < 1 || arcScript->getMinScore() <= currentScore) &&
 				(month < 1 || arcScript->getMaxScore() >= currentScore) &&
+				(month < 1 || arcScript->getMinTension() <= currentTension) &&
+				(month < 1 || arcScript->getMaxTension() >= currentTension) &&
 				(month < 1 || arcScript->getMinFunds() <= currentFunds) &&
 				(month < 1 || arcScript->getMaxFunds() >= currentFunds) &&
 				arcScript->getMinDifficulty() <= save->getDifficulty() &&
@@ -4035,6 +4049,8 @@ void GeoscapeState::determineAlienMissions(bool isNewMonth, const RuleEvent* eve
 			// and make sure we satisfy the difficulty restrictions
 			(month < 1 || command->getMinScore() <= currentScore) &&
 			(month < 1 || command->getMaxScore() >= currentScore) &&
+			(month < 1 || command->getMinTension() <= currentTension) &&
+			(month < 1 || command->getMaxTension() >= currentTension) &&
 			(month < 1 || command->getMinFunds() <= currentFunds) &&
 			(month < 1 || command->getMaxFunds() >= currentFunds) &&
 			command->getMinDifficulty() <= save->getDifficulty() &&
@@ -4234,6 +4250,8 @@ void GeoscapeState::determineAlienMissions(bool isNewMonth, const RuleEvent* eve
 				// and make sure we satisfy the difficulty restrictions
 				(month < 1 || eventScript->getMinScore() <= currentScore) &&
 				(month < 1 || eventScript->getMaxScore() >= currentScore) &&
+				(month < 1 || eventScript->getMinTension() <= currentTension) &&
+				(month < 1 || eventScript->getMaxTension() >= currentTension) &&
 				(month < 1 || eventScript->getMinFunds() <= currentFunds) &&
 				(month < 1 || eventScript->getMaxFunds() >= currentFunds) &&
 				eventScript->getMinDifficulty() <= save->getDifficulty() &&

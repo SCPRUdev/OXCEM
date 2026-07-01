@@ -1850,6 +1850,7 @@ void DogfightState::update()
 						if (country->getRules()->insideCountry(_ufo->getLongitude(), _ufo->getLatitude()))
 						{
 							country->addActivityXcom(_ufo->getRules()->getScore()*2);
+							country->addTension(_ufo->getRules()->getTension()*2);
 							break;
 						}
 					}
@@ -1858,6 +1859,7 @@ void DogfightState::update()
 						if (region->getRules()->insideRegion(_ufo->getLongitude(), _ufo->getLatitude()))
 						{
 							region->addActivityXcom(_ufo->getRules()->getScore()*2);
+							region->addTension(_ufo->getRules()->getTension()*2);
 							break;
 						}
 					}
@@ -1877,6 +1879,7 @@ void DogfightState::update()
 						if (country->getRules()->insideCountry(_ufo->getLongitude(), _ufo->getLatitude()))
 						{
 							country->addActivityXcom(_ufo->getRules()->getScore());
+							country->addTension(_ufo->getRules()->getTension());
 							break;
 						}
 					}
@@ -1885,6 +1888,7 @@ void DogfightState::update()
 						if (region->getRules()->insideRegion(_ufo->getLongitude(), _ufo->getLatitude()))
 						{
 							region->addActivityXcom(_ufo->getRules()->getScore());
+							region->addTension(_ufo->getRules()->getTension());
 							break;
 						}
 					}
@@ -1978,6 +1982,7 @@ void DogfightState::update()
 					if (country->getRules()->insideCountry(_ufo->getLongitude(), _ufo->getLatitude()))
 					{
 						country->addActivityXcom(_ufo->getRules()->getScore());
+						country->addTension(_ufo->getRules()->getTension());
 						break;
 					}
 				}
@@ -1986,6 +1991,7 @@ void DogfightState::update()
 					if (region->getRules()->insideRegion(_ufo->getLongitude(), _ufo->getLatitude()))
 					{
 						region->addActivityXcom(_ufo->getRules()->getScore());
+						region->addTension(_ufo->getRules()->getTension());
 						break;
 					}
 				}

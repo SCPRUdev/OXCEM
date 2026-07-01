@@ -30,6 +30,7 @@ Region::Region(RuleRegion *rules): _rules(rules)
 {
 	_activityAlien.push_back(0);
 	_activityXcom.push_back(0);
+	_tension.push_back(0);
 }
 
 /**
@@ -47,6 +48,19 @@ void Region::load(const YAML::YamlNodeReader& reader)
 {
 	reader.tryRead("activityXcom", _activityXcom);
 	reader.tryRead("activityAlien", _activityAlien);
+	reader.tryRead("tension", _tension);
+	if (_tension.empty())
+	{
+		_tension.push_back(0);
+	}
+	while (_tension.size() < _activityXcom.size())
+	{
+		_tension.insert(_tension.begin(), 0);
+	}
+	while (_tension.size() > _activityXcom.size())
+	{
+		_tension.erase(_tension.begin());
+	}
 }
 
 /**
@@ -59,6 +73,7 @@ void Region::save(YAML::YamlNodeWriter writer) const
 	writer.write("type", _rules->getType());
 	writer.write("activityXcom", _activityXcom);
 	writer.write("activityAlien", _activityAlien);
+	writer.write("tension", _tension);
 }
 
 /**
@@ -89,6 +104,15 @@ void Region::addActivityAlien(int activity)
 }
 
 /**
+ * Adds to the region's tension level.
+ * @param tension Amount to add.
+ */
+void Region::addTension(int tension)
+{
+	_tension.back() += tension;
+}
+
+/**
  * Gets the region's xcom activity level.
  * @return activity level.
  */
@@ -107,16 +131,28 @@ std::vector<int> &Region::getActivityAlien()
 }
 
 /**
+ * Gets the region's tension level.
+ * @return tension level.
+ */
+std::vector<int> &Region::getTension()
+{
+	return _tension;
+}
+
+/**
  * Store last month's counters, start new counters.
  */
 void Region::newMonth()
 {
 	_activityAlien.push_back(0);
 	_activityXcom.push_back(0);
+	_tension.push_back(_tension.back());
 	if (_activityAlien.size() > 12)
 		_activityAlien.erase(_activityAlien.begin());
 	if (_activityXcom.size() > 12)
 		_activityXcom.erase(_activityXcom.begin());
+	if (_tension.size() > 12)
+		_tension.erase(_tension.begin());
 }
 
 }

@@ -51,7 +51,7 @@ struct DebriefingStat {
 
 struct ReequipStat { std::string item; int qty; std::string craft; int listOrder; };
 
-struct RecoveryItem { std::string name; int value; };
+struct RecoveryItem { std::string name; int value; int tension; };
 
 /**
  * Debriefing screen shown after a Battlescape
@@ -82,11 +82,13 @@ private:
 	std::map<int, RecoveryItem*> _recoveryStats;
 	bool _positiveScore, _destroyBase, _promotions, _showSellButton, _initDone;
 	std::map<int, int>  _containmentStateInfo;
-	int _limitsEnforced;
+	int _limitsEnforced, _tensionTotal;
 	MissionStatistics *_missionStatistics;
 	std::vector<Soldier*> _soldiersCommended, _deadSoldiersCommended;
 	/// Adds to the debriefing stats.
-	void addStat(const std::string &name, int quantity, int score);
+	bool addStat(const std::string &name, int quantity, int score);
+	/// Adds to the debriefing stats and hidden tension total.
+	void addStat(const std::string &name, int quantity, int score, int tension);
 	/// Prepares debriefing.
 	void prepareDebriefing();
 	/// Adds item(s) to base stores.

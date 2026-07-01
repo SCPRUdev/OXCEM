@@ -139,6 +139,8 @@ public:
 	const MissionWave &getWave(size_t index) const { return _waves[index]; }
 	/// Gets the score for this mission.
 	int getPoints() const;
+	/// Gets the tension for this mission.
+	int getTension() const;
 	/// Gets the objective for this mission.
 	MissionObjective getObjective() const { return _objective; }
 	/// Gets the UFO type for special spawns.
@@ -198,6 +200,8 @@ private:
 	std::vector<MissionWave> _waves;
 	/// The mission's points.
 	int _points;
+	/// The mission's tension.
+	int _tension;
 	/// The mission's objective.
 	MissionObjective _objective;
 	/// The mission zone to use for spawning.
