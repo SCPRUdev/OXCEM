@@ -161,7 +161,7 @@ RuleItem::RuleItem(const std::string &type, int listOrder) :
 	_explodeInventory(-1),
 	_costUse(25), _costMind({}, {}), _costPanic({}, {}), _costThrow(25), _costPrime(50), _costUnprime(25),
 	_clipSize(0), _specialChance(100), _tuLoad{ }, _tuUnload{ },
-	_battleType(BT_NONE), _fuseType(BFT_NONE), _fuseTriggerEvents{ }, _hiddenOnMinimap(false),
+	_battleType(BT_NONE), _fuseType(BFT_NONE), _fuseTriggerEvents{ }, _hiddenOnMinimap(false), _hiddenFromTechTree(false),
 	_painKillerActionName("STR_PAIN_KILLER"), _stimulantActionName("STR_STIMULANT"), _healActionName("STR_HEAL"),
 	_medikitActionName("STR_USE_MEDI_KIT"),
 	_psiAttackName(), _primeActionName("STR_PRIME_GRENADE"), _unprimeActionName(),
@@ -488,6 +488,7 @@ void RuleItem::load(const YAML::YamlNodeReader& node, Mod *mod, const ModScript&
 	reader.tryRead("sellActionMessage", _sellActionMessage);
 	reader.tryRead("fuseType", _fuseType);
 	reader.tryRead("hiddenOnMinimap", _hiddenOnMinimap);
+	reader.tryRead("hiddenFromTechTree", _hiddenFromTechTree);
 	reader.tryRead("clipSize", _clipSize);
 
 	loadConfFuse(_fuseTriggerEvents, reader, "fuseTriggerEvents");

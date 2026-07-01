@@ -73,6 +73,7 @@ private:
 	RuleBaseFacilityFunctions _forbiddenBaseFunc = 0;
 	int _spriteShape, _spriteFacility;
 	bool _connectorsDisabled;
+	bool _hiddenFromTechTree;
 	int _missileAttraction;
 	int _fakeUnderwater;
 	bool _lift, _hyper, _mind, _grav;
@@ -149,6 +150,8 @@ public:
 	bool connectorsDisabled() const { return _connectorsDisabled; }
 	/// Gets if the facility's size is 1x1.
 	bool isSmall() const;
+	/// Is this facility hidden from the Tech Tree Viewer?
+	bool isHiddenFromTechTree() const { return _hiddenFromTechTree; }
 	/// Gets the facility's size.
 	int getSizeX() const { return _sizeX; }
 	/// Gets the facility's size.

@@ -422,7 +422,7 @@ private:
 	BattleType _battleType;
 	BattleFuseType _fuseType;
 	RuleItemFuseTrigger _fuseTriggerEvents;
-	bool _hiddenOnMinimap;
+	bool _hiddenOnMinimap, _hiddenFromTechTree;
 	std::string _painKillerActionName, _stimulantActionName, _healActionName;
 	std::string _medikitActionName, _psiAttackName, _primeActionName, _unprimeActionName, _primeActionMessage, _unprimeActionMessage;
 	std::string _sellActionMessage;
@@ -817,6 +817,8 @@ public:
 	int getFuseTimerDefault() const;
 	/// Is this item (e.g. a mine) hidden on the minimap?
 	bool isHiddenOnMinimap() const;
+	/// Is this item hidden from the Tech Tree Viewer?
+	bool isHiddenFromTechTree() const { return _hiddenFromTechTree; }
 	/// Get fuse trigger event.
 	const RuleItemFuseTrigger *getFuseTriggerEvent() const;
 

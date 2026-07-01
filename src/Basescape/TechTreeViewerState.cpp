@@ -232,6 +232,10 @@ TechTreeViewerState::TechTreeViewerState(const RuleResearch *r, const RuleManufa
 	for (auto& facType : _game->getMod()->getBaseFacilitiesList())
 	{
 		facRule = _game->getMod()->getBaseFacility(facType);
+		if (facRule->isHiddenFromTechTree())
+		{
+			continue;
+		}
 		if (_game->getSavedGame()->isResearched(facRule->getRequirements()))
 		{
 			_alreadyAvailableFacilities.insert(facRule->getType());
@@ -242,6 +246,10 @@ TechTreeViewerState::TechTreeViewerState(const RuleResearch *r, const RuleManufa
 	for (auto& itemType : _game->getMod()->getItemsList())
 	{
 		itemRule = _game->getMod()->getItem(itemType);
+		if (itemRule->isHiddenFromTechTree())
+		{
+			continue;
+		}
 		if (!itemRule->getRequirements().empty() || !itemRule->getBuyRequirements().empty())
 		{
 			_protectedItems.insert(itemRule->getType());
@@ -256,6 +264,10 @@ TechTreeViewerState::TechTreeViewerState(const RuleResearch *r, const RuleManufa
 	for (auto& craftType : _game->getMod()->getCraftsList())
 	{
 		craftRule = _game->getMod()->getCraft(craftType);
+		if (craftRule->isHiddenFromTechTree())
+		{
+			continue;
+		}
 		if (_game->getSavedGame()->isResearched(craftRule->getRequirements()))
 		{
 			_alreadyAvailableCrafts.insert(craftRule->getType());
@@ -536,6 +548,10 @@ void TechTreeViewerState::handleResearchData()
 	for (auto& f : _game->getMod()->getBaseFacilitiesList())
 	{
 		RuleBaseFacility *temp = _game->getMod()->getBaseFacility(f);
+		if (temp->isHiddenFromTechTree())
+		{
+			continue;
+		}
 		for (auto& i : temp->getRequirements())
 		{
 			if (i == rule->getName())
@@ -548,6 +564,10 @@ void TechTreeViewerState::handleResearchData()
 	for (auto& item : _game->getMod()->getItemsList())
 	{
 		RuleItem *temp = _game->getMod()->getItem(item);
+		if (temp->isHiddenFromTechTree())
+		{
+			continue;
+		}
 		for (auto& i : temp->getRequirements())
 		{
 			if (i == rule)
@@ -579,6 +599,10 @@ void TechTreeViewerState::handleResearchData()
 	for (auto& c : _game->getMod()->getCraftsList())
 	{
 		RuleCraft *temp = _game->getMod()->getCraft(c);
+		if (temp->isHiddenFromTechTree())
+		{
+			continue;
+		}
 		for (auto& i : temp->getRequirements())
 		{
 			if (i == rule->getName())
@@ -653,7 +677,8 @@ void TechTreeViewerState::handleResearchData()
 	}
 
 	// 1. item required
-	if (rule->needItem())
+	const RuleItem *neededItem = rule->getNeededItem();
+	if (rule->needItem() && (!neededItem || !neededItem->isHiddenFromTechTree()))
 	{
 		if (rule->destroyItem())
 		{
@@ -667,13 +692,13 @@ void TechTreeViewerState::handleResearchData()
 		_leftTopics.push_back("-");
 		_leftFlags.push_back(TTV_NONE);
 		++row;
-		if (rule->getNeededItem())
+		if (neededItem)
 		{
-			std::string itemName = tr(rule->getNeededItem()->getType());
+			std::string itemName = tr(neededItem->getType());
 			itemName.insert(0, "  ");
 			_lstLeft->addRow(1, itemName.c_str());
-			_lstLeft->setRowColor(row, getResearchColor(rule->getNeededItem()->getType()));
-			_leftTopics.push_back(rule->getNeededItem()->getType());
+			_lstLeft->setRowColor(row, getResearchColor(neededItem->getType()));
+			_leftTopics.push_back(neededItem->getType());
 			_leftFlags.push_back(TTV_ITEMS);
 		}
 		else
@@ -873,7 +898,24 @@ void TechTreeViewerState::handleResearchData()
 	}
 
 	// spawned item
-	if (!Mod::isEmptyRuleName(rule->getSpawnedItem()) || !rule->getSpawnedItemList().empty())
+	std::vector<std::string> spawnedItems;
+	if (!Mod::isEmptyRuleName(rule->getSpawnedItem()))
+	{
+		RuleItem *item = _game->getMod()->getItem(rule->getSpawnedItem(), false);
+		if (!item || !item->isHiddenFromTechTree())
+		{
+			spawnedItems.push_back(rule->getSpawnedItem());
+		}
+	}
+	for (auto& sil : rule->getSpawnedItemList())
+	{
+		RuleItem *item = _game->getMod()->getItem(sil, false);
+		if (!item || !item->isHiddenFromTechTree())
+		{
+			spawnedItems.push_back(sil);
+		}
+	}
+	if (!spawnedItems.empty())
 	{
 		_lstRight->addRow(1, tr("STR_SPAWNED_ITEMS").c_str());
 		_lstRight->setRowColor(row, _blue);
@@ -881,28 +923,18 @@ void TechTreeViewerState::handleResearchData()
 		_rightFlags.push_back(TTV_NONE);
 		++row;
 	}
-	if (!Mod::isEmptyRuleName(rule->getSpawnedItem()))
+	for (auto& spawnedItem : spawnedItems)
 	{
-		std::string name = tr(rule->getSpawnedItem());
+		std::string name = tr(spawnedItem);
 		name.insert(0, "  ");
-		if (rule->getSpawnedItemCount() > 1)
+		if (spawnedItem == rule->getSpawnedItem() && rule->getSpawnedItemCount() > 1)
 		{
 			name.append(" x");
 			name.append(std::to_string(rule->getSpawnedItemCount()));
 		}
 		_lstRight->addRow(1, name.c_str());
 		_lstRight->setRowColor(row, _white);
-		_rightTopics.push_back(rule->getSpawnedItem());
-		_rightFlags.push_back(TTV_ITEMS);
-		++row;
-	}
-	for (auto& sil : rule->getSpawnedItemList())
-	{
-		std::string name = tr(sil);
-		name.insert(0, "  ");
-		_lstRight->addRow(1, name.c_str());
-		_lstRight->setRowColor(row, _white);
-		_rightTopics.push_back(sil);
+		_rightTopics.push_back(spawnedItem);
 		_rightFlags.push_back(TTV_ITEMS);
 		++row;
 	}
@@ -1408,7 +1440,25 @@ void TechTreeViewerState::handleManufactureData()
 	// 3. inputs
 	const std::map<const RuleCraft*, int> craftInputs = rule->getRequiredCrafts();
 	const std::map<const RuleItem*, int> inputs = rule->getRequiredItems();
-	if (inputs.size() > 0 || craftInputs.size() > 0)
+	bool hasVisibleCraftInputs = false;
+	for (auto& i : craftInputs)
+	{
+		if (!i.first->isHiddenFromTechTree())
+		{
+			hasVisibleCraftInputs = true;
+			break;
+		}
+	}
+	bool hasVisibleInputs = false;
+	for (auto& i : inputs)
+	{
+		if (!i.first->isHiddenFromTechTree())
+		{
+			hasVisibleInputs = true;
+			break;
+		}
+	}
+	if (hasVisibleInputs || hasVisibleCraftInputs)
 	{
 		_lstLeft->addRow(1, tr("STR_MATERIALS_REQUIRED").c_str());
 		_lstLeft->setRowColor(row, _blue);
@@ -1417,6 +1467,10 @@ void TechTreeViewerState::handleManufactureData()
 		++row;
 		for (auto& i : craftInputs)
 		{
+			if (i.first->isHiddenFromTechTree())
+			{
+				continue;
+			}
 			std::ostringstream name;
 			name << "  ";
 			name << tr(i.first->getType());
@@ -1430,6 +1484,10 @@ void TechTreeViewerState::handleManufactureData()
 		}
 		for (auto& i : inputs)
 		{
+			if (i.first->isHiddenFromTechTree())
+			{
+				continue;
+			}
 			std::ostringstream name;
 			name << "  ";
 			name << tr(i.first->getType());
@@ -1524,18 +1582,28 @@ void TechTreeViewerState::handleManufactureData()
 
 	// 4. outputs
 	const std::map<const RuleItem*, int> outputs = rule->getProducedItems();
-	if (outputs.size() > 0 || rule->getProducedCraft())
+	bool hasVisibleOutputs = false;
+	for (auto& i : outputs)
+	{
+		if (!i.first->isHiddenFromTechTree())
+		{
+			hasVisibleOutputs = true;
+			break;
+		}
+	}
+	const RuleCraft *producedCraft = rule->getProducedCraft();
+	if (hasVisibleOutputs || (producedCraft && !producedCraft->isHiddenFromTechTree()))
 	{
 		_lstRight->addRow(1, tr("STR_ITEMS_PRODUCED").c_str());
 		_lstRight->setRowColor(row, _blue);
 		_rightTopics.push_back("-");
 		_rightFlags.push_back(TTV_NONE);
 		++row;
-		if (rule->getProducedCraft())
+		if (producedCraft && !producedCraft->isHiddenFromTechTree())
 		{
 			std::ostringstream name;
 			name << "  ";
-			name << tr(rule->getProducedCraft()->getType());
+			name << tr(producedCraft->getType());
 			name << ": 1";
 			_lstRight->addRow(1, name.str().c_str());
 			_lstRight->setRowColor(row, _white);
@@ -1545,6 +1613,10 @@ void TechTreeViewerState::handleManufactureData()
 		}
 		for (auto& i : outputs)
 		{
+			if (i.first->isHiddenFromTechTree())
+			{
+				continue;
+			}
 			std::ostringstream name;
 			name << "  ";
 			name << tr(i.first->getType());
@@ -1560,7 +1632,23 @@ void TechTreeViewerState::handleManufactureData()
 
 	// 4b. random outputs
 	auto& randomOutputs = rule->getRandomProducedItems();
-	if (randomOutputs.size() > 0)
+	bool hasVisibleRandomOutputs = false;
+	for (auto& randomOutput : randomOutputs)
+	{
+		for (auto& i : randomOutput.second)
+		{
+			if (!i.first->isHiddenFromTechTree())
+			{
+				hasVisibleRandomOutputs = true;
+				break;
+			}
+		}
+		if (hasVisibleRandomOutputs)
+		{
+			break;
+		}
+	}
+	if (hasVisibleRandomOutputs)
 	{
 		_lstRight->addRow(1, tr("STR_RANDOM_PRODUCTION_DISCLAIMER").c_str());
 		_lstRight->setRowColor(row, _blue);
@@ -1574,6 +1662,19 @@ void TechTreeViewerState::handleManufactureData()
 		}
 		for (auto& randomOutput : randomOutputs)
 		{
+			bool hasVisibleItems = false;
+			for (auto& i : randomOutput.second)
+			{
+				if (!i.first->isHiddenFromTechTree())
+				{
+					hasVisibleItems = true;
+					break;
+				}
+			}
+			if (!hasVisibleItems)
+			{
+				continue;
+			}
 			std::ostringstream chance;
 			chance << " " << randomOutput.first * 100 / total << "%";
 			_lstRight->addRow(1, chance.str().c_str());
@@ -1583,6 +1684,10 @@ void TechTreeViewerState::handleManufactureData()
 			++row;
 			for (auto& i : randomOutput.second)
 			{
+				if (i.first->isHiddenFromTechTree())
+				{
+					continue;
+				}
 				std::ostringstream name;
 				name << "  ";
 				name << tr(i.first->getType());

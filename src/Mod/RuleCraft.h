@@ -234,7 +234,7 @@ private:
 	bool _onlyOneSoldierGroupAllowed;
 	RuleCraftStats _stats;
 	int _shieldRechargeAtBase;
-	bool _mapVisible, _forceShowInMonthlyCosts;
+	bool _mapVisible, _forceShowInMonthlyCosts, _hiddenFromTechTree;
 	bool _useAllStartTiles;
 	std::string _customPreview;
 	std::vector<int> _selectSound, _takeoffSound;
@@ -261,6 +261,8 @@ public:
 	const std::string &getType() const;
 	/// Gets the craft's requirements.
 	const std::vector<std::string> &getRequirements() const;
+	/// Is this craft hidden from the Tech Tree Viewer?
+	bool isHiddenFromTechTree() const { return _hiddenFromTechTree; }
 	/// Gets the base functions required to buy craft.
 	RuleBaseFacilityFunctions getRequiresBuyBaseFunc() const { return _requiresBuyBaseFunc; }
 	/// Gets the allied country name required to buy this craft.

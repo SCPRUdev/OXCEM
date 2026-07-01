@@ -37,6 +37,7 @@ namespace OpenXcom
  */
 RuleBaseFacility::RuleBaseFacility(const std::string &type, int listOrder) :
 	_type(type), _spriteShape(-1), _spriteFacility(-1), _connectorsDisabled(false),
+	_hiddenFromTechTree(false),
 	_missileAttraction(100), _fakeUnderwater(-1),
 	_lift(false), _hyper(false), _mind(false), _grav(false), _mindPower(1),
 	_sizeX(1), _sizeY(1), _buildCost(0), _refundValue(0), _buildTime(0), _monthlyCost(0),
@@ -84,6 +85,7 @@ void RuleBaseFacility::load(const YAML::YamlNodeReader& node, Mod *mod)
 	mod->loadSpriteOffset(_type, _spriteFacility, reader["spriteFacility"], "BASEBITS.PCK");
 
 	reader.tryRead("connectorsDisabled", _connectorsDisabled);
+	reader.tryRead("hiddenFromTechTree", _hiddenFromTechTree);
 	reader.tryRead("fakeUnderwater", _fakeUnderwater);
 	reader.tryRead("missileAttraction", _missileAttraction);
 	reader.tryRead("lift", _lift);

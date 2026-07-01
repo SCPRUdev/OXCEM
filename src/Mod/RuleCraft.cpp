@@ -44,7 +44,7 @@ RuleCraft::RuleCraft(const std::string &type, int listOrder) :
 	_missilePower(0),
 	_listOrder(listOrder), _maxAltitude(-1), _defaultAltitude("STR_VERY_LOW"), _onlyOneSoldierGroupAllowed(false), _stats(),
 	_shieldRechargeAtBase(1000),
-	_mapVisible(true), _forceShowInMonthlyCosts(false), _useAllStartTiles(false)
+	_mapVisible(true), _forceShowInMonthlyCosts(false), _hiddenFromTechTree(false), _useAllStartTiles(false)
 {
 	for (int i = 0; i < WeaponMax; ++ i)
 	{
@@ -201,6 +201,7 @@ void RuleCraft::load(const YAML::YamlNodeReader& node, Mod *mod, const ModScript
 	reader.tryRead("shieldRechargedAtBase", _shieldRechargeAtBase);
 	reader.tryRead("mapVisible", _mapVisible);
 	reader.tryRead("forceShowInMonthlyCosts", _forceShowInMonthlyCosts);
+	reader.tryRead("hiddenFromTechTree", _hiddenFromTechTree);
 	reader.tryRead("useAllStartTiles", _useAllStartTiles);
 	reader.tryRead("customPreview", _customPreview);
 

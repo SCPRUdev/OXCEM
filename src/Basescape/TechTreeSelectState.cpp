@@ -23,6 +23,8 @@
 #include "../Engine/Game.h"
 #include "../Mod/Mod.h"
 #include "../Mod/RuleArcScript.h"
+#include "../Mod/RuleBaseFacility.h"
+#include "../Mod/RuleCraft.h"
 #include "../Mod/RuleEventScript.h"
 #include "../Mod/RuleMissionScript.h"
 #include "../Engine/LocalizedText.h"
@@ -218,6 +220,11 @@ void TechTreeSelectState::initLists()
 
 	for (auto& facType : _game->getMod()->getBaseFacilitiesList())
 	{
+		RuleBaseFacility *facilityRule = _game->getMod()->getBaseFacility(facType);
+		if (facilityRule->isHiddenFromTechTree())
+		{
+			continue;
+		}
 		std::string facilityName = tr(facType);
 		Unicode::upperCase(facilityName);
 		if (searchString == "SHAZAM")
@@ -283,6 +290,11 @@ void TechTreeSelectState::initLists()
 
 	for (auto& craftType : _game->getMod()->getCraftsList())
 	{
+		RuleCraft *craftRule = _game->getMod()->getCraft(craftType);
+		if (craftRule->isHiddenFromTechTree())
+		{
+			continue;
+		}
 		std::string craftName = tr(craftType);
 		Unicode::upperCase(craftName);
 		if (searchString == "SHAZAM")
