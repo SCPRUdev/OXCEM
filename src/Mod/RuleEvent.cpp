@@ -46,6 +46,10 @@ void RuleEvent::load(const YAML::YamlNodeReader& node)
 	reader.tryRead("music", _music);
 	reader.tryRead("cutscene", _cutscene);
 	reader.tryRead("regionList", _regionList);
+	if (reader["countries"])
+	{
+		_countries.load(reader["countries"]);
+	}
 	reader.tryRead("city", _city);
 	reader.tryRead("points", _points);
 	reader.tryRead("tension", _tension);
@@ -83,6 +87,10 @@ void RuleEvent::load(const YAML::YamlNodeReader& node)
 void RuleEvent::afterLoad(const Mod* mod)
 {
 	mod->linkRule(_research, _researchNames);
+	for (const auto& pair : _countries.getChoices())
+	{
+		mod->getCountry(pair.first, true);
+	}
 }
 
 }

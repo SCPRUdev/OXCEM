@@ -202,6 +202,7 @@ ru:
   STR_DISABLES_MISSIONS: "Блокирует задания:"
   STR_UNLOCKS_EVENTS: "Разблокирует события:"
   STR_DISABLES_EVENTS: "Блокирует события:"
+  STR_REDACTED: "[УДАЛЕНО]"
   STR_AFFECTS_GAME_PROGRESSION: "Влияет на дальнейшее прохождение!"
   STR_TRSIGN_UP: "^"
   STR_TRSIGN_MID: "~"

@@ -19,6 +19,7 @@
 #include "GeoscapeEventState.h"
 #include "GeoscapeState.h"
 #include <map>
+#include <vector>
 #include "../Basescape/SellState.h"
 #include "../Engine/Game.h"
 #include "../Engine/LocalizedText.h"
@@ -32,12 +33,14 @@
 #include "../Menu/ErrorMessageState.h"
 #include "../Mod/City.h"
 #include "../Mod/Mod.h"
+#include "../Mod/RuleCountry.h"
 #include "../Mod/RuleEvent.h"
 #include "../Mod/RuleInterface.h"
 #include "../Mod/RuleRegion.h"
 #include "../Mod/RuleSoldier.h"
 #include "../Mod/RuleVideo.h"
 #include "../Savegame/Base.h"
+#include "../Savegame/Country.h"
 #include "../Savegame/ItemContainer.h"
 #include "../Savegame/Region.h"
 #include "../Savegame/ResearchDiary.h"
@@ -148,44 +151,125 @@ void GeoscapeEventState::eventLogic()
 	const RuleEvent &rule = _eventRule;
 
 	RuleRegion *regionRule = nullptr;
+	Country *country = nullptr;
+	const RuleCountry *countryRule = nullptr;
 	City* city = nullptr;
+	std::string countryPlace;
+	std::string cityPlace;
+	std::string regionPlace;
+	if (!rule.getCountries().empty())
+	{
+		const std::string countryName = rule.getCountries().choose();
+		countryRule = mod->getCountry(countryName, true);
+		countryPlace = tr(countryName);
+		for (auto* savedCountry : *save->getCountries())
+		{
+			if (savedCountry->getRules() == countryRule)
+			{
+				country = savedCountry;
+				break;
+			}
+		}
+	}
+	auto regionHasMatchingCity = [&](RuleRegion* region) -> bool
+	{
+		if (!countryRule)
+		{
+			return true;
+		}
+		for (auto* candidateCity : *region->getCities())
+		{
+			if (countryRule->insideCountry(candidateCity->getLongitude(), candidateCity->getLatitude()))
+			{
+				return true;
+			}
+		}
+		return false;
+	};
 	if (!rule.getRegionList().empty())
 	{
-		size_t pickRegion = RNG::generate(0, rule.getRegionList().size() - 1);
-		auto& regionName = rule.getRegionList().at(pickRegion);
-		regionRule = _game->getMod()->getRegion(regionName, true);
-		std::string place = tr(regionName);
-
-		if (rule.isCitySpecific())
+		std::vector<std::string> matchingRegions;
+		if (countryRule)
 		{
-			size_t cities = regionRule->getCities()->size();
-			if (cities > 0)
+			for (const auto& regionName : rule.getRegionList())
 			{
-				size_t pickCity = RNG::generate(0, cities - 1);
-				city = regionRule->getCities()->at(pickCity);
-				place = city->getName(_game->getLanguage());
+				RuleRegion* possibleRegion = _game->getMod()->getRegion(regionName, true);
+				if (regionHasMatchingCity(possibleRegion))
+				{
+					matchingRegions.push_back(regionName);
+				}
 			}
 		}
-
-		std::string titlePlus = tr(rule.getName()).arg(place);
-		_txtTitle->setText(titlePlus);
-
-		std::string messagePlus = tr(rule.getDescription()).arg(place);
-		_txtMessage->setText(messagePlus);
+		const std::vector<std::string>* regionsToPick = matchingRegions.empty() ? &rule.getRegionList() : &matchingRegions;
+		size_t pickRegion = RNG::generate(0, regionsToPick->size() - 1);
+		const std::string& regionName = regionsToPick->at(pickRegion);
+		regionRule = _game->getMod()->getRegion(regionName, true);
+		regionPlace = tr(regionName);
 	}
 
-	// even if the event isn't city-specific, we'll still pick one city randomly to represent the region (and maybe even a country)
-	if (regionRule)
+	auto pickCity = [&]() -> City*
 	{
-		if (!rule.isCitySpecific())
+		std::vector<City*> citiesInScope;
+		auto addMatchingCities = [&](RuleRegion* region)
 		{
-			size_t cities = regionRule->getCities()->size();
-			if (cities > 0)
+			for (auto* candidateCity : *region->getCities())
 			{
-				size_t pickCity = RNG::generate(0, cities - 1);
-				city = regionRule->getCities()->at(pickCity);
+				if (!countryRule || countryRule->insideCountry(candidateCity->getLongitude(), candidateCity->getLatitude()))
+				{
+					citiesInScope.push_back(candidateCity);
+				}
+			}
+		};
+
+		if (regionRule)
+		{
+			addMatchingCities(regionRule);
+		}
+		else
+		{
+			for (auto* savedRegion : *save->getRegions())
+			{
+				addMatchingCities(savedRegion->getRules());
 			}
 		}
+
+		if (citiesInScope.empty())
+		{
+			return nullptr;
+		}
+		size_t pick = RNG::generate(0, citiesInScope.size() - 1);
+		return citiesInScope.at(pick);
+	};
+
+	if (regionRule || countryRule)
+	{
+		city = pickCity();
+		if (city)
+		{
+			cityPlace = city->getName(_game->getLanguage());
+		}
+		if (countryPlace.empty() && city)
+		{
+			Country* cityCountry = save->locateCountry(*city);
+			if (cityCountry)
+			{
+				countryPlace = tr(cityCountry->getRules()->getType());
+			}
+		}
+		std::string countryArg = countryPlace.empty() ? static_cast<std::string>(tr("STR_REDACTED")) : countryPlace;
+		std::string cityArg = cityPlace.empty() ? static_cast<std::string>(tr("STR_REDACTED")) : cityPlace;
+		std::string regionArg = regionPlace.empty() ? static_cast<std::string>(tr("STR_REDACTED")) : regionPlace;
+		LocalizedText titlePlus = tr(rule.getName());
+		titlePlus.arg(countryArg);
+		titlePlus.arg(cityArg);
+		titlePlus.arg(regionArg);
+		_txtTitle->setText(titlePlus);
+
+		LocalizedText messagePlus = tr(rule.getDescription());
+		messagePlus.arg(countryArg);
+		messagePlus.arg(cityArg);
+		messagePlus.arg(regionArg);
+		_txtMessage->setText(messagePlus);
 	}
 
 	// 1. give/take score points
@@ -201,7 +285,12 @@ void GeoscapeEventState::eventLogic()
 			}
 		}
 	}
-	else
+	if (country)
+	{
+		country->addActivityXcom(rule.getPoints());
+		country->addTension(rule.getTension());
+	}
+	else if (!regionRule)
 	{
 		save->addResearchScore(rule.getPoints());
 		save->addResearchTension(rule.getTension());

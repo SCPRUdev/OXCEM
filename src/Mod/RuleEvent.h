@@ -38,6 +38,7 @@ class RuleEvent
 private:
 	std::string _name, _description, _background, _music, _cutscene;
 	std::vector<std::string> _regionList;
+	WeightedOptions _countries;
 	bool _alignBottom;
 	bool _city;
 	int _points, _tension, _funds;
@@ -81,6 +82,8 @@ public:
 	const std::string &getCutscene() const { return _cutscene; }
 	/// Gets a list of regions where this event can occur.
 	const std::vector<std::string> &getRegionList() const { return _regionList; }
+	/// Gets a weighted list of countries where this event can occur.
+	const WeightedOptions &getCountries() const { return _countries; }
 	/// Is this event city specific?
 	bool isCitySpecific() const { return _city; }
 	/// Gets the amount of score points awarded when this event pops up.

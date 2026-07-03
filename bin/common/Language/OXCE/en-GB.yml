@@ -243,6 +243,7 @@ en-GB:
   STR_DISABLES_MISSIONS: "Disables missions:"
   STR_UNLOCKS_EVENTS: "Unlocks events:"
   STR_DISABLES_EVENTS: "Disables events:"
+  STR_REDACTED: "[REDACTED]"
   STR_AFFECTS_GAME_PROGRESSION: "Affects game progression!"
   STR_TRSIGN_UP: "^"
   STR_TRSIGN_MID: "~"
