@@ -17,6 +17,7 @@
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "RuleEventScript.h"
+#include "../Engine/RNG.h"
 #include <climits>
 
 namespace OpenXcom
@@ -28,7 +29,7 @@ namespace OpenXcom
  * Event scripts are executed just after the mission scripts.
  */
 RuleEventScript::RuleEventScript(const std::string &type) :
-	_type(type), _firstMonth(0), _lastMonth(-1), _executionOdds(100), _minDifficulty(0), _maxDifficulty(4),
+	_type(type), _firstMonth(0), _lastMonth(-1), _executionOdds(100), _maxEventPerScriptRun(1), _minDifficulty(0), _maxDifficulty(4),
 	_minScore(INT_MIN), _maxScore(INT_MAX), _minTension(INT_MIN), _maxTension(INT_MAX), _minFunds(INT64_MIN), _maxFunds(INT64_MAX),
 	_counterMin(0), _counterMax(-1),
 	_affectsGameProgression(false)
@@ -72,6 +73,11 @@ void RuleEventScript::load(const YAML::YamlNodeReader& node)
 	reader.tryRead("firstMonth", _firstMonth);
 	reader.tryRead("lastMonth", _lastMonth);
 	reader.tryRead("executionOdds", _executionOdds);
+	reader.tryRead("maxEventPerScriptRun", _maxEventPerScriptRun);
+	if (_maxEventPerScriptRun < 1)
+	{
+		_maxEventPerScriptRun = 1;
+	}
 	reader.tryRead("minDifficulty", _minDifficulty);
 	reader.tryRead("maxDifficulty", _maxDifficulty);
 	reader.tryRead("minScore", _minScore);
@@ -114,9 +120,48 @@ std::string RuleEventScript::generate(const size_t monthsPassed) const
 
 	std::vector<std::pair<size_t, WeightedOptions*> >::const_reverse_iterator rw;
 	rw = _eventWeights.rbegin();
-	while (monthsPassed < rw->first)
+	while (rw != _eventWeights.rend() && monthsPassed < rw->first)
 		++rw;
+	if (rw == _eventWeights.rend())
+		return std::string();
 	return rw->second->choose();
+}
+
+/**
+ * Chooses one or more available events for this command.
+ * @param monthsPassed The number of months that have passed in the game world.
+ * @return The string ids of the events.
+ */
+std::vector<std::string> RuleEventScript::generateEvents(const size_t monthsPassed) const
+{
+	std::vector<std::string> generatedEvents;
+	if (_eventWeights.empty())
+		return generatedEvents;
+
+	std::vector<std::pair<size_t, WeightedOptions*> >::const_reverse_iterator rw;
+	rw = _eventWeights.rbegin();
+	while (rw != _eventWeights.rend() && monthsPassed < rw->first)
+		++rw;
+	if (rw == _eventWeights.rend())
+		return generatedEvents;
+
+	WeightedOptions possibleEvents = *rw->second;
+	if (possibleEvents.empty())
+		return generatedEvents;
+
+	size_t maxEvents = possibleEvents.getChoices().size();
+	if (maxEvents > (size_t)_maxEventPerScriptRun)
+	{
+		maxEvents = (size_t)_maxEventPerScriptRun;
+	}
+	const size_t eventsToGenerate = (size_t)RNG::generate(1, (int)maxEvents);
+	for (size_t i = 0; i < eventsToGenerate && !possibleEvents.empty(); ++i)
+	{
+		std::string eventId = possibleEvents.choose();
+		generatedEvents.push_back(eventId);
+		possibleEvents.set(eventId, 0);
+	}
+	return generatedEvents;
 }
 
 }

@@ -4412,10 +4412,13 @@ void GeoscapeState::determineAlienMissions(bool isNewMonth, const RuleEvent* eve
 
 			// 3. randomly generated repeatable events
 			{
-				auto* eventRules = mod->getEvent(eventCommand->generate(save->getMonthsPassed()), false);
-				if (eventRules)
+				for (const auto& eventId : eventCommand->generateEvents(save->getMonthsPassed()))
 				{
-					toBeGenerated.push_back(eventRules);
+					auto* eventRules = mod->getEvent(eventId, false);
+					if (eventRules)
+					{
+						toBeGenerated.push_back(eventRules);
+					}
 				}
 			}
 

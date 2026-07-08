@@ -33,7 +33,7 @@ private:
 	std::vector<std::string> _oneTimeSequentialEvents;
 	WeightedOptions _oneTimeRandomEvents;
 	std::vector<std::pair<size_t, WeightedOptions*> > _eventWeights;
-	int _firstMonth, _lastMonth, _executionOdds, _minDifficulty, _maxDifficulty;
+	int _firstMonth, _lastMonth, _executionOdds, _maxEventPerScriptRun, _minDifficulty, _maxDifficulty;
 	int _minScore, _maxScore;
 	int _minTension, _maxTension;
 	int64_t _minFunds, _maxFunds;
@@ -72,6 +72,8 @@ public:
 	int getLastMonth() const { return _lastMonth; }
 	/// Gets the odds of this command executing.
 	int getExecutionOdds() const { return _executionOdds; }
+	/// Gets the maximum number of repeatable events this command can generate at once.
+	int getMaxEventPerScriptRun() const { return _maxEventPerScriptRun; }
 	/// Gets the minimum difficulty for this command to run.
 	int getMinDifficulty() const { return _minDifficulty; }
 	/// Gets the maximum difficulty for this command to run.
@@ -118,6 +120,8 @@ public:
 	bool getAffectsGameProgression() const { return _affectsGameProgression; }
 	/// Generates an event based on the month.
 	std::string generate(const size_t monthsPassed) const;
+	/// Generates events based on the month.
+	std::vector<std::string> generateEvents(const size_t monthsPassed) const;
 };
 
 }
