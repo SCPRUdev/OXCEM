@@ -256,7 +256,11 @@ void GeoscapeEventState::eventLogic()
 				countryPlace = tr(cityCountry->getRules()->getType());
 			}
 		}
-		std::string countryArg = countryPlace.empty() ? static_cast<std::string>(tr("STR_REDACTED")) : countryPlace;
+		std::string countryArg = countryPlace.empty() ? regionPlace : countryPlace;
+		if (countryArg.empty())
+		{
+			countryArg = static_cast<std::string>(tr("STR_REDACTED"));
+		}
 		std::string cityArg = cityPlace.empty() ? static_cast<std::string>(tr("STR_REDACTED")) : cityPlace;
 		std::string regionArg = regionPlace.empty() ? static_cast<std::string>(tr("STR_REDACTED")) : regionPlace;
 		LocalizedText titlePlus = tr(rule.getName());
