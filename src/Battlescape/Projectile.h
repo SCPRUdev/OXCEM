@@ -59,7 +59,11 @@ private:
 	int _bulletSprite;
 	bool _reversed;
 	int _vaporColor, _vaporDensity, _vaporProbability;
+	int _piercePower, _pierceRemaining;
+	bool _pierceImpactProcessed;
+	Position _pierceImpactPosition;
 	void applyAccuracy(Position origin, Position *target, double accuracy, bool keepRange, bool extendLine);
+	bool isPierceBlockedAt(Position pos) const;
 public:
 	/// Creates a new Projectile.
 	Projectile(Mod *mod, SavedBattleGame *save, BattleAction action, Position origin, Position target, BattleItem *ammo);
@@ -72,6 +76,16 @@ public:
 	int calculateThrow(double accuracy);
 	/// Moves the projectile one step in its trajectory.
 	bool move();
+	/// Can this projectile pass through terrain or units?
+	bool canPierce() const;
+	/// Gets remaining projectile pierce power.
+	int getPierceRemaining() const;
+	/// Spends projectile pierce power.
+	void spendPiercePower(int amount);
+	/// Checks whether current pierce impact has already been handled.
+	bool isPierceImpactProcessed(Position pos) const;
+	/// Marks current pierce impact as handled.
+	void markPierceImpactProcessed(Position pos);
 	/// Gets the current position in voxel space.
 	Position getPosition(int offset = 0) const;
 	/// Gets the two last position in voxel space.

@@ -4451,6 +4451,59 @@ VoxelType TileEngine::calculateLineVoxel(Position origin, Position target, bool 
 }
 
 /**
+ * Calculates a line trajectory for piercing projectiles. The path is stored until it leaves the map.
+ * @param origin Origin in voxel.
+ * @param target Target in voxel.
+ * @param storeTrajectory True will store the whole trajectory.
+ * @param trajectory A vector of positions in which the trajectory is stored.
+ * @param excludeUnit Excludes this unit in the collision detection.
+ * @param excludeAllBut [Optional] The only unit to be considered for ray hits.
+ * @param onlyVisible Skip invisible units? used in FPS view.
+ * @return out of map (5) or empty if the target was reached inside the map.
+ */
+VoxelType TileEngine::calculatePierceLineVoxel(Position origin, Position target, bool storeTrajectory, std::vector<Position> *trajectory, BattleUnit *excludeUnit, BattleUnit *excludeAllBut, bool onlyVisible)
+{
+	bool excludeAllUnits = false;
+	if (_save->isBeforeGame())
+	{
+		excludeAllUnits = true;
+	}
+
+	bool hit = calculateLineHelper(origin, target,
+		[&](Position point)
+		{
+			if (storeTrajectory && trajectory)
+			{
+				trajectory->push_back(point);
+			}
+
+			if (voxelCheck(point, excludeUnit, excludeAllUnits, onlyVisible, excludeAllBut) == V_OUTOFBOUNDS)
+			{
+				if (!storeTrajectory && trajectory)
+				{
+					trajectory->push_back(point);
+				}
+				return true;
+			}
+			return false;
+		},
+		[&](Position point)
+		{
+			if (voxelCheck(point, excludeUnit, excludeAllUnits, onlyVisible, excludeAllBut) == V_OUTOFBOUNDS)
+			{
+				if (trajectory)
+				{
+					trajectory->push_back(point);
+				}
+				return true;
+			}
+			return false;
+		}
+	);
+	return hit ? V_OUTOFBOUNDS : V_EMPTY;
+}
+
+/**
  * Calculates a parabola trajectory, used for throwing items.
  * @param origin Origin in voxelspace.
  * @param target Target in voxelspace.
@@ -4499,6 +4552,66 @@ int TileEngine::calculateParabolaVoxel(Position origin, Position target, bool st
 			return false;
 		}
 	);
+
+	return result;
+}
+
+/**
+ * Calculates a parabola trajectory for piercing projectiles.
+ * @param origin Origin in voxelspace.
+ * @param target Target in voxelspace.
+ * @param storeTrajectory True will store the whole trajectory.
+ * @param trajectory A vector of positions in which the trajectory is stored.
+ * @param excludeUnit Makes sure the trajectory does not hit the shooter itself.
+ * @param curvature How high the parabola goes.
+ * @param delta Deviation of the angles.
+ * @return out of map (5) or empty if the target was reached inside the map.
+ */
+int TileEngine::calculatePierceParabolaVoxel(Position origin, Position target, bool storeTrajectory, std::vector<Position> *trajectory, BattleUnit *excludeUnit, double curvature, const Position delta)
+{
+	if (target == origin) return V_EMPTY;
+
+	int result = V_EMPTY;
+	Position lastPosition = origin;
+	Position nextPosition = lastPosition;
+
+	if (storeTrajectory && trajectory)
+	{
+		trajectory->push_back(lastPosition);
+	}
+
+	calculateParabolaHelper(origin, target, curvature, delta,
+		[&](Position p)
+		{
+			nextPosition = p;
+
+			if (storeTrajectory && trajectory)
+			{
+				trajectory->pop_back();
+			}
+			result = calculatePierceLineVoxel(lastPosition, nextPosition, storeTrajectory, storeTrajectory ? trajectory : nullptr, excludeUnit);
+			if (result == V_OUTOFBOUNDS)
+			{
+				if (!storeTrajectory && trajectory)
+				{
+					calculatePierceLineVoxel(lastPosition, nextPosition, false, trajectory, excludeUnit);
+				}
+				return true;
+			}
+			lastPosition = nextPosition;
+			return false;
+		}
+	);
+
+	if (result != V_OUTOFBOUNDS && storeTrajectory && trajectory && trajectory->size() >= 2)
+	{
+		Position endPosition = trajectory->back();
+		Position direction = endPosition - trajectory->at(trajectory->size() - 2);
+		if (direction != Position())
+		{
+			result = calculatePierceLineVoxel(endPosition, endPosition + direction * (16 * 1000), storeTrajectory, trajectory, excludeUnit);
+		}
+	}
 
 	return result;
 }

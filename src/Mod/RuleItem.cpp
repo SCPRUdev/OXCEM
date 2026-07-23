@@ -176,7 +176,7 @@ RuleItem::RuleItem(const std::string &type, int listOrder) :
 															 _recover(true), _recoverCorpse(true), _ignoreInBaseDefense(false), _ignoreInCraftEquip(true), _liveAlien(false), _canBeSoldNormally(true), _canBeTransferredNormally(true),
 	_liveAlienPrisonType(0), _attraction(0), _flatUse(0, 1), _flatThrow(0, 1), _flatPrime(0, 1), _flatUnprime(0, 1), _arcingShot(false),
 	_experienceTrainingMode(ETM_DEFAULT), _manaExperience(0), _loadOrder(0), _listOrder(listOrder),
-	_maxRange(200), _minRange(0), _dropoff(2), _bulletSpeed(0), _explosionSpeed(0), _shotgunPellets(0), _shotgunBehaviorType(0), _shotgunSpread(100), _shotgunChoke(100),
+	_maxRange(200), _minRange(0), _dropoff(2), _bulletSpeed(0), _explosionSpeed(0), _shotgunPellets(0), _piercePower(0), _shotgunBehaviorType(0), _shotgunSpread(100), _shotgunChoke(100),
 	_spawnUnitFaction(FACTION_NONE), _zombieUnitFaction(FACTION_HOSTILE),
 	_targetMatrix(7), _convertToCivilian(false),
 	_LOSRequired(false), _underwaterOnly(false), _landOnly(false), _psiReqiured(false), _manaRequired(false),
@@ -623,6 +623,11 @@ void RuleItem::load(const YAML::YamlNodeReader& node, Mod *mod, const ModScript&
 	reader.tryRead("minRange", _minRange);
 	reader.tryRead("dropoff", _dropoff);
 	reader.tryRead("bulletSpeed", _bulletSpeed);
+	reader.tryRead("piercePower", _piercePower);
+	if (_piercePower == 0)
+	{
+		reader.tryRead("piercePowerCap", _piercePower); // compatibility with the original pierce prototype
+	}
 	reader.tryRead("explosionSpeed", _explosionSpeed);
 	reader.tryRead("autoShots", _confAuto.shots);
 	reader.tryRead("shotgunPellets", _shotgunPellets);
@@ -2451,6 +2456,15 @@ int RuleItem::getBulletSpeed() const
 }
 
 /**
+ * Gets how much damage/penetration power this projectile has for passing through terrain or units.
+ * @return The pierce power.
+ */
+int RuleItem::getPiercePower() const
+{
+	return std::max(0, _piercePower);
+}
+
+/**
  * Gets the speed at which this bullet explodes.
  * @return The speed.
  */
@@ -3001,6 +3015,7 @@ void RuleItem::ScriptRegister(ScriptParserBase* parser)
 	ri.add<&RuleItem::getAccuracyUse>("getAccuracyUse");
 
 	ri.add<&RuleItem::getPower>("getPower", "primary power, before applying unit bonuses, random rolls or other modifiers");
+	ri.add<&RuleItem::getPiercePower>("getPiercePower", "projectile penetration power for passing through terrain or units");
 	ri.add<&RuleItem::getDamageType>("getDamageType", "primary damage type");
 	ri.add<&RuleItem::getMeleePower>("getMeleePower", "secondary power (gunbutt), before applying unit bonuses, random rolls or other modifiers");
 	ri.add<&RuleItem::getMeleeType>("getMeleeDamageType", "secondary damage type (gunbutt)");

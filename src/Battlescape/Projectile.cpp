@@ -45,7 +45,7 @@ namespace OpenXcom
  * @param targetVoxel Position the projectile is targeting.
  * @param ammo the ammo that produced this projectile, where applicable.
  */
-Projectile::Projectile(Mod *mod, SavedBattleGame *save, BattleAction action, Position origin, Position targetVoxel, BattleItem *ammo) : _mod(mod), _save(save), _action(action), _ammo(ammo), _origin(origin), _targetVoxel(targetVoxel), _position(0), _distance(0.0f), _bulletSprite(-1), _reversed(false), _vaporColor(-1), _vaporDensity(-1), _vaporProbability(5)
+Projectile::Projectile(Mod *mod, SavedBattleGame *save, BattleAction action, Position origin, Position targetVoxel, BattleItem *ammo) : _mod(mod), _save(save), _action(action), _ammo(ammo), _origin(origin), _targetVoxel(targetVoxel), _position(0), _distance(0.0f), _bulletSprite(-1), _reversed(false), _vaporColor(-1), _vaporDensity(-1), _vaporProbability(5), _piercePower(0), _pierceRemaining(0), _pierceImpactProcessed(false), _pierceImpactPosition()
 {
 	// this is the number of pixels the sprite will move between frames
 	_speed = Options::battleFireSpeed;
@@ -89,6 +89,17 @@ Projectile::Projectile(Mod *mod, SavedBattleGame *save, BattleAction action, Pos
 	{
 		_reversed = true;
 	}
+
+	const RuleItem *pierceRules = _ammo ? _ammo->getRules() : nullptr;
+	if ((!pierceRules || pierceRules->getPiercePower() <= 0) && _action.weapon)
+	{
+		pierceRules = _action.weapon->getRules();
+	}
+	if (pierceRules && _action.type != BA_THROW && pierceRules->getShotgunPellets() == 0)
+	{
+		_piercePower = pierceRules->getPiercePower();
+	}
+	_pierceRemaining = _piercePower;
 }
 
 /**
@@ -127,7 +138,7 @@ int Projectile::calculateTrajectory(double accuracy, const Position& originVoxel
 		test = _save->getTileEngine()->calculateLineVoxel(originVoxel, _targetVoxel, false, &_trajectory, nullptr);
 	}
 
-	if (test != V_EMPTY &&
+	if (!canPierce() && test != V_EMPTY &&
 		!_trajectory.empty() &&
 		_action.actor->getFaction() == FACTION_PLAYER &&
 		_action.autoShotCounter == 1 &&
@@ -201,6 +212,10 @@ int Projectile::calculateTrajectory(double accuracy, const Position& originVoxel
 	applyAccuracy(originVoxel, &_targetVoxel, accuracy, false, extendLine);
 
 	// finally do a line calculation and store this trajectory.
+	if (canPierce())
+	{
+		return _save->getTileEngine()->calculatePierceLineVoxel(originVoxel, _targetVoxel, true, &_trajectory, bu);
+	}
 	return _save->getTileEngine()->calculateLineVoxel(originVoxel, _targetVoxel, true, &_trajectory, bu);
 }
 
@@ -304,7 +319,14 @@ int Projectile::calculateThrow(double accuracy)
 		}
 
 
-		test = _save->getTileEngine()->calculateParabolaVoxel(originVoxel, targetVoxel, true, &_trajectory, _action.actor, curvature, deltas);
+		if (canPierce())
+		{
+			test = _save->getTileEngine()->calculatePierceParabolaVoxel(originVoxel, targetVoxel, true, &_trajectory, _action.actor, curvature, deltas);
+		}
+		else
+		{
+			test = _save->getTileEngine()->calculateParabolaVoxel(originVoxel, targetVoxel, true, &_trajectory, _action.actor, curvature, deltas);
+		}
 		if (forced) return O_OBJECT; //fake hit
 		Position endPoint = getPositionFromEnd(_trajectory, ItemDropVoxelOffset).toTile();
 		Tile *endTile = _save->getTile(endPoint);
@@ -495,6 +517,30 @@ bool Projectile::move()
 
 	for (int i = 0; i < _speed; ++i)
 	{
+		if (canPierce())
+		{
+			VoxelType impact = _save->getTileEngine()->voxelCheck(getPosition(), _action.actor);
+			if (impact == V_OUTOFBOUNDS)
+			{
+				if (_position > 0)
+				{
+					--_position;
+				}
+				return false;
+			}
+			if (isPierceBlockedAt(getPosition()))
+			{
+				if (_pierceRemaining <= 0)
+				{
+					return false;
+				}
+				if (!isPierceImpactProcessed(getPosition()))
+				{
+					return true;
+				}
+			}
+		}
+
 		_position++;
 		if (_position == _trajectory.size())
 		{
@@ -510,6 +556,51 @@ bool Projectile::move()
 		}
 	}
 	return true;
+}
+
+bool Projectile::isPierceBlockedAt(Position pos) const
+{
+	VoxelType impact = _save->getTileEngine()->voxelCheck(pos, _action.actor);
+	if (impact < V_FLOOR || impact > V_UNIT)
+	{
+		return false;
+	}
+	if (impact == V_UNIT)
+	{
+		Tile *tile = _save->getTile(pos.toTile());
+		BattleUnit *unit = tile ? tile->getOverlappingUnit(_save) : nullptr;
+		if (!unit || unit->isOutThresholdExceed())
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+bool Projectile::canPierce() const
+{
+	return _piercePower > 0;
+}
+
+int Projectile::getPierceRemaining() const
+{
+	return std::max(0, _pierceRemaining);
+}
+
+void Projectile::spendPiercePower(int amount)
+{
+	_pierceRemaining = std::max(0, _pierceRemaining - std::max(0, amount));
+}
+
+bool Projectile::isPierceImpactProcessed(Position pos) const
+{
+	return _pierceImpactProcessed && _pierceImpactPosition == pos;
+}
+
+void Projectile::markPierceImpactProcessed(Position pos)
+{
+	_pierceImpactProcessed = true;
+	_pierceImpactPosition = pos;
 }
 
 /**

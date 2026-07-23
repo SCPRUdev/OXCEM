@@ -31,6 +31,7 @@
 #include "../Engine/Sound.h"
 #include "../Engine/RNG.h"
 #include "../Mod/Armor.h"
+#include "../Mod/MapData.h"
 #include "../Mod/RuleItem.h"
 #include "../Engine/Options.h"
 #include "AIModule.h"
@@ -504,7 +505,7 @@ bool ProjectileFlyBState::createNewProjectile()
 	else if (_action.weapon->getArcingShot(_action.type)) // special code for the "spit" trajectory
 	{
 		_projectileImpact = projectile->calculateThrow(BattleUnit::getFiringAccuracy(attack, _parent->getMod()) / accuracyDivider);
-		if (_projectileImpact != V_EMPTY && _projectileImpact != V_OUTOFBOUNDS)
+		if ((_projectileImpact != V_EMPTY && _projectileImpact != V_OUTOFBOUNDS) || projectile->canPierce())
 		{
 			// set the soldier in an aiming position
 			_unit->aim(true);
@@ -546,7 +547,7 @@ bool ProjectileFlyBState::createNewProjectile()
 		{
 			_projectileImpact = projectile->calculateTrajectory(BattleUnit::getFiringAccuracy(attack, _parent->getMod()) / accuracyDivider);
 		}
-		if (_targetVoxel != TileEngine::invalid.toVoxel() && (_projectileImpact != V_EMPTY || _action.type == BA_LAUNCH))
+		if (_targetVoxel != TileEngine::invalid.toVoxel() && (_projectileImpact != V_EMPTY || _action.type == BA_LAUNCH || projectile->canPierce()))
 		{
 			// set the soldier in an aiming position
 			_unit->aim(true);
@@ -654,14 +655,83 @@ void ProjectileFlyBState::think()
 	else
 	{
 		BattleActionAttack attack = BattleActionAttack::GetAferShoot(_action, _ammo);
+		Projectile *projectile = _parent->getMap()->getProjectile();
+		if (projectile->canPierce() && _ammo && _action.type != BA_THROW)
+		{
+			Position impactPos = projectile->getPosition();
+			VoxelType impact = _parent->getTileEngine()->voxelCheck(impactPos, _unit);
+			Tile *tile = _parent->getSave()->getTile(impactPos.toTile());
+			BattleUnit *victim = tile ? tile->getOverlappingUnit(_parent->getSave()) : nullptr;
+			if (impact >= V_FLOOR && impact <= V_UNIT && !projectile->isPierceImpactProcessed(impactPos) && !(impact == V_UNIT && (!victim || victim->isOutThresholdExceed())))
+			{
+				int pierceCost = 1;
+				if (impact == V_UNIT)
+				{
+					const float damageModifier = victim->getArmor()->getDamageModifier(_ammo->getRules()->getDamageType()->ResistType);
+					const float resistance = damageModifier > 0.0f ? std::min(1.0f, damageModifier) : 1.0f;
+					pierceCost = static_cast<int>((victim->getArmor()->getArmor(SIDE_FRONT) * _ammo->getRules()->getDamageType()->ArmorEffectiveness + victim->getHealth()) / resistance);
+				}
+				else if (tile && tile->getMapData(static_cast<TilePart>(impact)))
+				{
+					const float tileEffectiveness = _ammo->getRules()->getDamageType()->ToTile > 0.0f ? _ammo->getRules()->getDamageType()->ToTile : 1.0f;
+					pierceCost = static_cast<int>(tile->getMapData(static_cast<TilePart>(impact))->getArmor() / tileEffectiveness);
+				}
+				pierceCost = std::max(1, pierceCost);
+				_projectileImpact = impact;
+
+				if (projectile->getPierceRemaining() > pierceCost)
+				{
+					int power = 0;
+					if (_action.weapon->getRules()->getIgnoreAmmoPower())
+					{
+						power = _action.weapon->getRules()->getPowerBonus(attack) - _action.weapon->getRules()->getPowerRangeReduction(projectile->getDistance());
+					}
+					else
+					{
+						power = _ammo->getRules()->getPowerBonus(attack) - _ammo->getRules()->getPowerRangeReduction(projectile->getDistance());
+					}
+
+					_parent->getSave()->getTileEngine()->hit(attack, impactPos, std::min(projectile->getPierceRemaining(), power), _ammo->getRules()->getDamageType());
+					projectile->spendPiercePower(pierceCost);
+					projectile->markPierceImpactProcessed(impactPos);
+
+					if (impact == V_UNIT)
+					{
+						projectileHitUnit(impactPos);
+						_parent->checkForCasualties(nullptr, attack);
+						_parent->getSave()->reviveUnconsciousUnits(true);
+						_parent->convertInfected();
+					}
+					else if (Tile *explosionTile = _parent->getTileEngine()->checkForTerrainExplosions())
+					{
+						_parent->statePushNext(new ExplosionBState(_parent, projectile->getLastPositions(), BattleActionAttack{ BA_NONE, attack.attacker, }, explosionTile, false, 0, 0));
+					}
+
+					_projectileImpact = V_EMPTY;
+				}
+				else
+				{
+					projectile->spendPiercePower(pierceCost);
+				}
+			}
+			else if (impact == V_OUTOFBOUNDS)
+			{
+				_projectileImpact = _action.type == BA_LAUNCH && _action.waypoints.size() > 1 ? V_EMPTY : V_OUTOFBOUNDS;
+			}
+		}
 		if (_action.type != BA_THROW && _ammo && _ammo->getRules()->getShotgunPellets() != 0)
 		{
 			// shotgun pellets move to their terminal location instantly as fast as possible
-			_parent->getMap()->getProjectile()->skipTrajectory();
+			projectile->skipTrajectory();
 		}
-		if (!_parent->getMap()->getProjectile()->move())
+		if (!projectile->move())
 		{
 			// impact !
+			if (projectile->canPierce() && _projectileImpact == V_EMPTY)
+			{
+				VoxelType finalImpact = _parent->getTileEngine()->voxelCheck(projectile->getPosition(), _unit);
+				_projectileImpact = finalImpact >= V_FLOOR && finalImpact <= V_UNIT ? finalImpact : V_OUTOFBOUNDS;
+			}
 			if (_action.type == BA_THROW)
 			{
 				_parent->getMap()->resetCameraSmoothing();
