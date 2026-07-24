@@ -93,6 +93,8 @@ struct RuleDamageType
 	float ToItem;
 	/// Conversion from power to tile damage.
 	float ToTile;
+	/// Conversion from power to piercePower.
+	float ToPierce;
 	/// Conversion from power to stun level before applying armor protection.
 	float ToStunPre;
 	/// Conversion from power to stun level.

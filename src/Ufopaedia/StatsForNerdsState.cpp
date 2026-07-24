@@ -2075,6 +2075,7 @@ void StatsForNerdsState::initItemList()
 
 		addInteger(ss, rule->FireThreshold, "FireThreshold", ruleByResistType->FireThreshold);
 		addInteger(ss, rule->SmokeThreshold, "SmokeThreshold", ruleByResistType->SmokeThreshold);
+		addInteger(ss, itemRule->getPiercePower(), "piercePower");
 
 		addFloatAsPercentage(ss, rule->ToArmorPre, "ToArmorPre", ruleByResistType->ToArmorPre);
 		addBoolean(ss, rule->RandomArmorPre, "RandomArmorPre", ruleByResistType->RandomArmorPre);
@@ -2125,6 +2126,8 @@ void StatsForNerdsState::initItemList()
 		addBoolean(ss, rule->RandomTile, "RandomTile", ruleByResistType->RandomTile);
 		addInteger(ss, rule->TileDamageMethod, "TileDamageMethod", ruleByResistType->TileDamageMethod);
 		addInteger(ss, rule->TileDamageLimit, "TileDamageLimit", ruleByResistType->TileDamageLimit);
+
+		addFloatAsPercentage(ss, rule->ToPierce, "ToPierce", ruleByResistType->ToPierce);
 
 		endHeading();
 	}

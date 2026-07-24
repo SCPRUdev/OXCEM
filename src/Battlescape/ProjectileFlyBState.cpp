@@ -673,7 +673,7 @@ void ProjectileFlyBState::think()
 				}
 				else if (tile && tile->getMapData(static_cast<TilePart>(impact)))
 				{
-					const float tileEffectiveness = _ammo->getRules()->getDamageType()->ToTile > 0.0f ? _ammo->getRules()->getDamageType()->ToTile : 1.0f;
+					const float tileEffectiveness = _ammo->getRules()->getDamageType()->ToPierce > 0.0f ? _ammo->getRules()->getDamageType()->ToPierce : 1.0f;
 					pierceCost = static_cast<int>(tile->getMapData(static_cast<TilePart>(impact))->getArmor() / tileEffectiveness);
 				}
 				pierceCost = std::max(1, pierceCost);
