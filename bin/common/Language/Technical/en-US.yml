@@ -194,6 +194,7 @@ en-US:
   RadiusReduction: "Radius dmg reduction"
   FireThreshold: "Set-on-fire threshold"
   SmokeThreshold: "Make smoke threshold"
+  PiercePower: "Penetration Power"
 #
   ToArmorPre: "Armor pre-dmg mult."
   RandomArmorPre: "Armor pre-dmg RNG?"
@@ -227,6 +228,7 @@ en-US:
   RandomMana: "Mana dmg RNG?"
   ToTile: "Terrain dmg multiplier"
   RandomTile: "Terrain dmg RNG?"
+  ToPierce: "Penetration Ability"
   TileDamageMethod: "Tile Damage Method"
   TileDamageLimit: "Tile Damage Limit"
 #

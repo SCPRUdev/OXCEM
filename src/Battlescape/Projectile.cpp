@@ -45,7 +45,7 @@ namespace OpenXcom
  * @param targetVoxel Position the projectile is targeting.
  * @param ammo the ammo that produced this projectile, where applicable.
  */
-Projectile::Projectile(Mod *mod, SavedBattleGame *save, BattleAction action, Position origin, Position targetVoxel, BattleItem *ammo) : _mod(mod), _save(save), _action(action), _ammo(ammo), _origin(origin), _targetVoxel(targetVoxel), _position(0), _distance(0.0f), _bulletSprite(-1), _reversed(false), _vaporColor(-1), _vaporDensity(-1), _vaporProbability(5), _piercePower(0), _pierceRemaining(0), _pierceImpactProcessed(false), _pierceImpactPosition()
+Projectile::Projectile(Mod *mod, SavedBattleGame *save, BattleAction action, Position origin, Position targetVoxel, BattleItem *ammo) : _mod(mod), _save(save), _action(action), _ammo(ammo), _origin(origin), _targetVoxel(targetVoxel), _position(0), _distance(0.0f), _bulletSprite(-1), _reversed(false), _vaporColor(-1), _vaporDensity(-1), _vaporProbability(5), _piercePower(0), _pierceRemaining(0), _pierceImpactProcessed(false), _piercePausedPosition(0), _piercePauseCount(0), _pierceImpactPosition()
 {
 	// this is the number of pixels the sprite will move between frames
 	_speed = Options::battleFireSpeed;
@@ -536,12 +536,27 @@ bool Projectile::move()
 				}
 				if (!isPierceImpactProcessed(getPosition()))
 				{
+					if (_piercePausedPosition == _position)
+					{
+						++_piercePauseCount;
+					}
+					else
+					{
+						_piercePausedPosition = _position;
+						_piercePauseCount = 1;
+					}
+					if (_piercePauseCount > 8)
+					{
+						_pierceRemaining = 0;
+						return false;
+					}
 					return true;
 				}
 			}
 		}
 
 		_position++;
+		_piercePauseCount = 0;
 		if (_position == _trajectory.size())
 		{
 			_position--;

@@ -61,6 +61,8 @@ private:
 	int _vaporColor, _vaporDensity, _vaporProbability;
 	int _piercePower, _pierceRemaining;
 	bool _pierceImpactProcessed;
+	size_t _piercePausedPosition;
+	int _piercePauseCount;
 	Position _pierceImpactPosition;
 	void applyAccuracy(Position origin, Position *target, double accuracy, bool keepRange, bool extendLine);
 	bool isPierceBlockedAt(Position pos) const;

@@ -4469,20 +4469,19 @@ VoxelType TileEngine::calculatePierceLineVoxel(Position origin, Position target,
 		excludeAllUnits = true;
 	}
 
-	const int trajectoryJitter = RNG::generate(0, 1) ? -1 : 1;
 	bool hit = calculateLineHelper(origin, target,
 		[&](Position point)
 		{
 			if (storeTrajectory && trajectory)
 			{
-				trajectory->push_back(point + Position(trajectoryJitter, -trajectoryJitter, 0));
+				trajectory->push_back(point);
 			}
 
 			if (voxelCheck(point, excludeUnit, excludeAllUnits, onlyVisible, excludeAllBut) == V_OUTOFBOUNDS)
 			{
 				if (!storeTrajectory && trajectory)
 				{
-					trajectory->push_back(point + Position(trajectoryJitter, -trajectoryJitter, 0));
+					trajectory->push_back(point);
 				}
 				return true;
 			}
@@ -4494,7 +4493,7 @@ VoxelType TileEngine::calculatePierceLineVoxel(Position origin, Position target,
 			{
 				if (trajectory)
 				{
-					trajectory->push_back(point + Position(trajectoryJitter, -trajectoryJitter, 0));
+					trajectory->push_back(point);
 				}
 				return true;
 			}
