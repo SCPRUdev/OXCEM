@@ -176,7 +176,7 @@ RuleItem::RuleItem(const std::string &type, int listOrder) :
 															 _recover(true), _recoverCorpse(true), _ignoreInBaseDefense(false), _ignoreInCraftEquip(true), _liveAlien(false), _canBeSoldNormally(true), _canBeTransferredNormally(true),
 	_liveAlienPrisonType(0), _attraction(0), _flatUse(0, 1), _flatThrow(0, 1), _flatPrime(0, 1), _flatUnprime(0, 1), _arcingShot(false),
 	_experienceTrainingMode(ETM_DEFAULT), _manaExperience(0), _loadOrder(0), _listOrder(listOrder),
-	_maxRange(200), _minRange(0), _dropoff(2), _bulletSpeed(0), _explosionSpeed(0), _shotgunPellets(0), _piercePower(0), _shotgunBehaviorType(0), _shotgunSpread(100), _shotgunChoke(100),
+	_maxRange(200), _minRange(0), _dropoff(2), _bulletSpeed(0), _explosionSpeed(0), _shotgunPellets(0), _piercePower(0), _pierceChance(100), _shotgunBehaviorType(0), _shotgunSpread(100), _shotgunChoke(100),
 	_spawnUnitFaction(FACTION_NONE), _zombieUnitFaction(FACTION_HOSTILE),
 	_targetMatrix(7), _convertToCivilian(false),
 	_LOSRequired(false), _underwaterOnly(false), _landOnly(false), _psiReqiured(false), _manaRequired(false),
@@ -628,6 +628,7 @@ void RuleItem::load(const YAML::YamlNodeReader& node, Mod *mod, const ModScript&
 	{
 		reader.tryRead("piercePowerCap", _piercePower); // compatibility with the original pierce prototype
 	}
+	reader.tryRead("pierceChance", _pierceChance);
 	reader.tryRead("explosionSpeed", _explosionSpeed);
 	reader.tryRead("autoShots", _confAuto.shots);
 	reader.tryRead("shotgunPellets", _shotgunPellets);
@@ -2465,6 +2466,15 @@ int RuleItem::getPiercePower() const
 }
 
 /**
+ * Gets the chance for this projectile to pass through a valid piercing impact.
+ * @return The pierce chance.
+ */
+int RuleItem::getPierceChance() const
+{
+	return std::min(100, std::max(0, _pierceChance));
+}
+
+/**
  * Gets the speed at which this bullet explodes.
  * @return The speed.
  */
@@ -3017,6 +3027,7 @@ void RuleItem::ScriptRegister(ScriptParserBase* parser)
 
 	ri.add<&RuleItem::getPower>("getPower", "primary power, before applying unit bonuses, random rolls or other modifiers");
 	ri.add<&RuleItem::getPiercePower>("getPiercePower", "projectile penetration power for passing through terrain or units");
+	ri.add<&RuleItem::getPierceChance>("getPierceChance", "chance for a projectile to pass through a terrain or unit impact");
 	ri.add<&RuleItem::getDamageType>("getDamageType", "primary damage type");
 	ri.add<&RuleItem::getMeleePower>("getMeleePower", "secondary power (gunbutt), before applying unit bonuses, random rolls or other modifiers");
 	ri.add<&RuleItem::getMeleeType>("getMeleeDamageType", "secondary damage type (gunbutt)");

@@ -59,7 +59,7 @@ private:
 	int _bulletSprite;
 	bool _reversed;
 	int _vaporColor, _vaporDensity, _vaporProbability;
-	int _piercePower, _pierceRemaining;
+	int _piercePower, _pierceRemaining, _pierceChance;
 	bool _pierceImpactProcessed;
 	size_t _piercePausedPosition;
 	int _piercePauseCount;
@@ -82,6 +82,8 @@ public:
 	bool canPierce() const;
 	/// Gets remaining projectile pierce power.
 	int getPierceRemaining() const;
+	/// Gets projectile chance to pass through a valid piercing impact.
+	int getPierceChance() const;
 	/// Spends projectile pierce power.
 	void spendPiercePower(int amount);
 	/// Checks whether current pierce impact has already been handled.

@@ -458,7 +458,7 @@ private:
 	ExperienceTrainingMode _experienceTrainingMode;
 	int _manaExperience;
 	int _loadOrder;
-	int _listOrder, _maxRange, _minRange, _dropoff, _bulletSpeed, _explosionSpeed, _shotgunPellets, _piercePower;
+	int _listOrder, _maxRange, _minRange, _dropoff, _bulletSpeed, _explosionSpeed, _shotgunPellets, _piercePower, _pierceChance;
 	int _shotgunBehaviorType, _shotgunSpread, _shotgunChoke;
 
 	std::map<std::string, std::string> _zombieUnitByArmorMale, _zombieUnitByArmorFemale, _zombieUnitByType;
@@ -933,6 +933,8 @@ public:
 	int getBulletSpeed() const;
 	/// How much damage/penetration power does this projectile have for passing through terrain or units?
 	int getPiercePower() const;
+	/// Chance for this projectile to pass through a valid piercing impact.
+	int getPierceChance() const;
 	/// How fast does the explosion animation play?
 	int getExplosionSpeed() const;
 	/// Get name of medikit pain killer action for medikit view.

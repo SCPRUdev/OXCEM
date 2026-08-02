@@ -679,7 +679,9 @@ void ProjectileFlyBState::think()
 				pierceCost = std::max(1, pierceCost);
 				_projectileImpact = impact;
 
-				if (projectile->getPierceRemaining() > pierceCost)
+				const bool hasPiercePower = projectile->getPierceRemaining() > pierceCost;
+				const bool pierceChanceSucceeded = hasPiercePower && RNG::generate(0, 100) <= projectile->getPierceChance();
+				if (pierceChanceSucceeded)
 				{
 					int power = 0;
 					if (_action.weapon->getRules()->getIgnoreAmmoPower())
@@ -711,7 +713,7 @@ void ProjectileFlyBState::think()
 				}
 				else
 				{
-					projectile->spendPiercePower(pierceCost);
+					projectile->spendPiercePower(hasPiercePower ? projectile->getPierceRemaining() : pierceCost);
 				}
 			}
 			else if (impact == V_OUTOFBOUNDS)

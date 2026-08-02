@@ -195,6 +195,8 @@ ru:
   FireThreshold: "Порог воспламенения"
   SmokeThreshold: "Порог образ. дыма"
   PiercePower: "Проникающая способность"
+  PierceChance: "Шанс пробития"
+#
   ToArmorPre: "Множит. брони до получения урона"
   RandomArmorPre: "Разброс знач. брони до получения урона?"
   ToArmor: "Множитель урона броне"

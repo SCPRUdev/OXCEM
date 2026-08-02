@@ -1943,7 +1943,8 @@ void StatsForNerdsState::initItemList()
 	addInteger(ss, itemRule->getSnapRange(), "snapRange", 15);
 	int dropoffDefault = itemBattleType == BT_PSIAMP ? 1 : 2;
 	addInteger(ss, itemRule->getDropoff(), "dropoff", dropoffDefault);
-
+	addInteger(ss, itemRule->getPiercePower(), "piercePower");
+	addInteger(ss, itemRule->getPierceChance(), "pierceChance");
 	addRuleStatBonus(ss, *itemRule->getAccuracyMultiplierRaw(), "accuracyMultiplier");
 	addIntegerPercent(ss, itemRule->getConfigAimed()->accuracy, "accuracyAimed");
 	addIntegerPercent(ss, itemRule->getConfigAuto()->accuracy, "accuracyAuto");
@@ -2075,7 +2076,6 @@ void StatsForNerdsState::initItemList()
 
 		addInteger(ss, rule->FireThreshold, "FireThreshold", ruleByResistType->FireThreshold);
 		addInteger(ss, rule->SmokeThreshold, "SmokeThreshold", ruleByResistType->SmokeThreshold);
-		addInteger(ss, itemRule->getPiercePower(), "piercePower");
 
 		addFloatAsPercentage(ss, rule->ToArmorPre, "ToArmorPre", ruleByResistType->ToArmorPre);
 		addBoolean(ss, rule->RandomArmorPre, "RandomArmorPre", ruleByResistType->RandomArmorPre);

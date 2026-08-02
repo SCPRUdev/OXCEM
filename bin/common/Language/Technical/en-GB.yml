@@ -195,6 +195,7 @@ en-GB:
   FireThreshold: "Set-on-fire threshold"
   SmokeThreshold: "Make smoke threshold"
   PiercePower: "Penetration Power"
+  PierceChance: "Penetration Chance"
 #
   ToArmorPre: "Armor pre-dmg mult."
   RandomArmorPre: "Armor pre-dmg RNG?"
