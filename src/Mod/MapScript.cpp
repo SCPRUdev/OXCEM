@@ -329,9 +329,15 @@ void MapScript::initVerticalLevel(VerticalLevel level)
 
 	_blocks = level.levelBlocks;
 	_groups = level.levelGroups;
-	_cumulativeFrequency = std::max(_blocks.size(), _groups.size());
-	_frequenciesTemp.resize(_cumulativeFrequency, 1);
-	_maxUsesTemp.resize(_cumulativeFrequency, -1);
+	size_t selectionSize = std::max(_blocks.size(), _groups.size());
+	_frequenciesTemp = level.levelFrequencies;
+	_frequenciesTemp.resize(selectionSize, 1);
+	_maxUsesTemp = level.levelMaxUses;
+	_maxUsesTemp.resize(selectionSize, -1);
+	for (int freq : _frequenciesTemp)
+	{
+		_cumulativeFrequency += freq;
+	}
 	_blocksTemp = _blocks;
 	_groupsTemp = _groups;
 }

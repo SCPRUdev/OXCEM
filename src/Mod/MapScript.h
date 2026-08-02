@@ -54,7 +54,7 @@ enum VerticalLevelType {VLT_GROUND, VLT_MIDDLE, VLT_CEILING, VLT_EMPTY, VLT_DECO
 struct VerticalLevel
 {
 	VerticalLevelType levelType;
-	std::vector<int> levelGroups, levelBlocks;
+	std::vector<int> levelGroups, levelBlocks, levelFrequencies, levelMaxUses;
 	int levelSizeX, levelSizeY, levelSizeZ;
 	int maxRepeats;
 	std::string levelTerrain;
@@ -130,6 +130,7 @@ struct VerticalLevel
 
 		reader.tryRead("maxRepeats", maxRepeats);
 
+		size_t selectionSize = 0;
 		if (const auto& map = reader["groups"])
 		{
 			levelGroups.clear();
@@ -144,6 +145,7 @@ struct VerticalLevel
 			{
 				levelGroups.push_back(map.readVal(0));
 			}
+			selectionSize = levelGroups.size();
 		}
 
 		if (const auto& map = reader["blocks"])
@@ -160,7 +162,51 @@ struct VerticalLevel
 			{
 				levelBlocks.push_back(map.readVal(0));
 			}
+			selectionSize = levelBlocks.size();
 
+		}
+
+		levelFrequencies.resize(selectionSize, 1);
+		levelMaxUses.resize(selectionSize, -1);
+
+		if (selectionSize > 0)
+		{
+			if (const auto& map = reader["freqs"])
+			{
+				if (map.isSeq())
+				{
+					size_t entry = 0;
+					for (const auto& freq : map.children())
+					{
+						if (entry == selectionSize)
+							break;
+						levelFrequencies.at(entry) = freq.readVal(1);
+						entry++;
+					}
+				}
+				else
+				{
+					levelFrequencies.at(0) = map.readVal(1);
+				}
+			}
+			if (const auto& map = reader["maxUses"])
+			{
+				if (map.isSeq())
+				{
+					size_t entry = 0;
+					for (const auto& maxUse : map.children())
+					{
+						if (entry == selectionSize)
+							break;
+						levelMaxUses.at(entry) = maxUse.readVal(-1);
+						entry++;
+					}
+				}
+				else
+				{
+					levelMaxUses.at(0) = map.readVal(-1);
+				}
+			}
 		}
 
 		reader.tryRead("terrain", levelTerrain);
