@@ -30,7 +30,7 @@ class BattleUnit;
 
 /**
  * Represents an assignable extra bonus to soldier's stats, regen and night vision.
- * Bonus is awarded either via SoldierCommendations or via SoldierTransformations.
+ * Bonus is awarded via RuleSoldiers, SoldierCommendations or SoldierTransformations.
  */
 class RuleSoldierBonus
 {

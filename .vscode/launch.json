@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "OpenXcom Release",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/bin/Win32/Release/OpenXcom.exe",
+      "cwd": "${workspaceFolder}/bin",
+      "console": "integratedTerminal",
+      "stopAtEntry": false
+    }
+  ]
+}

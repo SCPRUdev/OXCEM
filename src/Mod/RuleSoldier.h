@@ -32,6 +32,7 @@ class SoldierNamePool;
 class StatString;
 class RuleItem;
 class RuleSkill;
+class RuleSoldierBonus;
 class Armor;
 
 /**
@@ -98,6 +99,8 @@ private:
 	int _skillIconSprite;
 	std::vector<std::string> _skillNames;
 	std::vector<const RuleSkill*> _skills;
+	std::vector<std::string> _soldierBonusNames;
+	std::vector<const RuleSoldierBonus*> _soldierBonuses;
 	ScriptValues<RuleSoldier> _scriptValues;
 
 	void addSoldierNamePool(const std::string &namFile);
@@ -146,6 +149,8 @@ public:
 	bool isSalaryDynamic() const;
 	/// Gets the list of defined skills.
 	const std::vector<const RuleSkill*> &getSkills() const;
+	/// Gets the list of soldier bonuses applied to every soldier of this type.
+	const std::vector<const RuleSoldierBonus*> &getSoldierBonuses() const;
 	/// Returns the sprite index for the skill icon sprite.
 	int getSkillIconSprite() const;
 	/// Gets the monthly salary of the soldier (for a given rank).

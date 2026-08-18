@@ -4136,6 +4136,7 @@ void StatsForNerdsState::initSoldierList()
 		addSection("{Other}", "", _white);
 		addInteger(ss, soldierRule->getGroup(), "group");
 		addInteger(ss, soldierRule->getSkills().size(), "skills*"); // size only
+		addVectorOfRulesNamed(ss, soldierRule->getSoldierBonuses(), "soldierBonuses");
 
 		addSection("{Visuals}", "", _white);
 		addRule(ss, soldierRule->getDefaultArmor(), "armorForAvatar");

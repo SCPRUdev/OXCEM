@@ -2085,6 +2085,10 @@ const std::vector<const RuleSoldierBonus*> *Soldier::getBonuses(const Mod *mod)
 			}
 		};
 
+		for (const auto* bonusRule : _rules->getSoldierBonuses())
+		{
+			addSorted(bonusRule);
+		}
 		for (const auto& bonusName : _transformationBonuses)
 		{
 			auto* bonusRule = mod->getSoldierBonus(bonusName.first, false);

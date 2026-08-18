@@ -185,6 +185,8 @@ void RuleSoldier::load(const YAML::YamlNodeReader& node, Mod *mod, const ModScri
 
 	mod->loadNames(_type, _skillNames, reader["skills"]);
 
+	mod->loadUnorderedNames(_type, _soldierBonusNames, reader["soldierBonuses"]);
+
 	if (reader["spawnedSoldier"])
 	{
 		_spawnedSoldier = reader["spawnedSoldier"].emitDescendants(YAML::YamlRootNodeReader(_spawnedSoldier, "(spawned soldier template)"));
@@ -244,6 +246,7 @@ void RuleSoldier::afterLoad(const Mod* mod)
 		}
 	}
 	mod->linkRule(_skills, _skillNames);
+	mod->linkRule(_soldierBonuses, _soldierBonusNames);
 
 	_manaMissingWoundThreshold = mod->getManaWoundThreshold();
 	_healthMissingWoundThreshold = mod->getHealthWoundThreshold();
@@ -355,6 +358,15 @@ bool RuleSoldier::isSalaryDynamic() const
 const std::vector<const RuleSkill*> &RuleSoldier::getSkills() const
 {
 	return _skills;
+}
+
+/**
+ * Gets the list of soldier bonuses applied to every soldier of this type.
+ * @return The list of soldier bonuses.
+ */
+const std::vector<const RuleSoldierBonus*> &RuleSoldier::getSoldierBonuses() const
+{
+	return _soldierBonuses;
 }
 
 /**
