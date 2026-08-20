@@ -1237,7 +1237,7 @@ void Base::syncCraftSlots()
 			}
 
 			// If housed, proceed to the next craft.
-			if (gotPlace) continue; 
+			if (gotPlace) continue;
 
 			// No suitable slot size? Look for a fall-back slot.
 			for (size_t j = 0; j < _craftSlots.size(); ++j)
@@ -1314,7 +1314,7 @@ void Base::syncCraftChanges()
  * @param Craft functionalities reference.
  * @return Number of suitable free hangar slots.
  */
-int Base::getFreeCraftSlots(const RuleCraftFunctions& craftFunc) const
+int Base::getFreeCraftSlots(const RuleCraftFunctions& craftFunc, const std::vector<const BaseFacility*>& excFacs) const
 {
 	// Reservation of incompatible slots.
 	int spacePenalty = 0;
@@ -1327,7 +1327,8 @@ int Base::getFreeCraftSlots(const RuleCraftFunctions& craftFunc) const
 
 	// Collect existing craft slots in base.
 	for (auto& craftSlot : _craftSlots)
-		virtualSlots.push_back(VirtualSlot(nullptr, craftSlot.func));
+		if (std::find(excFacs.begin(), excFacs.end(), craftSlot.parent) == excFacs.end())
+			virtualSlots.push_back(VirtualSlot(nullptr, craftSlot.func));
 
 	// Collect functionalities of existing crafts in base.
 	for (auto craftPtr : _crafts)
@@ -1430,21 +1431,40 @@ int Base::getFreeCraftSlots(const RuleCraftFunctions& craftFunc) const
 		}
 	);
 
+	// Switch to missing-only slots mode on facilities removal.
+	if (!excFacs.empty() && craftFunc == 0) freeSlots = 0;
+
 	// Apply craft slot reservation penalty.
 	freeSlots -= spacePenalty;
 
 	// Show the results of counting free compatible craft slots in debug mode.
 	if (Options::debug)
 	{
-		std::ostringstream funcStr;
-		const std::vector<std::string> funcList = _mod->getCraftFunctionNames(craftFunc);
-		for (const auto& func : funcList)
+		if (!excFacs.empty() && craftFunc == 0)
 		{
-			if (!funcStr.str().empty()) funcStr << ", ";
-			funcStr << func;
+			std::ostringstream facStr;
+			for (const auto* fac : excFacs)
+			{
+				if (!facStr.str().empty()) facStr << ", ";
+				facStr << fac->getRules()->getType();
+			}
+			Log(LOG_DEBUG) << "Base: " << _name << " requested number of missing slots on removal of: "
+				<< facStr.str().c_str() << ". Response: " << -1 * freeSlots;
 		}
-		Log(LOG_DEBUG) << "Base: " << _name << " requested number of free slots for functionalities: "
-			<< funcStr.str().c_str() << ". Response: " << freeSlots;
+		else
+		{
+			std::ostringstream funcStr;
+			const std::vector<std::string> funcList = _mod->getCraftFunctionNames(craftFunc);
+			for (const auto& func : funcList)
+			{
+				if (!funcStr.str().empty()) funcStr << ", ";
+				funcStr << func;
+			}
+			Log(LOG_DEBUG) << "Base: " << _name << " requested number of free slots for functionalities: "
+				<< funcStr.str().c_str() << ". Response: " << freeSlots;
+		}
+
+
 	}
 
 	// Return the number of suitable free hangar slots.
@@ -2661,6 +2681,7 @@ BasePlacementErrors Base::isAreaInUse(BaseAreaSubset area, const RuleBaseFacilit
 
 	int removedBuildings = 0;
 	int removedPrisonType[9] = { };
+	std::vector<const BaseFacility*> removedBuildingPtrs;
 	const auto prisonBegin = std::begin(removedPrisonType);
 	const auto prisonEnd = std::end(removedPrisonType);
 	auto prisonCurr = prisonBegin;
@@ -2671,6 +2692,7 @@ BasePlacementErrors Base::isAreaInUse(BaseAreaSubset area, const RuleBaseFacilit
 		if (BaseAreaSubset::intersection(bf->getPlacement(), area))
 		{
 			++removedBuildings;
+			removedBuildingPtrs.push_back(bf);
 
 			// removed one, check what we lose
 			removed.add(rule);
@@ -2770,6 +2792,42 @@ BasePlacementErrors Base::isAreaInUse(BaseAreaSubset area, const RuleBaseFacilit
 		return BPE_None;
 	}
 
+	std::vector<size_t> reservedCraftSlots;
+	for (size_t i = 0; i < _craftSlots.size(); ++i)
+	{
+		const CraftSlot& removedSlot = _craftSlots[i];
+		if (removedSlot.craft == nullptr || !BaseAreaSubset::intersection(removedSlot.parent->getPlacement(), area))
+		{
+			continue;
+		}
+
+		bool gotPlace = false;
+		for (size_t j = 0; j < _craftSlots.size(); ++j)
+		{
+			const CraftSlot& availableSlot = _craftSlots[j];
+			if (availableSlot.craft != nullptr || BaseAreaSubset::intersection(availableSlot.parent->getPlacement(), area))
+			{
+				continue;
+			}
+			if (std::find(reservedCraftSlots.begin(), reservedCraftSlots.end(), j) != reservedCraftSlots.end())
+			{
+				continue;
+			}
+			const RuleCraftFunctions& craftFunc = removedSlot.craft->getRules()->getRequiresCraftSlotFunc();
+			if (!availableSlot.func.none() && !craftFunc.none() && (availableSlot.func & craftFunc) == craftFunc)
+			{
+				reservedCraftSlots.push_back(j);
+				gotPlace = true;
+				break;
+			}
+		}
+
+		if (!gotPlace)
+		{
+			return BPE_Used_Hangars;
+		}
+	}
+
 	if (prisonBegin != prisonCurr)
 	{
 		int availablePrisonTypes[std::size(removedPrisonType)] = { };
@@ -2835,7 +2893,7 @@ BasePlacementErrors Base::isAreaInUse(BaseAreaSubset area, const RuleBaseFacilit
 	{
 		return BPE_Used_Workshops;
 	}
-	else if (removed.hangars > 0 && available.hangars < getUsedHangars())
+	else if (removed.hangars > 0 && getFreeCraftSlots(0, removedBuildingPtrs) < 0)
 	{
 		return BPE_Used_Hangars;
 	}
