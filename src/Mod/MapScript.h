@@ -57,11 +57,12 @@ struct VerticalLevel
 	std::vector<int> levelGroups, levelBlocks, levelFrequencies, levelMaxUses;
 	int levelSizeX, levelSizeY, levelSizeZ;
 	int maxRepeats;
+	bool oncePerPlacement;
 	std::string levelTerrain;
 
 	// Default constructor
 	VerticalLevel() :
-		levelType(VLT_MIDDLE), levelSizeX(1), levelSizeY(1), levelSizeZ(-1), maxRepeats(-1), levelTerrain("")
+		levelType(VLT_MIDDLE), levelSizeX(1), levelSizeY(1), levelSizeZ(-1), maxRepeats(-1), oncePerPlacement(false), levelTerrain("")
 	{
 
 	}
@@ -129,6 +130,7 @@ struct VerticalLevel
 		}
 
 		reader.tryRead("maxRepeats", maxRepeats);
+		reader.tryRead("oncePerPlacement", oncePerPlacement);
 
 		size_t selectionSize = 0;
 		if (const auto& map = reader["groups"])

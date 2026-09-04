@@ -3699,8 +3699,9 @@ RuleTerrain* BattlescapeGenerator::pickTerrain(std::string terrainName)
  */
 void BattlescapeGenerator::loadVerticalLevels(MapScript *command, bool repopulateLevels, MapBlock *craftMap)
 {
-	for (const auto& rect : _placedBlockRects)
+	for (size_t rectIndex = 0; rectIndex < _placedBlockRects.size(); ++rectIndex)
 	{
+		const auto& rect = _placedBlockRects[rectIndex];
 		// If we're using a command that adds multiple blocks per single execution, we need to make sure the _verticalLevels vector gets repopulated after each iteration.
 		if (repopulateLevels)
 		{
@@ -3803,6 +3804,12 @@ void BattlescapeGenerator::loadVerticalLevels(MapScript *command, bool repopulat
 			// Since our goal is filling the space between the bottom and the max height, we repeat the list of levels until we're done
 			if (currentLevel == _verticalLevels.end())
 				currentLevel = _verticalLevels.begin();
+
+			if (currentLevel->oncePerPlacement && rectIndex != 0)
+			{
+				currentLevel = _verticalLevels.erase(currentLevel);
+				continue;
+			}
 
 			// Determine what we're doing with the current level
 			RuleTerrain *levelTerrain = terrain;
