@@ -20,6 +20,8 @@
 #include "MapScript.h"
 #include "../Engine/RNG.h"
 #include "../Mod/Mod.h"
+#include "../Engine/Exception.h"
+#include <limits>
 #include "../fmath.h"
 
 namespace OpenXcom
@@ -102,6 +104,41 @@ void AlienDeployment::load(const YAML::YamlNodeReader& node, Mod *mod)
 	reader.tryRead("markCiviliansAsVIP", _markCiviliansAsVIP);
 	reader.tryRead("civilianSpawnNodeRank", _civilianSpawnNodeRank);
 	mod->loadUnorderedNamesToInt(_type, _civiliansByType, reader["civiliansByType"]);
+	if (const auto& groups = reader["civilianGroups"])
+	{
+		if (!groups.isSeq())
+			throw Exception(_type + ": civilianGroups must be a sequence");
+		_civilianGroups.clear();
+		for (const auto& entry : groups.children())
+		{
+			if (!entry.isMap())
+				throw Exception(_type + ": civilianGroups entries must be maps");
+			CivilianGroup group;
+			entry.tryRead("minQty", group.minQty);
+			entry.tryRead("maxQty", group.maxQty);
+			entry.tryRead("spawnChance", group.spawnChance);
+			if (group.minQty < 0 || group.maxQty < group.minQty || group.maxQty == std::numeric_limits<int>::max())
+				throw Exception(_type + ": civilianGroups requires 0 <= minQty <= maxQty < INT_MAX");
+			if (group.spawnChance < 0 || group.spawnChance > 100)
+				throw Exception(_type + ": civilianGroups spawnChance must be between 0 and 100");
+			const auto& types = entry["types"];
+			if (!types || !types.isMap())
+				throw Exception(_type + ": civilianGroups types must be a map of unit names to weights");
+			int totalWeight = 0;
+			for (const auto& option : types.children())
+			{
+				const auto name = option.readKey<std::string>();
+				const int weight = option.readVal<int>();
+				if (name.empty() || weight < 0 || weight > std::numeric_limits<int>::max() - totalWeight)
+					throw Exception(_type + ": civilianGroups requires nonempty unit names and nonnegative weights with total <= INT_MAX");
+				totalWeight += weight;
+				group.types.set(name, weight);
+			}
+			if (group.types.empty())
+				throw Exception(_type + ": civilianGroups types must contain a positive weight");
+			_civilianGroups.push_back(group);
+		}
+	}
 	reader.tryRead("terrains", _terrains);
 	reader.tryRead("shade", _shade);
 	reader.tryRead("minShade", _minShade);
@@ -279,8 +316,17 @@ int AlienDeployment::getBughuntMinTurn() const
 }
 
 /**
- * Gets a pointer to the data.
- * @return Pointer to the data.
+ * Resolves civilian unit references after all rulesets have loaded.
+ */
+void AlienDeployment::afterLoad(const Mod *mod)
+{
+	for (const auto& group : _civilianGroups)
+		for (const auto& option : group.types.getChoices())
+			mod->getUnit(option.first, true);
+}
+
+/**
+ * Gets a pointer to the deployment data.
  */
 const std::vector<DeploymentData>* AlienDeployment::getDeploymentData() const
 {

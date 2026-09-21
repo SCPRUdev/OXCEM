@@ -43,6 +43,14 @@ struct DeploymentData
 	std::vector<ItemSet> itemSets, extraRandomItems;
 	DeploymentData() : alienRank(0), lowQty(0), medQty(0), highQty(0), dQty(0), extraQty(0), percentageOutsideUfo(0) { }
 };
+struct CivilianGroup
+{
+	int minQty = 0;
+	int maxQty = 0;
+	int spawnChance = 100;
+	WeightedOptions types;
+};
+
 struct BriefingData
 {
 	int palette, textOffset;
@@ -107,6 +115,7 @@ private:
 	bool _markCiviliansAsVIP;
 	int _civilianSpawnNodeRank;
 	std::map<std::string, int> _civiliansByType;
+	std::vector<CivilianGroup> _civilianGroups;
 	std::vector<std::string> _terrains, _music;
 	int _shade, _minShade, _maxShade;
 	std::string _nextStage, _race, _mapScript;
@@ -146,6 +155,7 @@ public:
 	~AlienDeployment();
 	/// Loads Alien Deployment data from YAML.
 	void load(const YAML::YamlNodeReader& node, Mod *mod);
+	void afterLoad(const Mod *mod);
 	/// Gets the Alien Deployment's type.
 	const std::string& getType() const;
 	/// Gets the custom UFO name to use for the dummy/blank 'addUFO' mapscript command.
@@ -202,6 +212,7 @@ public:
 	int getCivilianSpawnNodeRank() const { return _civilianSpawnNodeRank; }
 	/// Gets civilians by type.
 	const std::map<std::string, int> &getCiviliansByType() const;
+	const std::vector<CivilianGroup> &getCivilianGroups() const { return _civilianGroups; }
 	/// Gets the terrain for battlescape generation.
 	std::vector<std::string> getTerrains() const;
 	/// Gets the shade level for battlescape generation.

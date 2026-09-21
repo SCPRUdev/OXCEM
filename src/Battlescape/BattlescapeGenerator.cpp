@@ -725,16 +725,11 @@ void BattlescapeGenerator::nextStage()
 	}
 
 	int civilianSpawnNodeRank = ruleDeploy->getCivilianSpawnNodeRank();
-	bool markCiviliansAsVIP = ruleDeploy->getMarkCiviliansAsVIP();
 
 	// Special case: deploy civilians before aliens
 	if (civilianSpawnNodeRank > 0)
 	{
-		deployCivilians(markCiviliansAsVIP, civilianSpawnNodeRank, ruleDeploy->getCivilians());
-		for (auto& pair : ruleDeploy->getCiviliansByType())
-		{
-			deployCivilians(markCiviliansAsVIP, civilianSpawnNodeRank, pair.second, true, pair.first);
-		}
+		deployCivilians(ruleDeploy);
 	}
 
 	size_t unitCount = _save->getUnits()->size();
@@ -749,11 +744,7 @@ void BattlescapeGenerator::nextStage()
 	// Normal case: deploy civilians after aliens
 	if (civilianSpawnNodeRank == 0)
 	{
-		deployCivilians(markCiviliansAsVIP, civilianSpawnNodeRank, ruleDeploy->getCivilians());
-		for (auto& pair : ruleDeploy->getCiviliansByType())
-		{
-			deployCivilians(markCiviliansAsVIP, civilianSpawnNodeRank, pair.second, true, pair.first);
-		}
+		deployCivilians(ruleDeploy);
 	}
 
 	_save->setAborted(false);
@@ -900,16 +891,11 @@ void BattlescapeGenerator::run()
 	deployXCOM(isPreview ? nullptr : startingCondition, isPreview ? nullptr : enviro);
 
 	int civilianSpawnNodeRank = ruleDeploy->getCivilianSpawnNodeRank();
-	bool markCiviliansAsVIP = ruleDeploy->getMarkCiviliansAsVIP();
 
 	// Special case: deploy civilians before aliens
 	if (!isPreview && civilianSpawnNodeRank > 0)
 	{
-		deployCivilians(markCiviliansAsVIP, civilianSpawnNodeRank, ruleDeploy->getCivilians());
-		for (auto& pair : ruleDeploy->getCiviliansByType())
-		{
-			deployCivilians(markCiviliansAsVIP, civilianSpawnNodeRank, pair.second, true, pair.first);
-		}
+		deployCivilians(ruleDeploy);
 	}
 
 	size_t unitCount = _save->getUnits()->size();
@@ -927,11 +913,7 @@ void BattlescapeGenerator::run()
 	// Normal case: deploy civilians after aliens
 	if (!isPreview && civilianSpawnNodeRank == 0)
 	{
-		deployCivilians(markCiviliansAsVIP, civilianSpawnNodeRank, ruleDeploy->getCivilians());
-		for (auto& pair : ruleDeploy->getCiviliansByType())
-		{
-			deployCivilians(markCiviliansAsVIP, civilianSpawnNodeRank, pair.second, true, pair.first);
-		}
+		deployCivilians(ruleDeploy);
 	}
 
 	if (!isPreview && _craftInventoryTile && ruleDeploy->getNoWeaponPile())
@@ -2622,6 +2604,38 @@ void BattlescapeGenerator::explodeOtherJunk()
 	}
 }
 
+void BattlescapeGenerator::deployCivilians(const AlienDeployment *deployment)
+{
+	const bool markAsVIP = deployment->getMarkCiviliansAsVIP();
+	const int nodeRank = deployment->getCivilianSpawnNodeRank();
+	deployCivilians(markAsVIP, nodeRank, deployment->getCivilians());
+	for (const auto& pair : deployment->getCiviliansByType())
+		deployCivilians(markAsVIP, nodeRank, pair.second, true, pair.first);
+	for (const auto& group : deployment->getCivilianGroups())
+	{
+		if (group.spawnChance == 0 || group.maxQty == 0)
+			continue;
+		if (group.spawnChance < 100 && !RNG::percent(group.spawnChance))
+			continue;
+		const int number = RNG::generate(group.minQty, group.maxQty);
+		for (int i = 0; i < number; ++i)
+			deployCivilian(_mod->getUnit(group.types.choose(), true), markAsVIP, nodeRank);
+	}
+}
+
+void BattlescapeGenerator::deployCivilian(Unit *rule, bool markAsVIP, int nodeRank)
+{
+	BattleUnit* civ = addCivilian(rule, nodeRank);
+	if (civ)
+	{
+		if (markAsVIP) civ->markAsVIP();
+		size_t itemLevel = (size_t)(_game->getMod()->getAlienItemLevels().at(_save->getAlienItemLevel()).at(RNG::generate(0,9)));
+		// Built in weapons: civilians may have levelled item lists with randomized distribution
+		// following the same basic rules as the alien item levels.
+		_save->initUnit(civ, itemLevel);
+	}
+}
+
 /**
  * Spawns civilians on a terror mission.
  * @param max Maximum number of civilians to spawn.
@@ -2650,15 +2664,7 @@ void BattlescapeGenerator::deployCivilians(bool markAsVIP, int nodeRank, int max
 					size_t pick = RNG::generate(0, _terrain->getCivilianTypes().size() - 1);
 					rule = _game->getMod()->getUnit(_terrain->getCivilianTypes().at(pick), true);
 				}
-				BattleUnit* civ = addCivilian(rule, nodeRank);
-				if (civ)
-				{
-					if (markAsVIP) civ->markAsVIP();
-					size_t itemLevel = (size_t)(_game->getMod()->getAlienItemLevels().at(_save->getAlienItemLevel()).at(RNG::generate(0,9)));
-					// Built in weapons: civilians may have levelled item lists with randomized distribution
-					// following the same basic rules as the alien item levels.
-					_save->initUnit(civ, itemLevel);
-				}
+				deployCivilian(rule, markAsVIP, nodeRank);
 			}
 		}
 	}
