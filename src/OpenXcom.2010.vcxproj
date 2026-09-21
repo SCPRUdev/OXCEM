@@ -703,6 +703,7 @@
     <ClCompile Include="Savegame\SaveConverter.cpp" />
     <ClCompile Include="Savegame\SavedBattleGame.cpp" />
     <ClCompile Include="Savegame\SavedGame.cpp" />
+    <ClCompile Include="Savegame\BaseRegions.cpp" />
     <ClCompile Include="Savegame\SerializationHelper.cpp" />
     <ClCompile Include="Savegame\Soldier.cpp" />
     <ClCompile Include="Savegame\Node.cpp">
@@ -1202,6 +1203,7 @@
     <ClInclude Include="Savegame\SaveConverter.h" />
     <ClInclude Include="Savegame\SavedBattleGame.h" />
     <ClInclude Include="Savegame\SavedGame.h" />
+    <ClInclude Include="Savegame\BaseRegions.h" />
     <ClInclude Include="Savegame\SerializationHelper.h" />
     <ClInclude Include="Savegame\Soldier.h" />
     <ClInclude Include="Savegame\Node.h" />

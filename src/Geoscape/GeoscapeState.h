@@ -58,6 +58,7 @@ private:
 	bool _pause, _pauseActive, _zoomInEffectDone, _zoomOutEffectDone;
 	Text *_txtDebug;
 	ComboBox *_cbxRegion, *_cbxZone, *_cbxArea, *_cbxCountry;
+	std::vector<std::string> _debugRegionIds;
 	Text *_txtSlacking;
 	Text *_txtTraining;
 	std::list<State*> _popups;
@@ -73,6 +74,7 @@ private:
 	void cbxZoneChange(Action *action);
 	void cbxAreaChange(Action *action);
 	void updateZoneInfo();
+	void refreshDebugRegions();
 	void cbxCountryChange(Action *action);
 
 public:

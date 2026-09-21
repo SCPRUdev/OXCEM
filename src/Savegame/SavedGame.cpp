@@ -47,6 +47,7 @@
 #include "ItemContainer.h"
 #include "Soldier.h"
 #include "Transfer.h"
+#include "../Mod/RuleEvent.h"
 #include "../Mod/RuleManufacture.h"
 #include "../Mod/RuleBaseFacility.h"
 #include "../Mod/RuleCraft.h"
@@ -135,6 +136,7 @@ SavedGame::SavedGame() :
  */
 SavedGame::~SavedGame()
 {
+
 	delete _time;
 	for (auto* country : _countries)
 	{
@@ -462,6 +464,10 @@ void SavedGame::load(const std::string &filename, Mod *mod, Language *lang)
 		}
 	}
 
+	// Restore campaign geometry before missions resolve their region names.
+	loadBaseRegions(reader["baseRegions"], *mod);
+	loadEscapes(reader["escapes"]);
+
 	// Alien bases must be loaded before alien missions
 	for (const auto& alienBase : reader["alienBases"].children())
 	{
@@ -629,6 +635,8 @@ void SavedGame::load(const std::string &filename, Mod *mod, Language *lang)
 		b->load(base, this, false);
 		_bases.push_back(b);
 	}
+
+	syncBaseRegions(*mod); // also upgrades old saves which have no base-region IDs
 
 	// Finish loading crafts after bases (more specifically after all crafts) are loaded, because of references between crafts (i.e. friendly escorts)
 	for (size_t i = 0; i < _bases.size(); ++i)
@@ -834,6 +842,8 @@ void SavedGame::save(const std::string &filename, Mod *mod) const
 
 	saveVector(writer, _countries, "countries", mod->getScriptGlobal());
 	saveVector(writer, _regions, "regions");
+	if (_baseRegionState.hasRegions()) saveBaseRegions(writer["baseRegions"]);
+	if (!getEscapes().empty()) saveEscapes(writer["escapes"]);
 	saveVector(writer, _bases, "bases");
 	saveVector(writer, _waypoints, "waypoints");
 	saveVector(writer, _missionSites, "missionSites");
@@ -2293,6 +2303,27 @@ bool SavedGame::isItemObtained(const std::string &itemType, const Mod* mod) cons
 }
 
 /**
+ * Returns the quantity of an item that an inverted Geoscape event may remove.
+ * Items on craft currently out on a mission are not available.
+ */
+int SavedGame::getItemAvailableForRemoval(const RuleItem *item) const
+{
+	int available = 0;
+	for (auto* xbase : _bases)
+	{
+		available += xbase->getStorageItems()->getItem(item);
+		for (auto* xcraft : *xbase->getCrafts())
+		{
+			if (xcraft->getStatus() != "STR_OUT")
+			{
+				available += xcraft->getItems()->getItem(item);
+			}
+		}
+	}
+	return available;
+}
+
+/**
  * Returns if a certain facility has been built in any base.
  * @param facilityType facility ID.
  * @return Whether it's been built or not. If false, the facility has not been built in any base.
@@ -3357,9 +3388,14 @@ bool SavedGame::spawnEvent(const RuleEvent* eventRules)
 /**
  * Checks if an instant Geoscape event can be spawned.
  */
-bool SavedGame::canSpawnInstantEvent(const RuleEvent* eventRules)
+bool SavedGame::canSpawnInstantEvent(const RuleEvent* eventRules, const Mod *mod)
 {
 	if (!eventRules)
+	{
+		return false;
+	}
+	if (eventRules->getInvert() && !eventRules->getRandomMultiItemList().empty() &&
+		eventRules->getAvailableRandomMultiItemList(this, mod).empty())
 	{
 		return false;
 	}

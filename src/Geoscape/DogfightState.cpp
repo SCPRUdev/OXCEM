@@ -1810,6 +1810,9 @@ void DogfightState::update()
 					{
 						// Attack on UFO's mission region
 						targetRegion = _ufo->getMission()->getRegion();
+						// Retaliation uses its own geographical-region trajectories, not a local template's zones.
+						if (_game->getSavedGame()->getMissionRegion(targetRegion, *_game->getMod(), true)->isBaseRegion())
+							targetRegion = _game->getSavedGame()->locateRegion(*_ufo)->getRules()->getType();
 					}
 					else
 					{

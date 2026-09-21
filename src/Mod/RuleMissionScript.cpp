@@ -69,6 +69,9 @@ void RuleMissionScript::load(const YAML::YamlNodeReader& node)
 	}
 
 	reader.tryRead("varName", _varName);
+	reader.tryRead("baseRegionTemplate", _baseRegionTemplate);
+	reader.tryRead("escapeId", _escapeId);
+	reader.tryRead("escapeMinMonths", _escapeMinMonths);
 	reader.tryRead("firstMonth", _firstMonth);
 	reader.tryRead("lastMonth", _lastMonth);
 	reader.tryRead("label", _label);
@@ -104,6 +107,7 @@ void RuleMissionScript::load(const YAML::YamlNodeReader& node)
 		nw->load(monthWeights);
 		_raceWeights.push_back(std::make_pair(monthWeights.readKey<size_t>(0), nw));
 	}
+	if (reader["regionWeights"]) _regionWeightsSpecified = true;
 	for (const auto& monthWeights : reader["regionWeights"].children())
 	{
 		WeightedOptions* nw = new WeightedOptions();
@@ -113,6 +117,7 @@ void RuleMissionScript::load(const YAML::YamlNodeReader& node)
 
 	reader.tryRead("researchTriggers", _researchTriggers);
 	reader.tryRead("itemTriggers", _itemTriggers);
+	reader.tryRead("anyItemTriggers", _anyItemTriggers);
 	reader.tryRead("facilityTriggers", _facilityTriggers);
 	reader.tryRead("baseFunctionTriggers", _baseFunctionTriggers);
 	reader.tryRead("soldierTypeTriggers", _soldierTypeTriggers);
@@ -229,6 +234,28 @@ bool RuleMissionScript::hasRaceWeights() const
 }
 
 /**
+ * Reject incompatible region selection modes after all ruleset overrides are loaded.
+ */
+void RuleMissionScript::validateBaseRegionSettings() const
+{
+	if (_baseRegionTemplate.empty()) return;
+	std::string conflicts;
+	if (_regionWeightsSpecified || hasRegionWeights()) conflicts = "regionWeights";
+	if (_targetBaseOdds != 0)
+	{
+		if (!conflicts.empty()) conflicts += " and ";
+		conflicts += "targetBaseOdds: " + std::to_string(_targetBaseOdds);
+	}
+	if (!conflicts.empty())
+		throw Exception("Mission script '" + _type + "': baseRegionTemplate '" + _baseRegionTemplate
+			+ "' cannot be combined with " + conflicts
+			+ ". Remove regionWeights (including inherited definitions) and remove targetBaseOdds or set it to 0. Dynamic base regions choose the mission region themselves.");
+	if (!hasMissionWeights())
+		throw Exception("Mission script '" + _type + "': baseRegionTemplate '" + _baseRegionTemplate
+			+ "' requires explicit missionWeights. Add the mission types and their weights.");
+}
+
+/**
  * @return if this command uses a weighted distribution to pick a mission.
  */
 bool RuleMissionScript::hasMissionWeights() const
@@ -258,6 +285,14 @@ const std::map<std::string, bool> &RuleMissionScript::getResearchTriggers() cons
 const std::map<std::string, bool> &RuleMissionScript::getItemTriggers() const
 {
 	return _itemTriggers;
+}
+
+/**
+ * @return a list of item triggers where at least one must match.
+ */
+const std::map<std::string, bool> &RuleMissionScript::getAnyItemTriggers() const
+{
+	return _anyItemTriggers;
 }
 
 /**

@@ -172,6 +172,8 @@ private:
 
 	std::map<std::string, RuleCountry*> _countries, _extraGlobeLabels;
 	std::map<std::string, RuleRegion*> _regions;
+	std::map<std::string, RuleRegion*> _baseRegionTemplates;
+	std::vector<std::string> _baseRegionTemplatesIndex;
 	std::map<std::string, RuleBaseFacility*> _facilities;
 	std::map<std::string, RuleCraft*> _crafts;
 	std::map<std::string, RuleCraftWeapon*> _craftWeapons;
@@ -711,6 +713,7 @@ public:
 	const std::vector<std::string> &getExtraGlobeLabelsList() const;
 	/// Gets the ruleset for a region type.
 	RuleRegion *getRegion(const std::string &id, bool error = false) const;
+	const std::map<std::string, RuleRegion*>& getBaseRegionTemplates() const { return _baseRegionTemplates; }
 	/// Gets the available regions.
 	const std::vector<std::string> &getRegionsList() const;
 	/// Gets the ruleset for a facility type.

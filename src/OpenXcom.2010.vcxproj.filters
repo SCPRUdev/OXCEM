@@ -149,6 +149,9 @@
     <ClCompile Include="Savegame\SavedGame.cpp">
       <Filter>Savegame</Filter>
     </ClCompile>
+    <ClCompile Include="Savegame\BaseRegions.cpp">
+      <Filter>Savegame</Filter>
+    </ClCompile>
     <ClCompile Include="Savegame\Soldier.cpp">
       <Filter>Savegame</Filter>
     </ClCompile>
@@ -1383,6 +1386,9 @@
       <Filter>Menu</Filter>
     </ClInclude>
     <ClInclude Include="Savegame\SavedGame.h">
+      <Filter>Savegame</Filter>
+    </ClInclude>
+    <ClInclude Include="Savegame\BaseRegions.h">
       <Filter>Savegame</Filter>
     </ClInclude>
     <ClInclude Include="Savegame\Soldier.h">

@@ -184,6 +184,7 @@ RuleItem::RuleItem(const std::string &type, int listOrder) :
 	_vaporColorSurface(-1), _vaporDensitySurface(0), _vaporProbabilitySurface(15),
 	_kneelBonus(-1), _oneHandedPenalty(-1),
 	_monthlySalary(0), _monthlyMaintenance(0),
+	_monthlyScore(0), _monthlyTension(0),
 	_sprayWaypoints(0)
 {
 	_accuracyMulti.setFiring();
@@ -672,6 +673,8 @@ void RuleItem::load(const YAML::YamlNodeReader& node, Mod *mod, const ModScript&
 	reader.tryRead("oneHandedPenalty", _oneHandedPenalty);
 	reader.tryRead("monthlySalary", _monthlySalary);
 	reader.tryRead("monthlyMaintenance", _monthlyMaintenance);
+	reader.tryRead("monthlyScore", _monthlyScore);
+	reader.tryRead("monthlyTension", _monthlyTension);
 	reader.tryRead("sprayWaypoints", _sprayWaypoints);
 
 	_damageBonus.load(_type, reader, parsers.bonusStatsScripts.get<ModScript::DamageBonusStatBonus>());

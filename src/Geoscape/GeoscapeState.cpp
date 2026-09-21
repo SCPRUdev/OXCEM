@@ -209,11 +209,11 @@ GeoscapeState::GeoscapeState() : _pause(false), _pauseActive(false), _zoomInEffe
 	_dogfightStartTimer = new Timer(Options::dogfightSpeed);
 	_dogfightTimer = new Timer(Options::dogfightSpeed);
 
-	_txtDebug = new Text(254, 32, 0, 0);
-	_cbxRegion = new ComboBox(this, 150, 16, 0, 36);
-	_cbxZone = new ComboBox(this, 48, 16, 154, 36);
-	_cbxArea = new ComboBox(this, 48, 16, 206, 36);
-	_cbxCountry = new ComboBox(this, 150, 16, 0, 36);
+	_txtDebug = new Text(254, 56, 0, 0);
+	_cbxRegion = new ComboBox(this, 150, 16, 0, 60);
+	_cbxZone = new ComboBox(this, 48, 16, 154, 60);
+	_cbxArea = new ComboBox(this, 48, 16, 206, 60);
+	_cbxCountry = new ComboBox(this, 150, 16, 0, 60);
 
 	// Set palette
 	setInterface("geoscape");
@@ -454,13 +454,7 @@ GeoscapeState::GeoscapeState() : _pause(false), _pauseActive(false), _zoomInEffe
 
 	// debug helpers
 	{
-		std::vector<std::string> regionList;
-		regionList.push_back("All regions");
-		for (auto* r : *_game->getSavedGame()->getRegions())
-		{
-			regionList.push_back(r->getRules()->getType());
-		}
-		_cbxRegion->setOptions(regionList, false);
+		refreshDebugRegions();
 		_cbxRegion->setVisible(false);
 		_cbxRegion->onChange((ActionHandler)&GeoscapeState::cbxRegionChange);
 
@@ -726,6 +720,9 @@ void GeoscapeState::handle(Action *action)
 void GeoscapeState::init()
 {
 	State::init();
+	_game->getSavedGame()->syncBaseRegions(*_game->getMod());
+	refreshDebugRegions();
+	if (_game->getSavedGame()->getDebugMode() && _game->getSavedGame()->debugType >= 1) updateZoneInfo();
 	timeDisplay();
 	updateResearchLockedUi();
 	updateSlackingIndicator();
@@ -1873,7 +1870,7 @@ bool GeoscapeState::processMissionSite(MissionSite *site)
 
 		// Generate a despawn event
 		auto* eventRules = _game->getMod()->getEvent(site->getDeployment()->chooseDespawnEvent());
-		bool canSpawn = _game->getSavedGame()->canSpawnInstantEvent(eventRules);
+		bool canSpawn = _game->getSavedGame()->canSpawnInstantEvent(eventRules, _game->getMod());
 		if (canSpawn)
 		{
 			timerReset();
@@ -1917,6 +1914,7 @@ bool GeoscapeState::processMissionSite(MissionSite *site)
  */
 void GeoscapeState::time30Minutes()
 {
+	_game->getSavedGame()->updateEscapes(*_game->getMod());
 	// Decrease mission countdowns
 	for (auto* am : _game->getSavedGame()->getAlienMissions())
 	{
@@ -2094,7 +2092,10 @@ void GeoscapeState::time30Minutes()
 					interrupted = true;
 				}
 			}
-			if (!interrupted)
+			bool noItemsToRemove = ge->getRules().getInvert() &&
+				!ge->getRules().getRandomMultiItemList().empty() &&
+				ge->getRules().getAvailableRandomMultiItemList(_game->getSavedGame(), _game->getMod()).empty();
+			if (!interrupted && !noItemsToRemove)
 			{
 				timerReset();
 				popup(new GeoscapeEventState(ge->getRules()));
@@ -2915,6 +2916,43 @@ void GeoscapeState::time1Day()
  */
 void GeoscapeState::time1Month()
 {
+	// Credit owned inventory to the ending month before monthly histories advance.
+	int itemScore = 0;
+	int itemTension = 0;
+	auto countItem = [&](const RuleItem* item, int quantity)
+	{
+		itemScore += item->getMonthlyScore() * quantity;
+		itemTension += item->getMonthlyTension() * quantity;
+	};
+	auto countInventory = [&](ItemContainer* inventory)
+	{
+		for (const auto& item : *inventory->getContents())
+		{
+			countItem(item.first, item.second);
+		}
+	};
+	for (auto* base : *_game->getSavedGame()->getBases())
+	{
+		countInventory(base->getStorageItems());
+		for (auto* craft : *base->getCrafts())
+		{
+			countInventory(craft->getItems());
+		}
+		for (auto* transfer : *base->getTransfers())
+		{
+			if (transfer->getType() == TRANSFER_ITEM)
+			{
+				countItem(transfer->getItems(), transfer->getQuantity());
+			}
+			else if (transfer->getType() == TRANSFER_CRAFT)
+			{
+				countInventory(transfer->getCraft()->getItems());
+			}
+		}
+	}
+	_game->getSavedGame()->addResearchScore(itemScore);
+	_game->getSavedGame()->addResearchTension(itemTension);
+
 	_game->getSavedGame()->addMonth();
 
 	// Determine alien mission for this month.
@@ -3238,6 +3276,8 @@ void GeoscapeState::btnDogfightExperienceClick(Action *)
  */
 void GeoscapeState::btnDebugClick(Action *)
 {
+	_game->getSavedGame()->syncBaseRegions(*_game->getMod());
+	refreshDebugRegions();
 	_game->getSavedGame()->setDebugMode();
 	if (_game->getSavedGame()->getDebugMode())
 	{
@@ -3246,11 +3286,14 @@ void GeoscapeState::btnDebugClick(Action *)
 	else
 	{
 		_txtDebug->setText("");
+		_game->getSavedGame()->debugType = (_game->getSavedGame()->debugType + 1) % 3;
 	}
 	_cbxRegion->setVisible(_game->getSavedGame()->getDebugMode() && _game->getSavedGame()->debugType >= 1);
 	_cbxZone->setVisible(_game->getSavedGame()->getDebugMode() && _game->getSavedGame()->debugType == 2);
 	_cbxArea->setVisible(_game->getSavedGame()->getDebugMode() && _game->getSavedGame()->debugType == 2);
 	_cbxCountry->setVisible(_game->getSavedGame()->getDebugMode() && _game->getSavedGame()->debugType == 0);
+	if (_game->getSavedGame()->getDebugMode() && _game->getSavedGame()->debugType >= 1) updateZoneInfo();
+	_globe->draw();
 }
 
 /**
@@ -3765,6 +3808,7 @@ void GeoscapeState::handleBaseDefense(Base *base, Ufo *ufo)
  */
 void GeoscapeState::determineAlienMissions(bool isNewMonth, const RuleEvent* eventRules)
 {
+	_game->getSavedGame()->updateEscapes(*_game->getMod());
 	SavedGame *save = _game->getSavedGame();
 	AlienStrategy &strategy = save->getAlienStrategy();
 	Mod *mod = _game->getMod();
@@ -3873,6 +3917,18 @@ void GeoscapeState::determineAlienMissions(bool isNewMonth, const RuleEvent* eve
 						triggerHappy = (save->isItemObtained(triggerItem.first, mod) == triggerItem.second);
 						if (!triggerHappy)
 							break;
+					}
+				}
+				if (triggerHappy && !arcScript->getAnyItemTriggers().empty())
+				{
+					triggerHappy = false;
+					for (auto& triggerItem : arcScript->getAnyItemTriggers())
+					{
+						if (save->isItemObtained(triggerItem.first, mod) == triggerItem.second)
+						{
+							triggerHappy = true;
+							break;
+						}
 					}
 				}
 				if (triggerHappy)
@@ -4100,6 +4156,18 @@ void GeoscapeState::determineAlienMissions(bool isNewMonth, const RuleEvent* eve
 						break;
 				}
 			}
+			if (triggerHappy && !command->getAnyItemTriggers().empty())
+			{
+				triggerHappy = false;
+				for (auto& triggerItem : command->getAnyItemTriggers())
+				{
+					if (save->isItemObtained(triggerItem.first, mod) == triggerItem.second)
+					{
+						triggerHappy = true;
+						break;
+					}
+				}
+			}
 			if (triggerHappy)
 			{
 				// facility requirements
@@ -4299,6 +4367,18 @@ void GeoscapeState::determineAlienMissions(bool isNewMonth, const RuleEvent* eve
 						triggerHappy = (save->isItemObtained(triggerItem.first, mod) == triggerItem.second);
 						if (!triggerHappy)
 							break;
+					}
+				}
+				if (triggerHappy && !eventScript->getAnyItemTriggers().empty())
+				{
+					triggerHappy = false;
+					for (auto& triggerItem : eventScript->getAnyItemTriggers())
+					{
+						if (save->isItemObtained(triggerItem.first, mod) == triggerItem.second)
+						{
+							triggerHappy = true;
+							break;
+						}
 					}
 				}
 				if (triggerHappy)
@@ -4538,6 +4618,20 @@ bool GeoscapeState::processCommand(RuleMissionScript *command)
 	std::string missionRace;
 	int targetZoneNumber = -1;
 	int targetAreaNumber = -1;
+	const bool useBaseRegion = !command->getBaseRegionTemplate().empty();
+	std::vector<std::string> baseRegions;
+	if (useBaseRegion)
+	{
+		if (!command->hasMissionWeights() || command->hasRegionWeights())
+			throw Exception("baseRegionTemplate requires missionWeights and cannot be combined with regionWeights: " + command->getType());
+		if (!command->getEscapeId().empty())
+		{
+			std::string id = save->getEscapeRegion(command->getEscapeId(), command->getBaseRegionTemplate(), command->getEscapeMinMonths(), *mod);
+			if (!id.empty()) baseRegions.push_back(id);
+		}
+		else baseRegions = save->getBaseRegions(command->getBaseRegionTemplate(), *mod);
+		if (baseRegions.empty()) return false;
+	}
 
 	// terror mission type deal? this will require special handling.
 	if (command->getSiteType())
@@ -4563,11 +4657,16 @@ bool GeoscapeState::processCommand(RuleMissionScript *command)
 		for (int h = 0; h != maxMissions; ++h)
 		{
 			// we'll use the regions listed in the command, if any, otherwise check all the regions in the ruleset looking for matches
-			std::vector<std::string> regions = (command->hasRegionWeights()) ? command->getRegions(month) : mod->getRegionsList();
+			std::vector<std::string> regions = useBaseRegion ? baseRegions :
+				((command->hasRegionWeights()) ? command->getRegions(month) : mod->getRegionsList());
 			missionRules = mod->getAlienMission(missionType, true);
 			targetZoneNumber = missionRules->getSpawnZone();
+			if (useBaseRegion)
+				for (const auto& id : regions)
+					if (targetZoneNumber < 0 || (size_t)targetZoneNumber >= save->getMissionRegion(id, *mod, true)->getMissionZones().size())
+						throw Exception("Invalid spawnZone for baseRegionTemplate in mission script: " + command->getType());
 
-			if (targetBase)
+			if (targetBase && !useBaseRegion)
 			{
 				std::vector<std::string> regionsToKeep;
 				//if we're targetting a base, we ignore regions that don't contain bases, simple.
@@ -4650,7 +4749,7 @@ bool GeoscapeState::processCommand(RuleMissionScript *command)
 				}
 				// ok, we found a region that doesn't have our mission in it, let's see if it has an appropriate landing zone.
 				// if it does, let's add it to our list of valid areas, taking note of which mission area(s) matched.
-				RuleRegion *region = mod->getRegion((*regionNameIt), true);
+				RuleRegion *region = save->getMissionRegion((*regionNameIt), *mod, true);
 				if ((int)(region->getMissionZones().size()) > targetZoneNumber)
 				{
 					if (targetZoneNumber < 0)
@@ -4661,6 +4760,15 @@ bool GeoscapeState::processCommand(RuleMissionScript *command)
 					int counter = 0;
 					for (const auto& area : areas)
 					{
+						if (useBaseRegion)
+						{
+							std::pair<double, double> point;
+							if (strategy.validMissionLocation(command->getVarName(), region->getType(), counter)
+								&& region->sampleBaseRegionPoint(*_globe, targetZoneNumber, counter, point, region->isLandOnly()))
+								validAreas.push_back(std::make_pair(region->getType(), counter));
+							++counter;
+							continue;
+						}
 						// validMissionLocation checks to make sure this city/whatever hasn't been used by the last n missions using this varName
 						// this prevents the same location getting hit more than once every n missions.
 						if (area.isPoint() && strategy.validMissionLocation(command->getVarName(), region->getType(), counter))
@@ -4702,7 +4810,14 @@ bool GeoscapeState::processCommand(RuleMissionScript *command)
 		// everything went according to plan: we can now pick a city/whatever to attack.
 		while (targetAreaNumber == -1)
 		{
-			if (command->hasRegionWeights())
+			if (useBaseRegion)
+			{
+				std::vector<std::string> candidates;
+				for (const auto& entry : validAreas)
+					if (candidates.empty() || candidates.back() != entry.first) candidates.push_back(entry.first);
+				targetRegion = candidates[RNG::generate(0, candidates.size() - 1)];
+			}
+			else if (command->hasRegionWeights())
 			{
 				// if we have a weighted region list, we know we have at least one valid choice for this mission
 				targetRegion = command->generate(month, GEN_REGION);
@@ -4744,6 +4859,18 @@ bool GeoscapeState::processCommand(RuleMissionScript *command)
 		}
 		// now add that city to the list of sites we've hit, store the array, etc.
 		strategy.addMissionLocation(command->getVarName(), targetRegion, targetAreaNumber, command->getRepeatAvoidance());
+	}
+	else if (useBaseRegion)
+	{
+		missionType = command->generate(month, GEN_MISSION);
+		baseRegions.erase(std::remove_if(baseRegions.begin(), baseRegions.end(), [&](const std::string& id)
+		{
+			for (auto* mission : save->getAlienMissions())
+				if (mission->getRegion() == id && mission->getRules().getType() == missionType) return true;
+			return false;
+		}), baseRegions.end());
+		if (baseRegions.empty()) return false;
+		targetRegion = baseRegions[RNG::generate(0, baseRegions.size() - 1)];
 	}
 	else if (RNG::percent(command->getTargetBaseOdds()))
 	{
@@ -4840,7 +4967,7 @@ bool GeoscapeState::processCommand(RuleMissionScript *command)
 
 	// we're bound to end up with typos, so let's throw an exception instead of simply returning false
 	// that way, the modder can fix their mistake
-	if (mod->getRegion(targetRegion) == 0)
+	if (save->getMissionRegion(targetRegion, *mod) == 0)
 	{
 		throw Exception("Error processing mission script named: " + command->getType() + ", region named: " + targetRegion + " is not defined");
 	}
@@ -4873,6 +5000,20 @@ bool GeoscapeState::processCommand(RuleMissionScript *command)
 	{
 		throw Exception("Error processing mission script named: " + command->getType() + ", mission type: " + missionType + " is not defined");
 	}
+	if (useBaseRegion)
+	{
+		const auto& zones = save->getMissionRegion(targetRegion, *mod, true)->getMissionZones();
+		for (size_t w = 0; w < missionRules->getWaveCount(); ++w)
+		{
+			const auto& wave = missionRules->getWave(w);
+			const auto* trajectory = mod->getUfoTrajectory(wave.trajectory, true);
+			// Direct sites use spawnZone; actual UFOs use every trajectory waypoint.
+			if (mod->getUfo(wave.ufoType))
+				for (size_t wp = 0; wp < trajectory->getWaypointCount(); ++wp)
+					if (trajectory->getZone(wp) >= zones.size())
+						throw Exception("Trajectory references a missing base-region zone: " + wave.trajectory + "; script: " + command->getType());
+		}
+	}
 
 	// do i really need to comment this? shouldn't it be obvious what's happening here?
 	if (!command->hasRaceWeights())
@@ -4900,13 +5041,14 @@ bool GeoscapeState::processCommand(RuleMissionScript *command)
 	AlienMission *mission = new AlienMission(*missionRules);
 	mission->setRace(missionRace);
 	mission->setId(_game->getSavedGame()->getId("ALIEN_MISSIONS"));
-	mission->setRegion(targetRegion, *_game->getMod());
+	mission->setRegion(targetRegion, *_game->getMod(), save);
 	mission->setMissionSiteZoneArea(targetAreaNumber);
 	strategy.addMissionRun(command->getVarName());
+	mission->setEscapeId(command->getEscapeId());
 	mission->start(*_game, *_globe, command->getDelay());
 	_game->getSavedGame()->getAlienMissions().push_back(mission);
 	// if this flag is set, we want to delete it from the table so it won't show up again until the schedule resets.
-	if (command->getUseTable())
+	if (command->getUseTable() && !useBaseRegion)
 	{
 		strategy.removeMission(targetRegion, missionType);
 	}
@@ -5222,40 +5364,96 @@ void GeoscapeState::updateSlackingIndicator()
 	}
 }
 
+void GeoscapeState::refreshDebugRegions()
+{
+	auto* save = _game->getSavedGame();
+	std::vector<std::string> labels{"All regions"};
+	_debugRegionIds = {""};
+	size_t selected = 0;
+	for (auto* rule : save->getDebugRegions())
+	{
+		std::string label = rule->getType();
+		if (rule->isBaseRegion())
+		{
+			label = "Base #" + std::to_string(rule->getBaseRegionId()) + " (retained)";
+			for (auto* base : *save->getBases())
+				if (base->getBaseRegionId() == rule->getBaseRegionId())
+					label = base->getName() + " #" + std::to_string(rule->getBaseRegionId());
+			label += " / " + rule->getBaseRegionTemplate();
+		}
+		_debugRegionIds.push_back(rule->getType());
+		labels.push_back(label);
+		if (save->debugRegion == rule->getType()) selected = labels.size() - 1;
+	}
+	if (!selected) save->debugRegion.clear();
+	_cbxRegion->setOptions(labels, false);
+	_cbxRegion->setSelected(selected);
+	_cbxRegion->setVisible(save->getDebugMode() && save->debugType >= 1);
+	_cbxZone->setVisible(save->getDebugMode() && save->debugType == 2);
+	_cbxArea->setVisible(save->getDebugMode() && save->debugType == 2);
+	_cbxCountry->setVisible(save->getDebugMode() && save->debugType == 0);
+}
+
 void GeoscapeState::cbxRegionChange(Action *)
 {
-	int index = _cbxRegion->getSelected();
-	if (index < 1)
-	{
-		_game->getSavedGame()->debugRegion = nullptr;
-	}
-	else
-	{
-		_game->getSavedGame()->debugRegion = (*_game->getSavedGame()->getRegions())[index-1];
-	}
+	size_t index = _cbxRegion->getSelected();
+	auto* save = _game->getSavedGame();
+	save->debugRegion = index < _debugRegionIds.size() ? _debugRegionIds[index] : "";
+	save->debugZone = save->debugArea = 0;
 	updateZoneInfo();
+	_globe->draw();
 }
 
 void GeoscapeState::cbxZoneChange(Action *)
 {
 	_game->getSavedGame()->debugZone = _cbxZone->getSelected();
+	_game->getSavedGame()->debugArea = 0;
 	updateZoneInfo();
+	_globe->draw();
 }
 
 void GeoscapeState::cbxAreaChange(Action *)
 {
 	_game->getSavedGame()->debugArea = _cbxArea->getSelected();
 	updateZoneInfo();
+	_globe->draw();
 }
 
 void GeoscapeState::updateZoneInfo()
 {
 	std::ostringstream ss;
 	auto* save = _game->getSavedGame();
-	if (save->debugRegion)
+	auto* regionRule = save->debugRegion.empty() ? nullptr : save->getMissionRegion(save->debugRegion, *_game->getMod());
+	size_t zones = 0, areas = 0;
+	for (auto* rule : save->getDebugRegions())
 	{
-		auto* regionRule = save->debugRegion->getRules();
-		if (save->debugType >= 1)
+		if (regionRule && rule != regionRule) continue;
+		zones = std::max(zones, rule->getMissionZones().size());
+		for (size_t z = 0; z < rule->getMissionZones().size(); ++z)
+			if (!save->debugZone || save->debugZone == z + 1)
+				areas = std::max(areas, rule->getMissionZones()[z].areas.size());
+	}
+	if (save->debugZone > zones) save->debugZone = 0;
+	if (save->debugArea > areas) save->debugArea = 0;
+	std::vector<std::string> zoneLabels{"All zones"}, areaLabels{"All areas"};
+	for (size_t z = 0; z < zones; ++z) zoneLabels.push_back(std::to_string(z));
+	for (size_t a = 0; a < areas; ++a) areaLabels.push_back(std::to_string(a));
+	_cbxZone->setOptions(zoneLabels, false);
+	_cbxZone->setSelected(save->debugZone);
+	_cbxArea->setOptions(areaLabels, false);
+	_cbxArea->setSelected(save->debugArea);
+	if (!regionRule) ss << (save->debugType == 1 ? "REGION AREAS: all regions" : "MISSION ZONES: all regions");
+	if (regionRule)
+	{
+		if (regionRule->isBaseRegion())
+		{
+			ss << "base #" << regionRule->getBaseRegionId();
+			for (auto* base : *save->getBases())
+				if (base->getBaseRegionId() == regionRule->getBaseRegionId()) ss << ": " << base->getName();
+			ss << "\n" << regionRule->getBaseRegionTemplate() << "\n";
+			ss << "max km: " << regionRule->getMaxDistanceKm() << "; landOnly: " << regionRule->isLandOnly() << "\n";
+		}
+		else if (save->debugType >= 1)
 		{
 			ss << "region: " << tr(regionRule->getType()) << " [" << regionRule->getType() << "]" << std::endl;
 		}
@@ -5264,7 +5462,9 @@ void GeoscapeState::updateZoneInfo()
 			if (save->debugZone > 0 && save->debugZone <= regionRule->getMissionZones().size())
 			{
 				auto& selectedZone = regionRule->getMissionZones().at(save->debugZone - 1);
-				ss << "zone: " << save->debugZone - 1 << std::endl;
+				ss << "zone: " << save->debugZone - 1;
+				if (regionRule->isCityMissionZone(save->debugZone - 1)) ss << "; cities: " << selectedZone.areas.size();
+				ss << std::endl;
 				if (save->debugArea > 0 && save->debugArea <= selectedZone.areas.size())
 				{
 					auto& selectedArea = selectedZone.areas.at(save->debugArea - 1);

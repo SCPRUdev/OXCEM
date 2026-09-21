@@ -139,7 +139,7 @@ GeoscapeEventState::GeoscapeEventState(const RuleEvent& eventRule) : _eventRule(
  */
 void GeoscapeEventState::eventLogic()
 {
-	if (!_eventRule.getAdhocMissionScriptTags().empty())
+	if (_eventRule.getEscapeId().empty() && !_eventRule.getAdhocMissionScriptTags().empty())
 	{
 		auto* geo = _game->getGeoscapeState();
 		geo->determineAlienMissions(false, &_eventRule);
@@ -149,6 +149,8 @@ void GeoscapeEventState::eventLogic()
 	Base *hq = save->getBases()->front();
 	const Mod *mod = _game->getMod();
 	const RuleEvent &rule = _eventRule;
+	Base* escapeBase = nullptr;
+	save->updateEscapes(*mod);
 
 	RuleRegion *regionRule = nullptr;
 	Country *country = nullptr;
@@ -425,14 +427,25 @@ void GeoscapeEventState::eventLogic()
 
 	if (!rule.getRandomMultiItemList().empty())
 	{
-		size_t pickItem = RNG::generate(0, rule.getRandomMultiItemList().size() - 1);
-		auto& sublist = rule.getRandomMultiItemList().at(pickItem);
-		for (auto& pair : sublist)
+		std::vector<size_t> candidates;
+		if (rule.getInvert())
 		{
-			const RuleItem* itemRule = mod->getItem(pair.first, true);
-			if (itemRule)
+			candidates = rule.getAvailableRandomMultiItemList(save, mod);
+		}
+
+		if (!rule.getInvert() || !candidates.empty())
+		{
+			size_t pickItem = rule.getInvert()
+				? candidates.at(RNG::generate(0, candidates.size() - 1))
+				: RNG::generate(0, rule.getRandomMultiItemList().size() - 1);
+			auto& sublist = rule.getRandomMultiItemList().at(pickItem);
+			for (auto& pair : sublist)
 			{
-				itemsToTransfer[itemRule->getType()] += pair.second;
+				const RuleItem* itemRule = mod->getItem(pair.first, true);
+				if (itemRule)
+				{
+					itemsToTransfer[itemRule->getType()] += pair.second;
+				}
 			}
 		}
 	}
@@ -459,6 +472,7 @@ void GeoscapeEventState::eventLogic()
 				{
 					int toRemove = std::min(bQty, ti.second);
 					xbase->getStorageItems()->removeItem(r, toRemove);
+					if (toRemove > 0 && ti.first == rule.getEscapeItem()) escapeBase = xbase;
 					ti.second -= toRemove;
 					removed += toRemove;
 				}
@@ -475,6 +489,7 @@ void GeoscapeEventState::eventLogic()
 						{
 							int toRemove = std::min(cQty, ti.second);
 							xcraft->getItems()->removeItem(r, toRemove);
+							if (toRemove > 0 && ti.first == rule.getEscapeItem()) escapeBase = xbase;
 							ti.second -= toRemove;
 							removed += toRemove;
 						}
@@ -592,6 +607,14 @@ void GeoscapeEventState::eventLogic()
 				_bonusResearchName = bonusLookup->getName();
 			}
 		}
+	}
+
+	// Side effects:
+	if (escapeBase && !rule.getEscapeId().empty())
+	{
+		save->registerEscape(rule, *escapeBase, *mod);
+		if (!rule.getAdhocMissionScriptTags().empty())
+			_game->getGeoscapeState()->determineAlienMissions(false, &rule);
 	}
 
 	// Side effects:

@@ -28,6 +28,7 @@ namespace OpenXcom
 
 class Mod;
 class RuleResearch;
+class SavedGame;
 
 /**
  * Represents a custom Geoscape event.
@@ -56,6 +57,9 @@ private:
 	std::string _interruptResearch;
 	int _timer, _timerRandom;
 	bool _invert;
+	std::string _escapeId, _escapeItem, _escapeRegionTemplate, _escapeLostEvent;
+	std::vector<std::string> _escapeRecoveryItems;
+	int _escapeSearchMonths = 3;
 	std::map<std::string, int> _everyMultiSoldierList;
 	std::vector<std::map<std::string, int> > _randomMultiSoldierList;
 public:
@@ -113,6 +117,8 @@ public:
 	const std::vector<std::string> &getRandomItemList() const { return _randomItemList; }
 	/// Gets a list of lists of items; one of them is randomly selected and transferred to HQ stores when this event pops up.
 	const std::vector<std::map<std::string, int> > &getRandomMultiItemList() const { return _randomMultiItemList; }
+	/// Gets indexes of random item lists that contain at least one item available for removal.
+	std::vector<size_t> getAvailableRandomMultiItemList(const SavedGame *save, const Mod *mod) const;
 	/// Gets a list of items; one of them is randomly selected (considering weights) and transferred to HQ stores when this event pops up.
 	const WeightedOptions &getWeightedItemList() const { return _weightedItemList; }
 	/// Gets a list of research projects; one of them will be randomly discovered when this event pops up.
@@ -127,6 +133,12 @@ public:
 	int getTimerRandom() const { return _timerRandom; }
 	/// Should the event remove items instead of adding them?
 	bool getInvert() const { return _invert; }
+	const std::string& getEscapeId() const { return _escapeId; }
+	const std::string& getEscapeItem() const { return _escapeItem; }
+	const std::string& getEscapeRegionTemplate() const { return _escapeRegionTemplate; }
+	const std::string& getEscapeLostEvent() const { return _escapeLostEvent; }
+	const std::vector<std::string>& getEscapeRecoveryItems() const { return _escapeRecoveryItems; }
+	int getEscapeSearchMonths() const { return _escapeSearchMonths; }
 
 	/// Gets a list of soldiers; they are all transferred to HQ when this event pops up.
 	const std::map<std::string, int> &getEveryMultiSoldierList() const { return _everyMultiSoldierList; }

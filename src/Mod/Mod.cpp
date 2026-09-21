@@ -647,6 +647,7 @@ Mod::Mod() :
  */
 Mod::~Mod()
 {
+	for (auto& pair : _baseRegionTemplates) delete pair.second;
 	delete _muteMusic;
 	delete _muteSound;
 	delete _globe;
@@ -2812,6 +2813,14 @@ void Mod::loadMod(const std::vector<FileMap::FileRecord> &rulesetFiles, ModScrip
 	for (auto& pair : map)
 	{
 		RuleMissionScript *rule = pair.second;
+		if (!rule->getEscapeId().empty() && (rule->getBaseRegionTemplate().empty() || rule->getEscapeMinMonths() < 0))
+			throw Exception("escapeId requires baseRegionTemplate and nonnegative escapeMinMonths: " + pair.first);
+		if (!rule->getBaseRegionTemplate().empty())
+		{
+			rule->validateBaseRegionSettings();
+			if (!_baseRegionTemplates.count(rule->getBaseRegionTemplate()))
+				throw Exception("Unknown baseRegionTemplate in mission script: " + pair.first);
+		}
 		std::set<std::string> missions = rule->getAllMissionTypes();
 		if (!missions.empty())
 		{
@@ -2838,6 +2847,7 @@ void Mod::loadMod(const std::vector<FileMap::FileRecord> &rulesetFiles, ModScrip
 	// the logical place for it, given that this sanitation is required as a result of moving all terror mission handling
 	// into missionScripting behaviour. apologies to all the modders that will be getting errors and need to adjust their
 	// rulesets, but this will save you weird errors down the line.
+	for (auto& pair : _baseRegionTemplates) pair.second->validateBaseTemplate();
 	for (auto& pair : _regions)
 	{
 		// bleh, make copies, const correctness kinda screwed me here.
@@ -3114,6 +3124,11 @@ void Mod::loadFile(const FileMap::FileRecord &filerec, ModScript &parsers)
 		{
 			rule->load(ruleReader, this);
 		}
+	}
+	for (const auto& ruleReader : iterateRules("baseRegionTemplates", "type"))
+	{
+		RuleRegion* rule = loadRule(ruleReader, &_baseRegionTemplates, &_baseRegionTemplatesIndex);
+		if (rule) rule->load(ruleReader, this);
 	}
 	for (const auto& ruleReader : iterateRules("facilities", "type"))
 	{

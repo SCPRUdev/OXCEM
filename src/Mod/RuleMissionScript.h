@@ -33,6 +33,10 @@ class RuleMissionScript
 {
 private:
 	std::string _type, _varName;
+	std::string _baseRegionTemplate;
+	bool _regionWeightsSpecified = false;
+	std::string _escapeId;
+	int _escapeMinMonths = 0;
 	int _firstMonth, _lastMonth, _label, _executionOdds, _targetBaseOdds, _minDifficulty, _maxDifficulty, _maxRuns, _avoidRepeats, _delay, _randomDelay;
 	int _minScore, _maxScore;
 	int _minTension, _maxTension;
@@ -45,6 +49,7 @@ private:
 
 	std::map<std::string, bool> _researchTriggers;
 	std::map<std::string, bool> _itemTriggers;
+	std::map<std::string, bool> _anyItemTriggers;
 	std::map<std::string, bool> _facilityTriggers;
 	std::map<std::string, bool> _baseFunctionTriggers;
 	std::map<std::string, bool> _soldierTypeTriggers;
@@ -57,6 +62,10 @@ private:
 public:
 	/// Creates a new mission script.
 	RuleMissionScript(const std::string &type);
+	const std::string& getBaseRegionTemplate() const { return _baseRegionTemplate; }
+	void validateBaseRegionSettings() const;
+	const std::string& getEscapeId() const { return _escapeId; }
+	int getEscapeMinMonths() const { return _escapeMinMonths; }
 	/// Deletes a mission script.
 	~RuleMissionScript();
 	/// Loads a mission script from yaml.
@@ -136,6 +145,8 @@ public:
 	const std::map<std::string, bool> &getResearchTriggers() const;
 	/// Gets the item triggers that may apply to this command.
 	const std::map<std::string, bool> &getItemTriggers() const;
+	/// Gets item triggers where at least one condition must match.
+	const std::map<std::string, bool> &getAnyItemTriggers() const;
 	/// Gets the facility triggers that may apply to this command.
 	const std::map<std::string, bool> &getFacilityTriggers() const;
 	/// Gets the base function that may apply to this command.

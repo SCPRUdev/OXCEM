@@ -49,6 +49,7 @@ void MissionSite::load(const YAML::YamlNodeReader& reader)
 {
 	Target::load(reader);
 	reader.tryRead("texture", _texture);
+	reader.tryRead("escapeId", _escapeId);
 	reader.tryRead("secondsRemaining", _secondsRemaining);
 	reader.tryRead("race", _race);
 	reader.tryRead("inBattlescape", _inBattlescape);
@@ -72,6 +73,7 @@ void MissionSite::save(YAML::YamlNodeWriter writer) const
 	if (_missionCustomDeploy)
 		writer.write("missionCustomDeploy", _missionCustomDeploy->getType());
 	writer.write("texture", _texture);
+	if (!_escapeId.empty()) writer.write("escapeId", _escapeId);
 	if (_secondsRemaining)
 		writer.write("secondsRemaining", _secondsRemaining);
 	writer.write("race", _race);

@@ -1394,7 +1394,7 @@ void Globe::drawDetail()
 {
 	_countries->clear();
 
-	if (!Options::globeDetail || _detailLevel == DETAIL_NONE)
+	if ((!Options::globeDetail || _detailLevel == DETAIL_NONE) && !_game->getSavedGame()->getDebugMode())
 		return;
 
 	// Draw the country borders
@@ -1546,12 +1546,10 @@ void Globe::drawDetail()
 		delete label;
 	}
 
-	int& debugType = _game->getSavedGame()->debugType;
-	static bool canSwitchDebugType = false;
+	const int debugType = _game->getSavedGame()->debugType;
 	if (_game->getSavedGame()->getDebugMode())
 	{
 		int color;
-		canSwitchDebugType = true;
 		if (debugType == 0)
 		{
 			color = 0;
@@ -1578,18 +1576,18 @@ void Globe::drawDetail()
 		else if (debugType == 1)
 		{
 			color = 0;
-			for (auto* region : *_game->getSavedGame()->getRegions())
+			for (auto* region : _game->getSavedGame()->getDebugRegions())
 			{
-				if (_game->getSavedGame()->debugRegion && _game->getSavedGame()->debugRegion != region)
+				if (!_game->getSavedGame()->debugRegion.empty() && _game->getSavedGame()->debugRegion != region->getType())
 					continue;
 
 				color += 10;
-				for (size_t k = 0; k != region->getRules()->getLatMax().size(); ++k)
+				for (size_t k = 0; k != region->getLatMax().size(); ++k)
 				{
-					double lon2 = region->getRules()->getLonMax().at(k);
-					double lon1 = region->getRules()->getLonMin().at(k);
-					double lat2 = region->getRules()->getLatMax().at(k);
-					double lat1 = region->getRules()->getLatMin().at(k);
+					double lon2 = region->getLonMax().at(k);
+					double lon1 = region->getLonMin().at(k);
+					double lat2 = region->getLatMax().at(k);
+					double lat1 = region->getLatMin().at(k);
 
 					drawVHLine(_countries, lon1, lat1, lon2, lat1, color);
 					drawVHLine(_countries, lon1, lat2, lon2, lat2, color);
@@ -1600,14 +1598,14 @@ void Globe::drawDetail()
 		}
 		else if (debugType == 2)
 		{
-			for (auto* region : *_game->getSavedGame()->getRegions())
+			for (auto* region : _game->getSavedGame()->getDebugRegions())
 			{
-				if (_game->getSavedGame()->debugRegion && _game->getSavedGame()->debugRegion != region)
+				if (!_game->getSavedGame()->debugRegion.empty() && _game->getSavedGame()->debugRegion != region->getType())
 					continue;
 
 				color = -1;
 				size_t zoneNumber = 0;
-				for (const auto& missionZone : region->getRules()->getMissionZones())
+				for (const auto& missionZone : region->getMissionZones())
 				{
 					++zoneNumber;
 					if (_game->getSavedGame()->debugZone > 0 && _game->getSavedGame()->debugZone != zoneNumber)
@@ -1630,18 +1628,78 @@ void Globe::drawDetail()
 						drawVHLine(_countries, lon1, lat2, lon2, lat2, color);
 						drawVHLine(_countries, lon1, lat1, lon1, lat2, color);
 						drawVHLine(_countries, lon2, lat1, lon2, lat2, color);
+						// Deterministic preview: never consume the campaign's random generator while drawing.
+						if (region->isBaseRegion() && _game->getSavedGame()->debugRegion == region->getType())
+						{
+							const int nx = AreSame(lon1, lon2) ? 1 : 17;
+							const int ny = AreSame(lat1, lat2) ? 1 : 17;
+							for (int ix = 0; ix < nx; ++ix)
+								for (int iy = 0; iy < ny; ++iy)
+								{
+									double lon = lon1 + (lon2 - lon1) * ix / std::max(1, nx - 1);
+									double lat = lat1 + (lat2 - lat1) * iy / std::max(1, ny - 1);
+									lon = std::fmod(lon, 2 * M_PI);
+									if (lon < 0) lon += 2 * M_PI;
+									if (pointBack(lon, lat) || !region->allowsBaseRegionPoint(lon, lat)
+										|| (region->isLandOnly() && !insideLand(lon, lat))) continue;
+									Sint16 x, y;
+									polarToCart(lon, lat, &x, &y);
+									_countries->drawRect(x - 1, y - 1, 2, 2, color);
+								}
+						}
 					}
 				}
 			}
 		}
-	}
-	else
-	{
-		if (canSwitchDebugType)
+		if (debugType >= 1)
 		{
-			++debugType;
-			if (debugType > 2) debugType = 0;
-			canSwitchDebugType = false;
+			for (auto* region : _game->getSavedGame()->getDebugRegions())
+			{
+				if (!region->isBaseRegion() || (!_game->getSavedGame()->debugRegion.empty()
+					&& _game->getSavedGame()->debugRegion != region->getType())) continue;
+				if (debugType == 2 && _game->getSavedGame()->debugRegion == region->getType())
+					for (size_t a = 0; a < region->getLonMin().size(); ++a)
+					{
+						double lon1 = region->getLonMin()[a], lon2 = region->getLonMax()[a];
+						double lat1 = region->getLatMin()[a], lat2 = region->getLatMax()[a];
+						drawVHLine(_countries, lon1, lat1, lon2, lat1, BASE_LABEL_COLOR);
+						drawVHLine(_countries, lon1, lat2, lon2, lat2, BASE_LABEL_COLOR);
+						drawVHLine(_countries, lon1, lat1, lon1, lat2, BASE_LABEL_COLOR);
+						drawVHLine(_countries, lon2, lat1, lon2, lat2, BASE_LABEL_COLOR);
+					}
+				double lon = region->getBaseRegionLongitude(), lat = region->getBaseRegionLatitude();
+				if (!pointBack(lon, lat))
+				{
+					Sint16 x, y;
+					polarToCart(lon, lat, &x, &y);
+					_countries->drawLine(x - 3, y, x + 3, y, BASE_LABEL_COLOR);
+					_countries->drawLine(x, y - 3, x, y + 3, BASE_LABEL_COLOR);
+				}
+				double radius = region->getMaxDistanceKm() / 6371.0;
+				if (radius <= 0 || radius >= M_PI) continue;
+				double previousLon = 0, previousLat = 0;
+				for (int i = 0; i <= 128; ++i)
+				{
+					double azimuth = 2 * M_PI * i / 128;
+					double sine = std::sin(lat) * std::cos(radius) + std::cos(lat) * std::sin(radius) * std::cos(azimuth);
+					double circleLat = std::asin(std::max(-1.0, std::min(1.0, sine)));
+					double circleLon = lon + std::atan2(std::sin(azimuth) * std::sin(radius) * std::cos(lat),
+						std::cos(radius) - std::sin(lat) * std::sin(circleLat));
+					if (std::abs(std::cos(lat)) < 1e-10)
+					{
+						circleLat = lat > 0 ? M_PI / 2 - radius : -M_PI / 2 + radius;
+						circleLon = lon + azimuth;
+					}
+					if (i && !pointBack(previousLon, previousLat) && !pointBack(circleLon, circleLat))
+					{
+						Sint16 x1, y1, x2, y2;
+						polarToCart(previousLon, previousLat, &x1, &y1);
+						polarToCart(circleLon, circleLat, &x2, &y2);
+						_countries->drawLine(x1, y1, x2, y2, BASE_LABEL_COLOR);
+					}
+					previousLon = circleLon; previousLat = circleLat;
+				}
+			}
 		}
 	}
 }

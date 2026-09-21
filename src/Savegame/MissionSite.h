@@ -40,10 +40,13 @@ private:
 	int _texture;
 	size_t _secondsRemaining;
 	std::string _race, _city;
+	std::string _escapeId;
 	bool _inBattlescape, _detected;
 	Ufo* _ufo;
 	int _ufoUniqueId;
 public:
+	const std::string& getEscapeId() const { return _escapeId; }
+	void setEscapeId(const std::string& id) { _escapeId = id; }
 	/// Creates a mission site.
 	MissionSite(const RuleAlienMission *rules, const AlienDeployment *deployment, const AlienDeployment *alienWeaponDeploy);
 	/// Cleans up the mission site.

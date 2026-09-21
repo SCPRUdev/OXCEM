@@ -24,6 +24,7 @@
 #include <time.h>
 #include <stdint.h>
 #include "GameTime.h"
+#include "BaseRegions.h"
 #include "../Mod/RuleAlienMission.h"
 #include "../Mod/RuleEvent.h"
 #include "../Savegame/Craft.h"
@@ -41,6 +42,7 @@ class GameTime;
 class Country;
 class Base;
 class Region;
+class RuleRegion;
 class Ufo;
 class Waypoint;
 class SavedBattleGame;
@@ -82,6 +84,8 @@ enum SaveType { SAVE_DEFAULT, SAVE_INSTA, SAVE_QUICK, SAVE_AUTO_GEOSCAPE, SAVE_A
  */
 enum GameEnding { END_NONE, END_WIN, END_LOSE };
 
+
+
 /**
  * Container for savegame info displayed on listings.
  */
@@ -105,7 +109,7 @@ class SavedGame
 {
 public:
 	Country *debugCountry = nullptr;
-	Region *debugRegion = nullptr;
+	std::string debugRegion;
 	int debugType = 0;
 	size_t debugZone = 0;
 	size_t debugArea = 0;
@@ -134,6 +138,8 @@ private:
 	std::map<std::string, int> _ids;
 	std::vector<Country*> _countries;
 	std::vector<Region*> _regions;
+	BaseRegions _baseRegionState{*this};
+
 	std::vector<Base*> _bases;
 	std::vector<Ufo*> _ufos;
 	std::vector<Waypoint*> _waypoints;
@@ -183,6 +189,20 @@ public:
 	static const std::string AUTOSAVE_GEOSCAPE, AUTOSAVE_BATTLESCAPE, QUICKSAVE;
 	/// Creates a new saved game.
 	SavedGame();
+	/// Campaign-local mission geometry, deliberately excluded from geographical activity regions.
+	RuleRegion* getMissionRegion(const std::string& id, const Mod& mod, bool error = false) const { return _baseRegionState.getMissionRegion(id, mod, error); }
+	void syncBaseRegions(const Mod& mod) { _baseRegionState.syncBaseRegions(mod); }
+	void registerEscape(const RuleEvent& rule, Base& base, const Mod& mod) { _baseRegionState.registerEscape(rule, base, mod); }
+	void updateEscapes(const Mod& mod) { _baseRegionState.updateEscapes(mod); }
+	bool hasEscapeMission(const std::string& id) const { return _baseRegionState.hasEscapeMission(id); }
+	std::string getEscapeRegion(const std::string& id, const std::string& templateId, int minMonths, const Mod& mod) { return _baseRegionState.getEscapeRegion(id, templateId, minMonths, mod); }
+	const std::map<std::string, EscapeContext>& getEscapes() const { return _baseRegionState.getEscapes(); }
+	void loadEscapes(const YAML::YamlNodeReader& reader) { _baseRegionState.loadEscapes(reader); }
+	void saveEscapes(YAML::YamlNodeWriter writer) const { _baseRegionState.saveEscapes(writer); }
+	void loadBaseRegions(const YAML::YamlNodeReader& reader, Mod& mod) { _baseRegionState.loadBaseRegions(reader, mod); }
+	void saveBaseRegions(YAML::YamlNodeWriter writer) const { _baseRegionState.saveBaseRegions(writer); }
+	std::vector<RuleRegion*> getDebugRegions() const { return _baseRegionState.getDebugRegions(); }
+	std::vector<std::string> getBaseRegions(const std::string& templateId, const Mod& mod) { return _baseRegionState.getBaseRegions(templateId, mod); }
 	/// Cleans up the saved game.
 	~SavedGame();
 	/// Sanitizes a mod name in a save.
@@ -351,6 +371,8 @@ public:
 	bool isResearched(const std::vector<const RuleResearch *> &research, bool considerDebugMode = true, bool skipDisabled = false) const;
 	/// Gets if a certain item has been obtained.
 	bool isItemObtained(const std::string &itemType, const Mod* mod) const;
+	/// Gets the quantity of an item that an inverted Geoscape event may remove.
+	int getItemAvailableForRemoval(const RuleItem *item) const;
 	/// Gets if a certain facility has been built.
 	bool isFacilityBuilt(const std::string &facilityType) const;
 	/// Gets if a certain base function has been enabled.
@@ -536,7 +558,7 @@ public:
 	/// Spawn a Geoscape event from the event rules.
 	bool spawnEvent(const RuleEvent* eventRules);
 	/// Checks if an instant Geoscape event can be spawned.
-	bool canSpawnInstantEvent(const RuleEvent* eventRules);
+	bool canSpawnInstantEvent(const RuleEvent* eventRules, const Mod *mod);
 	/// Handles research unlocked by successful/failed missions and despawned mission sites.
 	bool handleResearchUnlockedByMissions(const RuleResearch* research, const Mod* mod, const AlienDeployment* deployment);
 	/// Handles research side effects for primary research sources.

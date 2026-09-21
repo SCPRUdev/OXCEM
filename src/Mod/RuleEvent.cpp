@@ -18,6 +18,8 @@
  */
 #include "RuleEvent.h"
 #include "Mod.h"
+#include "../Savegame/SavedGame.h"
+#include "../Engine/Exception.h"
 
 namespace OpenXcom
 {
@@ -76,6 +78,12 @@ void RuleEvent::load(const YAML::YamlNodeReader& node)
 	reader.tryRead("timer", _timer);
 	reader.tryRead("timerRandom", _timerRandom);
 	reader.tryRead("invert", _invert);
+	reader.tryRead("escapeId", _escapeId);
+	reader.tryRead("escapeItem", _escapeItem);
+	reader.tryRead("escapeRegionTemplate", _escapeRegionTemplate);
+	reader.tryRead("escapeRecoveryItems", _escapeRecoveryItems);
+	reader.tryRead("escapeSearchMonths", _escapeSearchMonths);
+	reader.tryRead("escapeLostEvent", _escapeLostEvent);
 
 	reader.tryRead("everyMultiSoldierList", _everyMultiSoldierList);
 	reader.tryRead("randomMultiSoldierList", _randomMultiSoldierList);
@@ -86,11 +94,46 @@ void RuleEvent::load(const YAML::YamlNodeReader& node)
  */
 void RuleEvent::afterLoad(const Mod* mod)
 {
+	if (!_escapeId.empty())
+	{
+		int quantity = 0;
+		for (const auto& item : _everyItemList) if (item == _escapeItem) ++quantity;
+		auto item = _everyMultiItemList.find(_escapeItem);
+		if (item != _everyMultiItemList.end()) quantity += item->second;
+		if (!_invert || _escapeItem.empty() || quantity != 1 || _escapeSearchMonths < 0
+			|| !mod->getBaseRegionTemplates().count(_escapeRegionTemplate)
+			|| !_randomItemList.empty() || !_randomMultiItemList.empty() || !_weightedItemList.empty())
+			throw Exception("Escape event requires invert, exactly one fixed escapeItem, a base region template and nonnegative escapeSearchMonths: " + _name);
+		mod->getItem(_escapeItem, true);
+		for (const auto& recovery : _escapeRecoveryItems) mod->getItem(recovery, true);
+		if (!_escapeLostEvent.empty()) mod->getEvent(_escapeLostEvent, true);
+	}
 	mod->linkRule(_research, _researchNames);
 	for (const auto& pair : _countries.getChoices())
 	{
 		mod->getCountry(pair.first, true);
 	}
+}
+
+/**
+ * Returns random item-list entries that can remove at least one item now.
+ */
+std::vector<size_t> RuleEvent::getAvailableRandomMultiItemList(const SavedGame *save, const Mod *mod) const
+{
+	std::vector<size_t> available;
+	for (size_t i = 0; i < _randomMultiItemList.size(); ++i)
+	{
+		for (const auto& pair : _randomMultiItemList[i])
+		{
+			const RuleItem *item = mod->getItem(pair.first, true);
+			if (pair.second > 0 && item && save->getItemAvailableForRemoval(item) > 0)
+			{
+				available.push_back(i);
+				break;
+			}
+		}
+	}
+	return available;
 }
 
 }

@@ -42,6 +42,7 @@ private:
 
 	std::map<std::string, bool> _researchTriggers;
 	std::map<std::string, bool> _itemTriggers;
+	std::map<std::string, bool> _anyItemTriggers;
 	std::map<std::string, bool> _facilityTriggers;
 	std::map<std::string, bool> _baseFunctionTriggers;
 	std::map<std::string, bool> _soldierTypeTriggers;
@@ -103,6 +104,8 @@ public:
 	const std::map<std::string, bool> &getResearchTriggers() const { return _researchTriggers; }
 	/// Gets the item triggers that may apply to this command.
 	const std::map<std::string, bool> &getItemTriggers() const { return _itemTriggers; }
+	/// Gets item triggers where at least one condition must match.
+	const std::map<std::string, bool> &getAnyItemTriggers() const { return _anyItemTriggers; }
 	/// Gets the facility triggers that may apply to this command.
 	const std::map<std::string, bool> &getFacilityTriggers() const { return _facilityTriggers; }
 	/// Gets the base function triggers that may apply to this command.

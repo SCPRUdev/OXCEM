@@ -43,10 +43,21 @@
 #include <assert.h>
 #include <algorithm>
 #include <functional>
+#include <limits>
 #include "../Mod/AlienDeployment.h"
 
 namespace OpenXcom
 {
+
+// A failed search must not fall back to an ocean tile or coordinates outside the base region.
+static std::pair<double, double> baseRegionPoint(const RuleRegion& region, const Globe& globe,
+	size_t zone, int area, bool requireLand, int fakeWater = -1)
+{
+	std::pair<double, double> point;
+	if (region.sampleBaseRegionPoint(globe, zone, area, point, requireLand, fakeWater)) return point;
+	Log(LOG_WARNING) << "Skipping base-region spawn/waypoint: no suitable point in " << region.getType() << ", zone " << zone;
+	return std::make_pair(std::numeric_limits<double>::quiet_NaN(), 0.0);
+}
 
 AlienMission::AlienMission(const RuleAlienMission &rule) : _rule(rule), _nextWave(0), _nextUfoCounter(0), _spawnCountdown(0), _liveUfos(0),
 	_interrupted(false), _multiUfoRetaliationInProgress(false), _uniqueID(0), _missionSiteZoneArea(-1), _base(0)
@@ -71,6 +82,7 @@ void AlienMission::load(const YAML::YamlNodeReader& reader, SavedGame &game, con
 	reader.tryRead("nextWave", _nextWave);
 	reader.tryRead("nextUfoCounter", _nextUfoCounter);
 	reader.tryRead("spawnCountdown", _spawnCountdown);
+	reader.tryRead("escapeId", _escapeId);
 	reader.tryRead("liveUfos", _liveUfos);
 	reader.tryRead("interrupted", _interrupted);
 	reader.tryRead("multiUfoRetaliationInProgress", _multiUfoRetaliationInProgress);
@@ -89,7 +101,7 @@ void AlienMission::load(const YAML::YamlNodeReader& reader, SavedGame &game, con
 	reader.tryRead("missionSiteZone", _missionSiteZoneArea);
 
 	// fix invalid saves
-	RuleRegion* region = mod->getRegion(_region, false);
+	RuleRegion* region = game.getMissionRegion(_region, *mod, false);
 	if (!region)
 	{
 		Log(LOG_ERROR) << "Corrupted save: Mission with uniqueID: " << _uniqueID << " has an invalid region: " << _region;
@@ -132,6 +144,7 @@ void AlienMission::save(YAML::YamlNodeWriter writer) const
 	writer.write("nextWave", _nextWave);
 	writer.write("nextUfoCounter", _nextUfoCounter);
 	writer.write("spawnCountdown", _spawnCountdown);
+	if (!_escapeId.empty()) writer.write("escapeId", _escapeId);
 	writer.write("liveUfos", _liveUfos);
 	if (_interrupted)
 		writer.write("interrupted", _interrupted);
@@ -186,17 +199,28 @@ void AlienMission::think(Game &engine, const Globe &globe)
 	}
 	const MissionWave &wave = _rule.getWave(_nextWave);
 	const UfoTrajectory &trajectory = *mod.getUfoTrajectory(wave.trajectory, true);
+	const auto* spawnRegion = game.getMissionRegion(_region, mod, true);
+	size_t spawnZone = _rule.getSpawnZone() == -1 ? trajectory.getZone(0) : _rule.getSpawnZone();
+	if (spawnRegion->isBaseRegion() && spawnRegion->isCityMissionZone(spawnZone)
+		&& spawnZone < spawnRegion->getMissionZones().size() && spawnRegion->getMissionZones()[spawnZone].areas.empty())
+	{
+		Log(LOG_WARNING) << "Skipping mission: no cities in base region " << _region << ", zone " << spawnZone;
+		_interrupted = true;
+		return;
+	}
 	Ufo *ufo = spawnUfo(game, mod, globe, wave, trajectory);
+	const bool failedBaseRegionUfo = !ufo && mod.getUfo(wave.ufoType)
+		&& game.getMissionRegion(_region, mod, true)->isBaseRegion();
 	if (ufo)
 	{
 		//Some missions may not spawn a UFO!
 		ufo->setMissionWaveNumber(_nextWave);
 		game.getUfos()->push_back(ufo);
 	}
-	else if ((mod.getDeployment(wave.ufoType) && !mod.getUfo(wave.ufoType) && !mod.getDeployment(wave.ufoType)->getMarkerName().empty()) // a mission site that we want to spawn directly
-			|| (_rule.getObjective() == OBJECTIVE_SITE && wave.objective)) // or we want to spawn one at random according to our terrain
+	else if (!failedBaseRegionUfo && ((mod.getDeployment(wave.ufoType) && !mod.getUfo(wave.ufoType) && !mod.getDeployment(wave.ufoType)->getMarkerName().empty()) // a mission site that we want to spawn directly
+			|| (_rule.getObjective() == OBJECTIVE_SITE && wave.objective))) // or we want to spawn one at random according to our terrain
 	{
-		RuleRegion* regionRules = mod.getRegion(_region, true);
+		RuleRegion* regionRules = game.getMissionRegion(_region, mod, true);
 		std::vector<MissionArea> areas = regionRules->getMissionZones().at((_rule.getSpawnZone() == -1) ? trajectory.getZone(0) : _rule.getSpawnZone()).areas;
 		MissionArea area = areas.at((_missionSiteZoneArea == -1) ? RNG::generate(0, areas.size() - 1) : _missionSiteZoneArea);
 
@@ -212,12 +236,12 @@ void AlienMission::think(Game &engine, const Globe &globe)
 				area.latMax = xcombase->getLatitude();
 				// area.texture is taken from the ruleset
 				area.name = ""; // remove the city name, if there was any
-				spawnMissionSite(game, mod, area, 0, mod.getDeployment(wave.ufoType, false));
+				spawnMissionSite(game, mod, globe, area, 0, mod.getDeployment(wave.ufoType, false));
 			}
 		}
 		else
 		{
-			spawnMissionSite(game, mod, area, 0, mod.getDeployment(wave.ufoType, false));
+			spawnMissionSite(game, mod, globe, area, 0, mod.getDeployment(wave.ufoType, false));
 		}
 	}
 
@@ -236,7 +260,7 @@ void AlienMission::think(Game &engine, const Globe &globe)
 		}
 		for (auto* c : countriesCopy)
 		{
-			RuleRegion *region = mod.getRegion(_region, true);
+			RuleRegion *region = game.getMissionRegion(_region, mod, true);
 			if (c->canBeInfiltrated() && region->insideRegion(c->getRules()->getLabelLongitude(), c->getRules()->getLabelLatitude()))
 			{
 				std::pair<double, double> pos;
@@ -325,13 +349,12 @@ void AlienMission::think(Game &engine, const Globe &globe)
 				}
 				if (tries < 100 || mod.getAllowAlienBasesOnWrongTextures())
 				{
-					// only create a pact if the base is going to be spawned too
-					c->setNewPact();
-
-					spawnAlienBase(c, engine, pos, alienBaseType);
-
-					// if the base can't be spawned for this country, try the next country
-					break;
+					// Only create the pact when the base passed the final location checks.
+					if (spawnAlienBase(c, engine, globe, pos, alienBaseType))
+					{
+						c->setNewPact();
+						break;
+					}
 				}
 			}
 		}
@@ -343,7 +366,7 @@ void AlienMission::think(Game &engine, const Globe &globe)
 	}
 	if (_rule.getObjective() == OBJECTIVE_BASE && _nextWave == _rule.getWaveCount() && !wave.objectiveOnTheLandingSite)
 	{
-		RuleRegion *region = mod.getRegion(_region, true);
+		RuleRegion *region = game.getMissionRegion(_region, mod, true);
 		if (_rule.getSpawnZone() < 0 || _rule.getSpawnZone() >= (int)region->getMissionZones().size())
 		{
 			throw Exception("Cannot spawn alien base, invalid spawnZone! Mission: " + _rule.getType());
@@ -387,7 +410,7 @@ void AlienMission::think(Game &engine, const Globe &globe)
 		}
 		if (tries < 100 || mod.getAllowAlienBasesOnWrongTextures())
 		{
-			spawnAlienBase(0, engine, pos, alienBaseType);
+			spawnAlienBase(0, engine, globe, pos, alienBaseType);
 		}
 	}
 
@@ -416,7 +439,8 @@ Base* AlienMission::selectXcomBase(SavedGame& game, const RuleRegion& regionRule
 	std::vector<Base*> validxcombases;
 	for (auto* xb : *game.getBases())
 	{
-		if (regionRules.insideRegion(xb->getLongitude(), xb->getLatitude()))
+		if (regionRules.isBaseRegion() ? xb->getBaseRegionId() == regionRules.getBaseRegionId()
+			: regionRules.insideRegion(xb->getLongitude(), xb->getLatitude()))
 		{
 			if (_rule.getObjective() == OBJECTIVE_RETALIATION)
 			{
@@ -506,7 +530,7 @@ Ufo *AlienMission::spawnUfo(SavedGame &game, const Mod &mod, const Globe &globe,
 	}
 	if (_rule.getObjective() == OBJECTIVE_RETALIATION || _rule.getObjective() == OBJECTIVE_INSTANT_RETALIATION)
 	{
-		const RuleRegion &regionRules = *mod.getRegion(_region, true);
+		const RuleRegion &regionRules = *game.getMissionRegion(_region, mod, true);
 		Base* xcombase = nullptr;
 
 		// skip the scouting phase of a retaliation mission
@@ -550,9 +574,10 @@ Ufo *AlienMission::spawnUfo(SavedGame &game, const Mod &mod, const Globe &globe,
 			}
 			else
 			{
-				pos = regionRules.getRandomPoint(trajectory.getZone(0));
+				pos = regionRules.isBaseRegion() ? baseRegionPoint(regionRules, globe, trajectory.getZone(0), -1, false) : regionRules.getRandomPoint(trajectory.getZone(0));
 			}
 			ufo->setAltitude(assaultTrajectory.getAltitude(0));
+			if (!std::isfinite(pos.first)) { delete ufo; return nullptr; }
 			ufo->setSpeed(assaultTrajectory.applySpeedPercentage(0, ufo->getCraftStats().speedMax));
 			ufo->setLongitude(pos.first);
 			ufo->setLatitude(pos.second);
@@ -588,7 +613,7 @@ Ufo *AlienMission::spawnUfo(SavedGame &game, const Mod &mod, const Globe &globe,
 			ufo = new Ufo(ufoRule, game.getId("STR_UFO_UNIQUE"), hunterKillerPercentage, huntMode, huntBehavior);
 		}
 		ufo->setMissionInfo(this, &trajectory);
-		const RuleRegion &regionRules = *mod.getRegion(_region, true);
+		const RuleRegion &regionRules = *game.getMissionRegion(_region, mod, true);
 		std::pair<double, double> pos;
 		if (_rule.getOperationType() != AMOT_SPACE && _base)
 		{
@@ -601,9 +626,10 @@ Ufo *AlienMission::spawnUfo(SavedGame &game, const Mod &mod, const Globe &globe,
 		}
 		else
 		{
-			pos = regionRules.getRandomPoint(trajectory.getZone(0));
+			pos = regionRules.isBaseRegion() ? baseRegionPoint(regionRules, globe, trajectory.getZone(0), -1, false) : regionRules.getRandomPoint(trajectory.getZone(0));
 		}
 		ufo->setAltitude(trajectory.getAltitude(0));
+		if (!std::isfinite(pos.first)) { delete ufo; return nullptr; }
 		ufo->setSpeed(trajectory.applySpeedPercentage(0, ufo->getCraftStats().speedMax));
 		ufo->setLongitude(pos.first);
 		ufo->setLatitude(pos.second);
@@ -624,8 +650,9 @@ Ufo *AlienMission::spawnUfo(SavedGame &game, const Mod &mod, const Globe &globe,
 		}
 		else
 		{
-			pos = regionRules.getRandomPoint(trajectory.getZone(1));
+			pos = regionRules.isBaseRegion() ? baseRegionPoint(regionRules, globe, trajectory.getZone(1), -1, false) : regionRules.getRandomPoint(trajectory.getZone(1));
 		}
+		if (!std::isfinite(pos.first)) { delete wp; delete ufo; return nullptr; }
 		wp->setLongitude(pos.first);
 		wp->setLatitude(pos.second);
 		ufo->setDestination(wp);
@@ -659,8 +686,9 @@ Ufo *AlienMission::spawnUfo(SavedGame &game, const Mod &mod, const Globe &globe,
 	// Spawn according to sequence.
 	Ufo *ufo = new Ufo(ufoRule, game.getId("STR_UFO_UNIQUE"), hunterKillerPercentage, huntMode, huntBehavior);
 	ufo->setMissionInfo(this, &trajectory);
-	const RuleRegion &regionRules = *mod.getRegion(_region, true);
+	const RuleRegion &regionRules = *game.getMissionRegion(_region, mod, true);
 	std::pair<double, double> pos = getWaypoint(wave, trajectory, 0, globe, regionRules, *ufo);
+	if (!std::isfinite(pos.first)) { delete ufo; return nullptr; }
 	ufo->setAltitude(trajectory.getAltitude(0));
 	if (trajectory.getAltitude(0) == "STR_GROUND")
 	{
@@ -679,6 +707,7 @@ Ufo *AlienMission::spawnUfo(SavedGame &game, const Mod &mod, const Globe &globe,
 	if (trajectory.getWaypointCount() > 1)
 	{
 		pos = getWaypoint(wave, trajectory, 1, globe, regionRules, *ufo);
+		if (!std::isfinite(pos.first)) { delete wp; delete ufo; return nullptr; }
 	}
 	else
 	{
@@ -747,7 +776,7 @@ void AlienMission::start(Game &engine, const Globe &globe, size_t initialCount)
 			if (_rule.getOperationType() == AMOT_REGION_EXISTING_BASE || _rule.getOperationType() == AMOT_REGION_NEW_BASE_IF_NECESSARY)
 			{
 				// region only
-				auto* missionRegion = mod.getRegion(_region, true);
+				auto* missionRegion = game.getMissionRegion(_region, mod, true);
 				for (auto* ab : *game.getAlienBases())
 				{
 					if (missionRegion->insideRegion(ab->getLongitude(), ab->getLatitude()))
@@ -778,12 +807,18 @@ void AlienMission::start(Game &engine, const Globe &globe, size_t initialCount)
 			else
 			{
 				// 3. spawn a new base
-				RuleRegion *region = mod.getRegion(_region, true);
+				RuleRegion *region = game.getMissionRegion(_region, mod, true);
 				if (_rule.getOperationSpawnZone() < 0 || _rule.getOperationSpawnZone() >= (int)region->getMissionZones().size())
 				{
 					throw Exception("Cannot spawn alien base, invalid operationSpawnZone! Mission: " + _rule.getType());
 				}
 				std::vector<MissionArea> areas = region->getMissionZones().at(_rule.getOperationSpawnZone()).areas;
+				if (areas.empty() && region->isBaseRegion() && region->isCityMissionZone(_rule.getOperationSpawnZone()))
+				{
+					Log(LOG_WARNING) << "Skipping alien operation: no cities in base region " << _region;
+					_interrupted = true;
+					return;
+				}
 				std::pair<double, double> pos;
 				int tries = 0;
 				AlienDeployment* operationBaseType = mod.getDeployment(_rule.getOperationBaseType(), true);
@@ -816,7 +851,7 @@ void AlienMission::start(Game &engine, const Globe &globe, size_t initialCount)
 				AlienBase* newAlienOperationBase = nullptr;
 				if (tries < 100 || mod.getAllowAlienBasesOnWrongTextures())
 				{
-					newAlienOperationBase = spawnAlienBase(0, engine, pos, operationBaseType);
+					newAlienOperationBase = spawnAlienBase(0, engine, globe, pos, operationBaseType);
 				}
 				if (newAlienOperationBase)
 				{
@@ -869,10 +904,16 @@ void AlienMission::ufoReachedWaypoint(Ufo &ufo, Game &engine, const Globe &globe
 	}
 	ufo.setAltitude(trajectory.getAltitude(nextWaypoint));
 	ufo.setTrajectoryPoint(nextWaypoint);
-	const RuleRegion &regionRules = *mod.getRegion(_region, true);
+	const RuleRegion &regionRules = *game.getMissionRegion(_region, mod, true);
 
 	{
 		std::pair<double, double> pos = getWaypoint(wave, trajectory, nextWaypoint, globe, regionRules, ufo);
+		if (!std::isfinite(pos.first))
+		{
+			ufo.setDetected(false);
+			ufo.setStatus(Ufo::DESTROYED);
+			return;
+		}
 
 		Waypoint *wp = new Waypoint();
 		wp->setLongitude(pos.first);
@@ -906,7 +947,7 @@ void AlienMission::ufoReachedWaypoint(Ufo &ufo, Game &engine, const Globe &globe
 				area.latMin = ufo.getLatitude();
 				area.latMax = ufo.getLatitude();
 			}
-			MissionSite *missionSite = spawnMissionSite(game, mod, area, &ufo);
+			MissionSite *missionSite = spawnMissionSite(game, mod, globe, area, &ufo);
 			if (missionSite && _rule.respawnUfoAfterSiteDespawn())
 			{
 				ufo.setStatus(Ufo::IGNORE_ME);
@@ -990,7 +1031,7 @@ void AlienMission::ufoReachedWaypoint(Ufo &ufo, Game &engine, const Globe &globe
 					MissionArea dummyArea;
 					AlienDeployment* alienBaseType = chooseAlienBaseType(mod, dummyArea);
 
-					spawnAlienBase(0, engine, pos, alienBaseType);
+					spawnAlienBase(0, engine, globe, pos, alienBaseType);
 				}
 			}
 			else
@@ -1157,9 +1198,21 @@ void AlienMission::addScore(double lon, double lat, SavedGame &game) const
  * @param deployment The base type.
  * @return Pointer to the spawned alien base.
  */
-AlienBase *AlienMission::spawnAlienBase(Country *pactCountry, Game &engine, std::pair<double, double> pos, AlienDeployment *deployment)
+AlienBase *AlienMission::spawnAlienBase(Country *pactCountry, Game &engine, const Globe& globe, std::pair<double, double> pos, AlienDeployment *deployment)
 {
 	SavedGame &game = *engine.getSavedGame();
+	const auto* region = game.getMissionRegion(_region, *engine.getMod(), true);
+	if (region->isBaseRegion())
+	{
+		pos.first = std::fmod(pos.first, 2 * M_PI);
+		if (pos.first < 0) pos.first += 2 * M_PI;
+		if (!region->allowsBaseRegionPoint(pos.first, pos.second)
+			|| (region->isLandOnly() && !globe.insideLand(pos.first, pos.second)))
+		{
+			Log(LOG_WARNING) << "Skipping alien base outside allowed base-region geometry: " << _region;
+			return nullptr;
+		}
+	}
 	AlienBase *ab = new AlienBase(deployment, game.getMonthsPassed());
 	if (pactCountry)
 	{
@@ -1225,9 +1278,9 @@ AlienDeployment *AlienMission::chooseAlienBaseType(const Mod &mod, const Mission
  * @param region the region we want to try to set the mission to.
  * @param mod the mod, in case we need to swap out the region.
  */
-void AlienMission::setRegion(const std::string &region, const Mod &mod)
+void AlienMission::setRegion(const std::string &region, const Mod &mod, const SavedGame* game)
 {
-	RuleRegion *r = mod.getRegion(region, true);
+	RuleRegion *r = game ? game->getMissionRegion(region, mod, true) : mod.getRegion(region, true);
 	if (!r->getMissionRegion().empty())
 	{
 		_region = r->getMissionRegion();
@@ -1252,6 +1305,18 @@ std::pair<double, double> AlienMission::getWaypoint(const MissionWave &wave, con
 	if (trajectory.getZone(nextWaypoint) >= region.getMissionZones().size())
 	{
 		logMissionError(trajectory.getZone(nextWaypoint), region);
+	}
+	if (region.isBaseRegion())
+	{
+		if (_rule.getOperationType() != AMOT_SPACE && _base && nextWaypoint >= trajectory.getWaypointCount() - 1)
+			return std::make_pair(_base->getLongitude(), _base->getLatitude());
+		bool objective = _missionSiteZoneArea != -1 && wave.objective
+			&& trajectory.getZone(nextWaypoint) == (size_t)_rule.getSpawnZone();
+		bool landing = trajectory.getAltitude(nextWaypoint) == "STR_GROUND"
+			|| (nextWaypoint + 1 < trajectory.getWaypointCount() && trajectory.getAltitude(nextWaypoint + 1) == "STR_GROUND");
+		return baseRegionPoint(region, globe, trajectory.getZone(nextWaypoint), objective ? _missionSiteZoneArea : -1,
+			(landing || objective) && region.isLandOnly(),
+			landing && !objective && region.isLandOnly() ? (RNG::percent(ufo.getRules()->getFakeWaterLandingChance()) ? 1 : 0) : -1);
 	}
 
 	if (_missionSiteZoneArea != -1 && wave.objective && trajectory.getZone(nextWaypoint) == (size_t)(_rule.getSpawnZone()))
@@ -1295,6 +1360,9 @@ std::pair<double, double> AlienMission::getWaypoint(const MissionWave &wave, con
  */
 std::pair<double, double> AlienMission::getLandPoint(const Globe &globe, const RuleRegion &region, size_t zone, const Ufo &ufo)
 {
+	if (region.isBaseRegion())
+		return baseRegionPoint(region, globe, zone, -1, region.isLandOnly(),
+			region.isLandOnly() ? (RNG::percent(ufo.getRules()->getFakeWaterLandingChance()) ? 1 : 0) : -1);
 	if (zone >= region.getMissionZones().size() || region.getMissionZones().at(zone).areas.size() == 0)
 	{
 		logMissionError(zone, region);
@@ -1431,8 +1499,31 @@ std::pair<double, double> AlienMission::getLandPointForMissionSite(const Globe& 
  * @param ufo ufo that spawn that mission.
  * @return a pointer to the mission site.
  */
-MissionSite *AlienMission::spawnMissionSite(SavedGame &game, const Mod &mod, const MissionArea &area, const Ufo *ufo, AlienDeployment *missionOveride)
+MissionSite *AlienMission::spawnMissionSite(SavedGame &game, const Mod &mod, const Globe& globe, const MissionArea &area, const Ufo *ufo, AlienDeployment *missionOveride)
 {
+	const RuleRegion* region = game.getMissionRegion(_region, mod, true);
+	std::pair<double, double> point;
+	if (region->isBaseRegion())
+	{
+		bool found = false;
+		for (int attempt = 0; attempt < 1000; ++attempt)
+		{
+			point = std::make_pair(RNG::generate(area.lonMin, area.lonMax), RNG::generate(area.latMin, area.latMax));
+			point.first = std::fmod(point.first, 2 * M_PI);
+			if (point.first < 0) point.first += 2 * M_PI;
+			if (region->allowsBaseRegionPoint(point.first, point.second)
+				&& (!region->isLandOnly() || globe.insideLand(point.first, point.second)))
+			{
+				found = true;
+				break;
+			}
+		}
+		if (!found)
+		{
+			Log(LOG_WARNING) << "Skipping mission site: no suitable point in base region " << _region;
+			return nullptr;
+		}
+	}
 	Texture *texture = mod.getGlobe()->getTexture(area.texture);
 	AlienDeployment *deployment = nullptr;
 	AlienDeployment *alienCustomDeploy = ufo ? mod.getDeployment(ufo->getCraftStats().missionCustomDeploy) : 0;
@@ -1457,13 +1548,14 @@ MissionSite *AlienMission::spawnMissionSite(SavedGame &game, const Mod &mod, con
 	if (deployment)
 	{
 		MissionSite *missionSite = new MissionSite(&_rule, deployment, alienCustomDeploy);
-		missionSite->setLongitude(RNG::generate(area.lonMin, area.lonMax));
-		missionSite->setLatitude(RNG::generate(area.latMin, area.latMax));
+		missionSite->setLongitude(region->isBaseRegion() ? point.first : RNG::generate(area.lonMin, area.lonMax));
+		missionSite->setLatitude(region->isBaseRegion() ? point.second : RNG::generate(area.latMin, area.latMax));
 		missionSite->setId(game.getId(deployment->getMarkerName()));
 		missionSite->setSecondsRemaining(RNG::generate(deployment->getDurationMin(), deployment->getDurationMax()) * 3600);
 		missionSite->setAlienRace(_race);
 		missionSite->setTexture(area.texture);
 		missionSite->setCity(area.name);
+		missionSite->setEscapeId(_escapeId);
 		game.getMissionSites()->push_back(missionSite);
 
 		if (Options::oxceGeoscapeDebugLogMaxEntries > 0)

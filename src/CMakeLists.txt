@@ -378,6 +378,7 @@ set ( savegame_src
   Savegame/SaveConverter.cpp
   Savegame/SavedBattleGame.cpp
   Savegame/SavedGame.cpp
+  Savegame/BaseRegions.cpp
   Savegame/SerializationHelper.cpp
   Savegame/Soldier.cpp
   Savegame/SoldierAvatar.cpp

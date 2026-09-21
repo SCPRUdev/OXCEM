@@ -76,6 +76,7 @@ void RuleArcScript::load(const YAML::YamlNodeReader& node)
 
 	reader.tryRead("researchTriggers", _researchTriggers);
 	reader.tryRead("itemTriggers", _itemTriggers);
+	reader.tryRead("anyItemTriggers", _anyItemTriggers);
 	reader.tryRead("facilityTriggers", _facilityTriggers);
 	reader.tryRead("baseFunctionTriggers", _baseFunctionTriggers);
 	reader.tryRead("soldierTypeTriggers", _soldierTypeTriggers);

@@ -479,6 +479,7 @@ private:
 	std::vector<int> _customItemPreviewIndex;
 	int _kneelBonus, _oneHandedPenalty;
 	int _monthlySalary, _monthlyMaintenance;
+	int _monthlyScore, _monthlyTension;
 	int _sprayWaypoints;
 	RuleStatBonus _damageBonus, _meleeBonus, _accuracyMulti, _meleeMulti, _throwMulti, _closeQuartersMulti;
 	ModScript::BattleItemScripts::Container _battleItemScripts;
@@ -1049,6 +1050,10 @@ public:
 	int getMonthlySalary() const;
 	/// Gets the monthly maintenance.
 	int getMonthlyMaintenance() const;
+	/// Gets the monthly rating awarded per owned item.
+	int getMonthlyScore() const { return _monthlyScore; }
+	/// Gets the monthly tension added per owned item.
+	int getMonthlyTension() const { return _monthlyTension; }
 	/// Gets how many waypoints are used for a "spray" attack
 	int getSprayWaypoints() const;
 	/// Gets script.

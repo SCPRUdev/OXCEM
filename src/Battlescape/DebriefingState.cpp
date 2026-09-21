@@ -897,7 +897,7 @@ void DebriefingState::btnOkClick(Action *)
 
 		if (_eventToSpawn)
 		{
-			bool canSpawn = _game->getSavedGame()->canSpawnInstantEvent(_eventToSpawn);
+			bool canSpawn = _game->getSavedGame()->canSpawnInstantEvent(_eventToSpawn, _game->getMod());
 			if (canSpawn)
 			{
 				_game->pushState(new GeoscapeEventState(*_eventToSpawn));

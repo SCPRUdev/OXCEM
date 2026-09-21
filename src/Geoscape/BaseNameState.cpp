@@ -25,6 +25,7 @@
 #include "../Interface/TextEdit.h"
 #include "../Interface/TextButton.h"
 #include "../Savegame/Base.h"
+#include "../Savegame/SavedGame.h"
 #include "../Basescape/PlaceLiftState.h"
 #include "../Engine/Options.h"
 #include "../Engine/RNG.h"
@@ -139,6 +140,7 @@ void BaseNameState::btnOkClick(Action *)
 	if (!_edtName->getText().empty())
 	{
 		_base->setName(_edtName->getText());
+		_game->getSavedGame()->syncBaseRegions(*_game->getMod());
 		_game->popState(); // pop BaseNameState
 
 		if (!_fixedLocation)

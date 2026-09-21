@@ -50,6 +50,7 @@ class AlienMission
 private:
 	const RuleAlienMission &_rule;
 	std::string _region, _race;
+	std::string _escapeId;
 	size_t _nextWave;
 	size_t _nextUfoCounter;
 	size_t _spawnCountdown;
@@ -72,8 +73,10 @@ public:
 	const RuleAlienMission &getRules() const { return _rule; }
 	/// Gets the mission's region.
 	const std::string &getRegion() const { return _region; }
+	const std::string& getEscapeId() const { return _escapeId; }
+	void setEscapeId(const std::string& id) { _escapeId = id; }
 	/// Sets the mission's region.
-	void setRegion(const std::string &region, const Mod &rules);
+	void setRegion(const std::string &region, const Mod &rules, const SavedGame* game = nullptr);
 	/// Gets the mission's race.
 	const std::string &getRace() const { return _race; }
 	/// Sets the mission's race.
@@ -123,7 +126,7 @@ private:
 	/// Spawns a UFO, based on mission rules.
 	Ufo *spawnUfo(SavedGame &game, const Mod &mod, const Globe &globe, const MissionWave &wave, const UfoTrajectory &trajectory);
 	/// Spawn an alien base
-	AlienBase *spawnAlienBase(Country *pactCountry, Game &engine, std::pair<double, double> pos, AlienDeployment *deployment);
+	AlienBase *spawnAlienBase(Country *pactCountry, Game &engine, const Globe& globe, std::pair<double, double> pos, AlienDeployment *deployment);
 	/// Chooses a mission type for a new alien base.
 	AlienDeployment *chooseAlienBaseType(const Mod &mod, const MissionArea &area);
 	/// Select a destination (lon/lat) based on the criteria of our trajectory and desired waypoint.
@@ -133,7 +136,7 @@ private:
 	/// Get a random landing point inside the given region zone and area.
 	std::pair<double, double> getLandPointForMissionSite(const Globe& globe, const RuleRegion& region, size_t zone, int area, const Ufo& ufo);
 	/// Spawns a MissionSite at a specific location.
-	MissionSite *spawnMissionSite(SavedGame &game, const Mod &mod, const MissionArea &area, const Ufo *ufo = 0, AlienDeployment *missionOveride = 0);
+	MissionSite *spawnMissionSite(SavedGame &game, const Mod &mod, const Globe& globe, const MissionArea &area, const Ufo *ufo = 0, AlienDeployment *missionOveride = 0);
 	/// Provides some error information for bad mission definitions
 	void logMissionError(int zone, const RuleRegion &region);
 

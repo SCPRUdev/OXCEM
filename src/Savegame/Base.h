@@ -152,6 +152,7 @@ struct VirtualSlot
 class Base : public Target
 {
 private:
+	int _baseRegionId = 0;
 	static const int BASE_SIZE = 6;
 	static const int GRID_SIZE = 32;
 	static const int HNG_CENTER_X = 2;
@@ -182,6 +183,8 @@ private:
 public:
 	/// Creates a new base.
 	Base(const Mod *mod);
+	int getBaseRegionId() const { return _baseRegionId; }
+	void setBaseRegionId(int id) { _baseRegionId = id; }
 	/// Cleans up the base.
 	~Base();
 	/// Loads the base from YAML.

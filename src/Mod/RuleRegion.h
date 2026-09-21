@@ -19,6 +19,7 @@
  */
 #include <string>
 #include <vector>
+#include <functional>
 #include "../Engine/Yaml.h"
 #include "../fmath.h"
 #include "../Savegame/WeightedOptions.h"
@@ -65,6 +66,7 @@ struct MissionZone
 
 class City;
 class Mod;
+class Globe;
 
 
 /**
@@ -85,8 +87,15 @@ private:
 	size_t _regionWeight;
 	/// All the mission zones in this region.
 	std::vector<MissionZone> _missionZones;
+	/// Template zones whose rectangles are resolved to existing named city points.
+	std::vector<int> _cityMissionZones;
 	/// Do missions in the region defined by this string instead.
 	std::string _missionRegion;
+	// Campaign-owned instances of base-region templates never enter the geographical region list.
+	std::string _baseRegionTemplate;
+	int _baseRegionId = 0;
+	bool _landOnly = true;
+	double _maxDistanceKm = 0.0, _originLon = 0.0, _originLat = 0.0;
 	RuleBaseFacilityFunctions _provideBaseFunc = 0;
 	RuleBaseFacilityFunctions _forbiddenBaseFunc = 0;
 public:
@@ -96,6 +105,25 @@ public:
 	~RuleRegion();
 	/// Loads the region from YAML.
 	void load(const YAML::YamlNodeReader& reader, Mod* mod);
+	void validateBaseTemplate() const;
+	RuleRegion* instantiate(const std::string& id, int baseId, double lon, double lat,
+		const std::vector<MissionArea>& cities = {}) const;
+	bool isCityMissionZone(size_t zone) const;
+	bool hasCityMissionZones() const { return !_cityMissionZones.empty(); }
+	void saveBaseRegion(YAML::YamlNodeWriter writer) const;
+	bool isBaseRegion() const { return !_baseRegionTemplate.empty(); }
+	const std::string& getBaseRegionTemplate() const { return _baseRegionTemplate; }
+	int getBaseRegionId() const { return _baseRegionId; }
+	bool isLandOnly() const { return _landOnly; }
+	double getBaseRegionLongitude() const { return _originLon; }
+	double getBaseRegionLatitude() const { return _originLat; }
+	double getMaxDistanceKm() const { return _maxDistanceKm; }
+	bool isCenteredAt(double lon, double lat) const { return AreSame(_originLon, lon) && AreSame(_originLat, lat); }
+	bool allowsBaseRegionPoint(double lon, double lat) const;
+	bool sampleBaseRegionPoint(const Globe& globe, size_t zone, int area, std::pair<double, double>& point,
+		bool requireLand, int fakeWater = -1) const;
+	bool sampleBaseRegionPoint(size_t zone, int area, std::pair<double, double>& point,
+		const std::function<bool(double, double)>& acceptsSurface) const;
 	/// Gets the region's type.
 	const std::string& getType() const;
 	/// Gets the region's base cost.

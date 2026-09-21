@@ -2293,6 +2293,8 @@ void StatsForNerdsState::initItemList()
 	addInteger(ss, itemRule->getTransferTime(), "transferTime", 24);
 	addInteger(ss, itemRule->getMonthlySalary(), "monthlySalary", 0, true);
 	addInteger(ss, itemRule->getMonthlyMaintenance(), "monthlyMaintenance", 0, true);
+	addInteger(ss, itemRule->getMonthlyScore(), "monthlyScore");
+	addInteger(ss, itemRule->getMonthlyTension(), "monthlyTension");
 	if (_game->getSavedGame()->getSellPriceCoefficient() == 100)
 	{
 		addInteger(ss, itemRule->getSellCost(), "costSell", 0, true);

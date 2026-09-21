@@ -107,6 +107,7 @@ Base::~Base()
  */
 void Base::load(const YAML::YamlNodeReader& reader, SavedGame *save, bool newGame, bool newBattleGame)
 {
+	if (!newGame && !newBattleGame) reader.tryRead("baseRegionId", _baseRegionId);
 	Target::load(reader);
 	if (!newGame || !Options::customInitialBase || newBattleGame)
 	{
@@ -358,6 +359,7 @@ bool Base::isOverlappingOrOverflowing()
 void Base::save(YAML::YamlNodeWriter writer) const
 {
 	writer.setAsMap();
+	writer.tryWrite("baseRegionId", _baseRegionId, 0);
 	Target::save(writer);
 	writer.write("facilities", _facilities,
 		[](YAML::YamlNodeWriter& vectorWriter, BaseFacility* f)

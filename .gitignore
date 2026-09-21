@@ -7745,3 +7745,15 @@ bin/standard/OpenSCP/TERRAIN/mi8.TAB
 bin/standard/OpenSCP/TERRAIN/MV_Backup/mi8.MCD
 bin/standard/OpenSCP/TERRAIN/MV_Backup/mi8.PCK
 bin/standard/OpenSCP/TERRAIN/MV_Backup/mi8.TAB
+bin/standard/OpenSCP/Resources/TEH_END.png
+bin/standard/OpenSCP/Resources/Pedia/pedia_7_penetration.png
+tests/base-regions.cpp
+tests/run-base-regions.ps1
+obj/base-region-tests/link.rsp
+bin/standard/OpenSCP/tools/build_347_drawio.py
+bin/standard/OpenSCP/Ruleset/scp347EscapeRegion.rul
+bin/standard/OpenSCP/Ruleset/baseRegions.rul
+bin/standard/OpenSCP/Diagrams/SCP-347-research.drawio
+bin/standard/OpenSCP/Diagrams/SCP-347-readme.txt
+bin/standard/OpenSCP/Diagrams/SCP-347-preview.svg
+bin/standard/OpenSCP/Diagrams/SCP-347-audit.json
