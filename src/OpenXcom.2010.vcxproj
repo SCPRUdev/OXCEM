@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -441,6 +441,7 @@
     <ClCompile Include="Battlescape\InventorySaveState.cpp" />
     <ClCompile Include="Battlescape\InventoryState.cpp" />
     <ClCompile Include="Battlescape\ItemSprite.cpp" />
+    <ClCompile Include="Battlescape\SpriteOverlay.cpp" />
     <ClCompile Include="Battlescape\Map.cpp" />
     <ClCompile Include="Battlescape\MedikitState.cpp" />
     <ClCompile Include="Battlescape\MedikitView.cpp" />
@@ -920,6 +921,7 @@
     <ClInclude Include="Battlescape\InventorySaveState.h" />
     <ClInclude Include="Battlescape\InventoryState.h" />
     <ClInclude Include="Battlescape\ItemSprite.h" />
+    <ClInclude Include="Battlescape\SpriteOverlay.h" />
     <ClInclude Include="Battlescape\Map.h" />
     <ClInclude Include="Battlescape\MedikitState.h" />
     <ClInclude Include="Battlescape\MedikitView.h" />

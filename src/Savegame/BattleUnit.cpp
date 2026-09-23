@@ -6021,6 +6021,11 @@ void getRecolorScript(const BattleUnit *bu, int &pixel)
 		}
 	}
 }
+
+void getStatusScript(const BattleUnit* unit, int& result)
+{
+	result = unit ? static_cast<int>(unit->getStatus()) : 0;
+}
 void getTileShade(const BattleUnit *bu, int &shade)
 {
 	if (bu)
@@ -6668,6 +6673,20 @@ void BattleUnit::ScriptRegister(ScriptParserBase* parser)
 	bu.add<&BattleUnit::getTurretDirection>("getTurretDirection");
 	bu.add<&BattleUnit::getWalkingPhase>("getWalkingPhase");
 	bu.add<&BattleUnit::disableIndicators>("disableIndicators");
+	bu.add<&getStatusScript>("getStatus");
+	bu.addCustomConst("STATUS_STANDING", STATUS_STANDING);
+	bu.addCustomConst("STATUS_WALKING", STATUS_WALKING);
+	bu.addCustomConst("STATUS_FLYING", STATUS_FLYING);
+	bu.addCustomConst("STATUS_TURNING", STATUS_TURNING);
+	bu.addCustomConst("STATUS_AIMING", STATUS_AIMING);
+	bu.addCustomConst("STATUS_COLLAPSING", STATUS_COLLAPSING);
+	bu.addCustomConst("STATUS_DEAD", STATUS_DEAD);
+	bu.addCustomConst("STATUS_UNCONSCIOUS", STATUS_UNCONSCIOUS);
+	bu.addCustomConst("STATUS_PANICKING", STATUS_PANICKING);
+	bu.addCustomConst("STATUS_BERSERK", STATUS_BERSERK);
+	bu.addCustomConst("STATUS_IGNORE_ME", STATUS_IGNORE_ME);
+	bu.add<&BattleUnit::indicatorsAreEnabled>("indicatorsAreEnabled");
+	bu.add<&BattleUnit::hasNegativeHealthRegen>("hasNegativeHealthRegen");
 
 	bu.add<&BattleUnit::getVisible>("isVisible");
 	bu.add<&makeVisibleScript>("makeVisible");

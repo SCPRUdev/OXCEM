@@ -24,6 +24,7 @@
 #include "Map.h"
 #include "Camera.h"
 #include "BattlescapeState.h"
+#include "SpriteOverlay.h"
 #include "AbortMissionState.h"
 #include "TileEngine.h"
 #include "ActionMenuState.h"
@@ -142,6 +143,7 @@ BattlescapeState::BattlescapeState() :
 
 	_numLayers = new NumberText(3, 5, x + 232, y + 6);
 	_rank = new Surface(26, 23, x + 107, y + 33);
+	_rankOverlay = new Surface(26, 23, x + 107, y + 33);
 
 	// Create buttons
 	_btnUnitUp = new BattlescapeButton(32, 16, x + 48, y);
@@ -313,6 +315,7 @@ BattlescapeState::BattlescapeState() :
 	}
 
 	add(_rank, "rank", "battlescape", _icons);
+	add(_rankOverlay, "rank", "battlescape", _icons);
 	add(_rankTiny, "rank", "battlescape", _icons);
 	add(_btnUnitUp, "buttonUnitUp", "battlescape", _icons);
 	add(_btnUnitDown, "buttonUnitDown", "battlescape", _icons);
@@ -1996,9 +1999,15 @@ void BattlescapeState::drawItem(BattleItem* item, Surface* hand, std::vector<Num
 	{
 		const RuleItem *rule = item->getRules();
 		rule->drawHandSprite(_game->getMod()->getSurfaceSet("BIGOBS.PCK"), hand, item, _save, _save->getAnimFrame());
+		InventorySpriteContext context{InventorySpriteContext::SCREEN_BATTSCAPE,
+			InventorySpriteContext::DRAW_AMMO | InventorySpriteContext::DRAW_MEDIKIT |
+			InventorySpriteContext::DRAW_TWOHAND | InventorySpriteContext::DRAW_GRENADE};
+		const auto handBounds = SpriteOverlay::surfaceBounds(*hand);
+		SpriteOverlay::itemOverlays(_game, *hand, item, rule->getHandSpriteOffX(), rule->getHandSpriteOffY(),
+			context, _save->getAnimFrame(), &handBounds);
 		for (int slot = 0; slot < RuleItem::AmmoSlotMax; ++slot)
 		{
-			if (item->isAmmoVisibleForSlot(slot))
+			if (item->isAmmoVisibleForSlot(slot) && context.has(InventorySpriteContext::DRAW_AMMO))
 			{
 				BattleItem* ammo = item->getAmmoForSlot(slot);
 				if (!ammo)
@@ -2013,9 +2022,9 @@ void BattlescapeState::drawItem(BattleItem* item, Surface* hand, std::vector<Num
 				}
 			}
 		}
-		twoHandedText->setVisible(rule->isTwoHanded());
+		twoHandedText->setVisible(rule->isTwoHanded() && context.has(InventorySpriteContext::DRAW_TWOHAND));
 		twoHandedText->setColor(rule->isBlockingBothHands() ? _twoHandedRed : _twoHandedGreen);
-		if (rule->getBattleType() == BT_MEDIKIT)
+		if (rule->getBattleType() == BT_MEDIKIT && context.has(InventorySpriteContext::DRAW_MEDIKIT))
 		{
 			medikitText[0]->setVisible(true);
 			medikitText[0]->setValue(item->getPainKillerQuantity());
@@ -2036,7 +2045,7 @@ void BattlescapeState::drawItem(BattleItem* item, Surface* hand, std::vector<Num
 		}
 		*/
 		// primed grenade indicator (animated)
-		if (item->getFuseTimer() >= 0)
+		if (item->getFuseTimer() >= 0 && context.has(InventorySpriteContext::DRAW_GRENADE))
 		{
 			const int Pulsate[8] = { 0, 1, 2, 3, 4, 3, 2, 1 };
 			Surface *tempSurface = _game->getMod()->getSurfaceSet("SCANG.DAT")->getFrame(6);
@@ -2127,6 +2136,7 @@ void BattlescapeState::updateSoldierInfo(bool checkFOV)
 
 	bool playableUnit = _battleGame->playableUnitSelected();
 	_rank->setVisible(playableUnit);
+	_rankOverlay->setVisible(playableUnit);
 	_rankTiny->setVisible(playableUnit);
 	_numTimeUnits->setVisible(playableUnit);
 	_barTimeUnits->setVisible(playableUnit);
@@ -2159,6 +2169,8 @@ void BattlescapeState::updateSoldierInfo(bool checkFOV)
 
 	_txtName->setText(battleUnit->getName(_game->getLanguage(), false));
 	Soldier *soldier = battleUnit->getGeoscapeSoldier();
+	_rank->clear();
+	_rankTiny->clear();
 	if (soldier != 0)
 	{
 		if (soldier->hasCallsign() && !_save->isNameDisplay())
@@ -2263,6 +2275,7 @@ void BattlescapeState::updateSoldierInfo(bool checkFOV)
 		_rank->clear();
 		_rankTiny->clear();
 	}
+	drawRankOverlay();
 	_numTimeUnits->setValue(battleUnit->getTimeUnits());
 	_barTimeUnits->setMax(battleUnit->getBaseStats()->tu);
 	_barTimeUnits->setValue(battleUnit->getTimeUnits());
@@ -2532,12 +2545,21 @@ void BattlescapeState::handleItemClick(BattleItem *item, bool middleClick)
 /**
  * Animates map objects on the map, also smoke,fire, ...
  */
+void BattlescapeState::drawRankOverlay()
+{
+	_rankOverlay->clear();
+	if (const auto unit = _save->getSelectedUnit())
+		SpriteOverlay(*_rankOverlay, SpriteOverlay::surfaceBounds(*_rankOverlay), _save, _game->getMod(), _game->getLanguage())
+			.draw<ModScript::UnitRankOverlay>(*unit->getArmor(), unit, _save->getAnimFrame());
+}
+
 void BattlescapeState::animate()
 {
 	_map->animate(!_battleGame->isBusy());
 
 	blinkVisibleUnitButtons();
 	blinkHealthBar();
+	drawRankOverlay();
 
 	if (!_map->getProjectile())
 	{

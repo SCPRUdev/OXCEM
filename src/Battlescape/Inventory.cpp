@@ -17,6 +17,7 @@
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "Inventory.h"
+#include "SpriteOverlay.h"
 #include <algorithm>
 #include <cmath>
 #include "../Mod/Mod.h"
@@ -344,9 +345,16 @@ void Inventory::drawItems()
 			}
 			BattleItem::ScriptFill(&work, invItem, save, BODYPART_ITEM_INVENTORY, _animFrame, 0);
 			work.executeBlit(frame, _items, x, y, 0);
+			InventorySpriteContext overlayContext{InventorySpriteContext::SCREEN_INVENTORY |
+				(_mouseOverItem == invItem ? InventorySpriteContext::CURSOR_HOVER : 0),
+				InventorySpriteContext::DRAW_GRENADE | InventorySpriteContext::DRAW_TWOHAND};
+			const auto handBounds = SpriteOverlay::bounds(invItem->getSlot()->getX(), invItem->getSlot()->getY(),
+				RuleInventory::HAND_W * RuleInventory::SLOT_W, RuleInventory::HAND_H * RuleInventory::SLOT_H);
+			SpriteOverlay::itemOverlays(_game, *_items, invItem, x, y, overlayContext, _animFrame,
+				invItem->getSlot()->getType() == INV_HAND ? &handBounds : nullptr);
 
 			// two-handed indicator
-			if (invItem->getSlot()->getType() == INV_HAND)
+			if (invItem->getSlot()->getType() == INV_HAND && overlayContext.has(InventorySpriteContext::DRAW_TWOHAND))
 			{
 				if (invItem->getRules()->isTwoHanded() || invItem->getRules()->isBlockingBothHands())
 				{
@@ -362,7 +370,7 @@ void Inventory::drawItems()
 			}
 
 			// grenade primer indicators
-			if (invItem->getFuseTimer() >= 0 && invItem->getRules()->getInventoryWidth() > 0)
+			if (invItem->getFuseTimer() >= 0 && invItem->getRules()->getInventoryWidth() > 0 && overlayContext.has(InventorySpriteContext::DRAW_GRENADE))
 			{
 				primers(x, y, invItem->isFuseEnabled());
 			}
@@ -401,9 +409,13 @@ void Inventory::drawItems()
 			y = (groundItem->getSlot()->getY() + groundItem->getSlotY() * RuleInventory::SLOT_H);
 			BattleItem::ScriptFill(&work, groundItem, save, BODYPART_ITEM_INVENTORY, _animFrame, 0);
 			work.executeBlit(frame, _items, x, y, 0);
+			InventorySpriteContext overlayContext{InventorySpriteContext::SCREEN_INVENTORY |
+				(_mouseOverItem == groundItem ? InventorySpriteContext::CURSOR_HOVER : 0),
+				InventorySpriteContext::DRAW_GRENADE | InventorySpriteContext::DRAW_CORPSE_STATE | InventorySpriteContext::DRAW_FATAL_WOUNDS};
+			SpriteOverlay::itemOverlays(_game, *_items, groundItem, x, y, overlayContext, _animFrame);
 
 			// grenade primer indicators
-			if (groundItem->getFuseTimer() >= 0 && groundItem->getRules()->getInventoryWidth() > 0)
+			if (groundItem->getFuseTimer() >= 0 && groundItem->getRules()->getInventoryWidth() > 0 && overlayContext.has(InventorySpriteContext::DRAW_GRENADE))
 			{
 				primers(x, y, groundItem->isFuseEnabled());
 			}
@@ -416,25 +428,25 @@ void Inventory::drawItems()
 				if (groundItem->getUnit()->getStatus() == STATUS_UNCONSCIOUS && groundItem->getUnit()->indicatorsAreEnabled())
 				{
 					fatalWounds = groundItem->getUnit()->getFatalWounds();
-					if (_burnIndicator && groundItem->getUnit()->getFire() > 0)
+					if (_burnIndicator && groundItem->getUnit()->getFire() > 0 && overlayContext.has(InventorySpriteContext::DRAW_CORPSE_STATE))
 					{
 						indicators(_burnIndicator, x, y);
 					}
-					else if (_woundIndicator && fatalWounds > 0)
+					else if (_woundIndicator && fatalWounds > 0 && overlayContext.has(InventorySpriteContext::DRAW_CORPSE_STATE))
 					{
 						indicators(_woundIndicator, x, y);
 					}
-					else if (_shockIndicator && groundItem->getUnit()->hasNegativeHealthRegen())
+					else if (_shockIndicator && groundItem->getUnit()->hasNegativeHealthRegen() && overlayContext.has(InventorySpriteContext::DRAW_CORPSE_STATE))
 					{
 						indicators(_shockIndicator, x, y);
 					}
-					else if (_stunIndicator)
+					else if (_stunIndicator && overlayContext.has(InventorySpriteContext::DRAW_CORPSE_STATE))
 					{
 						indicators(_stunIndicator, x, y);
 					}
 				}
 			}
-			if (fatalWounds > 0)
+			if (fatalWounds > 0 && overlayContext.has(InventorySpriteContext::DRAW_FATAL_WOUNDS))
 			{
 				_stackNumber->setX((groundItem->getSlot()->getX() + ((groundItem->getSlotX() + groundItem->getRules()->getInventoryWidth()) - _groundOffset) * RuleInventory::SLOT_W)-4);
 				if (fatalWounds > 9)
@@ -477,6 +489,10 @@ void Inventory::drawSelectedItem()
 	{
 		_selection->clear();
 		_selItem->getRules()->drawHandSprite(_game->getMod()->getSurfaceSet("BIGOBS.PCK"), _selection, _selItem, _game->getSavedGame()->getSavedBattle(), _animFrame);
+		InventorySpriteContext context{InventorySpriteContext::SCREEN_INVENTORY | InventorySpriteContext::CURSOR_SELECTED, 0};
+		const auto handBounds = SpriteOverlay::surfaceBounds(*_selection);
+		SpriteOverlay::itemOverlays(_game, *_selection, _selItem, _selItem->getRules()->getHandSpriteOffX(),
+			_selItem->getRules()->getHandSpriteOffY(), context, _animFrame, &handBounds);
 	}
 }
 

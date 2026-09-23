@@ -2853,6 +2853,11 @@ void getBattleTypeScript(const RuleItem *ri, int &ret)
 	ret = (int)BT_NONE;
 }
 
+void getMedikitTypeScript(const RuleItem* item, int& result)
+{
+	result = item ? static_cast<int>(item->getMediKitType()) : -1;
+}
+
 void isSingleTargetScript(const RuleItem* r, int &ret)
 {
 	if (r)
@@ -3016,6 +3021,11 @@ void RuleItem::ScriptRegister(ScriptParserBase* parser)
 	ri.addCustomConst("BT_PSIAMP", BT_PSIAMP);
 	ri.addCustomConst("BT_FLARE", BT_FLARE);
 	ri.addCustomConst("BT_CORPSE", BT_CORPSE);
+	ri.addCustomConst("BMT_NORMAL", BMT_NORMAL);
+	ri.addCustomConst("BMT_HEAL", BMT_HEAL);
+	ri.addCustomConst("BMT_PAINKILLER", BMT_PAINKILLER);
+	ri.addCustomConst("BMT_PAINKILER", BMT_PAINKILLER); // PR #120 compatibility alias.
+	ri.addCustomConst("BMT_STIMULANT", BMT_STIMULANT);
 
 	ri.add<&getTypeScript>("getType");
 
@@ -3037,7 +3047,15 @@ void RuleItem::ScriptRegister(ScriptParserBase* parser)
 
 	ri.add<&RuleItem::getArmor>("getArmorValue");
 	ri.add<&RuleItem::getWeight>("getWeight");
+	ri.add<&RuleItem::getClipSize>("getClipSize");
+	ri.add<&RuleItem::getHealQuantity>("getMaxHealQuantity");
+	ri.add<&RuleItem::getPainKillerQuantity>("getMaxPainKillerQuantity");
+	ri.add<&RuleItem::getStimulantQuantity>("getMaxStimulantQuantity");
+	ri.add<&RuleItem::getInventoryWidth>("getInvWidth");
+	ri.add<&RuleItem::getInventoryHeight>("getInvHeight");
+	ri.add<&RuleItem::getBigSprite>("getBigSpriteIndex");
 	ri.add<&getBattleTypeScript>("getBattleType");
+	ri.add<&getMedikitTypeScript>("getMediKitType");
 	ri.add<&RuleItem::getWaypoints>("getWaypoints");
 	ri.add<&RuleItem::isWaterOnly>("isWaterOnly");
 	ri.add<&RuleItem::isTwoHanded>("isTwoHanded");

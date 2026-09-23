@@ -17,6 +17,7 @@
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "InventoryState.h"
+#include "SpriteOverlay.h"
 #include "InventoryLoadState.h"
 #include "InventorySaveState.h"
 #include "InventoryPersonalState.h"
@@ -108,6 +109,7 @@ InventoryState::InventoryState(bool tu, BattlescapeState *parent, Base *base, bo
 	// Create objects
 	_bg = new Surface(320, 200, 0, 0);
 	_soldier = new Surface(320, 200, 0, 0);
+	_soldierOverlay = new Surface(320, 200, 0, 0);
 	_txtPosition = new Text(70, 9, 65, 95);
 	_txtNameStatic = new Text(210, 17, 28, 6);
 	_txtName = new TextEdit(this, 210, 17, 28, 6);
@@ -151,6 +153,7 @@ InventoryState::InventoryState(bool tu, BattlescapeState *parent, Base *base, bo
 	add(_btnArmor, "buttonArmor", "inventory", _bg);
 
 	add(_soldier);
+	add(_soldierOverlay);
 	add(_btnQuickSearch, "textItem", "inventory");
 	add(_txtNameStatic, "textName", "inventory", _bg);
 	add(_txtName, "textName", "inventory", _bg);
@@ -575,6 +578,7 @@ void InventoryState::init()
 	}
 
 	// coming from InventoryLoad window...
+	drawPaperdollOverlay();
 	if (_globalLayoutIndex > -1)
 	{
 		loadGlobalLayout((_globalLayoutIndex));
@@ -2160,6 +2164,14 @@ void InventoryState::handle(Action *action)
 /**
  * Cycle through loaded ammo in hover over item.
  */
+void InventoryState::drawPaperdollOverlay()
+{
+	_soldierOverlay->clear();
+	if (const auto unit = _battleGame->getSelectedUnit())
+		SpriteOverlay(*_soldierOverlay, SpriteOverlay::surfaceBounds(*_soldierOverlay), _battleGame, _game->getMod(), _game->getLanguage())
+			.draw<ModScript::UnitPaperdollOverlay>(*unit->getArmor(), unit, _inv->getAnimFrame());
+}
+
 void InventoryState::think()
 {
 	if (_mouseHoverItem)
@@ -2213,6 +2225,10 @@ void InventoryState::think()
 			r.h -= 2;
 			_selAmmo->drawRect(&r, Palette::blockOffset(0)+15);
 			firstAmmo->getRules()->drawHandSprite(_game->getMod()->getSurfaceSet("BIGOBS.PCK"), _selAmmo, firstAmmo, _game->getSavedGame()->getSavedBattle(), anim);
+			InventorySpriteContext context{InventorySpriteContext::SCREEN_INVENTORY | InventorySpriteContext::INVENTORY_AMMO, 0};
+			const auto handBounds = SpriteOverlay::surfaceBounds(*_selAmmo);
+			SpriteOverlay::itemOverlays(_game, *_selAmmo, firstAmmo, firstAmmo->getRules()->getHandSpriteOffX(),
+				firstAmmo->getRules()->getHandSpriteOffY(), context, anim, &handBounds);
 		}
 		else
 		{
@@ -2220,6 +2236,7 @@ void InventoryState::think()
 		}
 	}
 	State::think();
+	drawPaperdollOverlay();
 }
 
 /**

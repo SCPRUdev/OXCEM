@@ -1,0 +1,53 @@
+# Optional examples. Not loaded by the game automatically.
+extended:
+  scripts:
+    inventorySpriteOverlay:
+      - offset: 50
+        code: |
+          var ptr RuleItem rule;
+          var int type;
+          var int charges;
+          var int width;
+          if eq item null;
+            overlay.drawRect 0 0 4 4 48;
+            return;
+          end;
+          item.getRuleItem rule;
+          rule.getBattleType type;
+          if neq type BT_MEDIKIT;
+            return;
+          end;
+          item.getHealQuantity charges;
+          overlay.getWidth width;
+          overlay.drawNumber charges 1 1 width 5 48;
+          return;
+    handOverlay:
+      - offset: 50
+        code: |
+          var int height;
+          overlay.getHeight height;
+          sub height 1;
+          overlay.drawLine 0 height 7 height 48;
+          return;
+    unitPaperdollOverlay:
+      - offset: 50
+        code: |
+          var int x;
+          set x anim_frame;
+          mod x 20;
+          add x 140;
+          overlay.drawLine x 60 x 64 48;
+          return;
+    unitRankOverlay:
+      - offset: 50
+        code: |
+          var int width;
+          var int x;
+          overlay.getWidth width;
+          if le width 0;
+            return;
+          end;
+          set x anim_frame;
+          mod x width;
+          overlay.drawLine x 0 x 2 48;
+          return;

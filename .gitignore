@@ -7759,3 +7759,4 @@ bin/standard/OpenSCP/Diagrams/SCP-347-readme.txt
 bin/standard/OpenSCP/Diagrams/SCP-347-preview.svg
 bin/standard/OpenSCP/Diagrams/SCP-347-audit.json
 /tests
+/obj/sprite-overlay-tests/

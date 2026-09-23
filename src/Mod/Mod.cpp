@@ -7052,6 +7052,23 @@ void getSoldierScript(const Mod* mod, const RuleSoldier* &soldier, const std::st
 		soldier = nullptr;
 	}
 }
+void getSpriteFromSetScript(const Mod* mod, const Surface*& sprite, const std::string& name, int index)
+{
+	const auto set = mod ? const_cast<Mod*>(mod)->getSurfaceSet(name, false) : nullptr;
+	sprite = set && index >= 0 ? set->getFrame(index) : nullptr;
+}
+void getNamedSpriteScript(const Mod* mod, const Surface*& sprite, const std::string& name)
+{
+	sprite = mod ? const_cast<Mod*>(mod)->getSurface(name, false) : nullptr;
+}
+template<int Element::*member>
+void getInterfaceColorScript(const Mod* mod, int& color, const std::string& name, const std::string& element)
+{
+	const auto rule = mod ? mod->getInterface(name, false) : nullptr;
+	const auto value = rule ? rule->getElementOptional(element) : nullptr;
+	color = value && value->*member != INT_MAX ? value->*member : -1;
+}
+
 void getInventoryScript(const Mod* mod, const RuleInventory* &inv, const std::string &name)
 {
 	if (mod)
@@ -7071,6 +7088,10 @@ void getInventoryScript(const Mod* mod, const RuleInventory* &inv, const std::st
  */
 void Mod::ScriptRegister(ScriptParserBase *parser)
 {
+	parser->registerRawPointerType<Surface>("Sprite");
+	Bind<Surface> sprite{parser, "Sprite"};
+	sprite.add<&Surface::getWidth>("getWidth");
+	sprite.add<&Surface::getHeight>("getHeight");
 	parser->registerPointerType<Unit>();
 	parser->registerPointerType<RuleItem>();
 	parser->registerPointerType<Armor>();
@@ -7080,6 +7101,10 @@ void Mod::ScriptRegister(ScriptParserBase *parser)
 	parser->registerPointerType<RuleInventory>();
 
 	Bind<Mod> mod = { parser };
+	mod.add<&getSpriteFromSetScript>("getSpriteFromSet", "sprite setName runtimeIndex; null if missing");
+	mod.add<&getNamedSpriteScript>("getNamedSprite", "sprite name; null if missing");
+	mod.add<&getInterfaceColorScript<&Element::color>>("getInterfaceElementColor", "result interface element; -1 if missing");
+	mod.add<&getInterfaceColorScript<&Element::color2>>("getInterfaceElementColor2", "result interface element; -1 if missing");
 
 	mod.add<&offset<&Mod::_soundOffsetBattle>>("getSoundOffsetBattle", "convert mod sound index in first argument to runtime index in given set, second argument is mod id");
 	mod.add<&offset<&Mod::_soundOffsetGeo>>("getSoundOffsetGeo", "convert mod sound index in first argument to runtime index in given set, second argument is mod id");

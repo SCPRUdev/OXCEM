@@ -57,6 +57,8 @@ class Tile;
 class BattleUnit;
 class BattleUnitVisibility;
 class BattleItem;
+class SpriteOverlay;
+struct InventorySpriteContext;
 struct StatAdjustment;
 
 class Ufo;
@@ -86,6 +88,23 @@ class ModScript
 	}
 
 	using Output = ScriptOutputArgs<int&, int>;
+
+	struct UnitPaperdollOverlayParser : ScriptParserEvents<ScriptOutputArgs<>, const BattleUnit*, const SavedBattleGame*, SpriteOverlay*, int>
+	{
+		UnitPaperdollOverlayParser(ScriptGlobal*, const std::string&, Mod*);
+	};
+	struct UnitRankOverlayParser : ScriptParserEvents<ScriptOutputArgs<>, const BattleUnit*, const SavedBattleGame*, SpriteOverlay*, int>
+	{
+		UnitRankOverlayParser(ScriptGlobal*, const std::string&, Mod*);
+	};
+	struct InventorySpriteOverlayParser : ScriptParserEvents<ScriptOutputArgs<>, const BattleItem*, const SavedBattleGame*, SpriteOverlay*, InventorySpriteContext*, int>
+	{
+		InventorySpriteOverlayParser(ScriptGlobal*, const std::string&, Mod*);
+	};
+	struct HandOverlayParser : ScriptParserEvents<ScriptOutputArgs<>, const BattleItem*, const SavedBattleGame*, SpriteOverlay*, InventorySpriteContext*, int>
+	{
+		HandOverlayParser(ScriptGlobal*, const std::string&, Mod*);
+	};
 
 	////////////////////////////////////////////////////////////
 	//					unit script
@@ -332,6 +351,10 @@ public:
 	////////////////////////////////////////////////////////////
 
 	using RecolorUnitSprite = MACRO_NAMED_SCRIPT("recolorUnitSprite", RecolorUnitParser);
+	using UnitPaperdollOverlay = MACRO_NAMED_SCRIPT("unitPaperdollOverlay", UnitPaperdollOverlayParser);
+	using UnitRankOverlay = MACRO_NAMED_SCRIPT("unitRankOverlay", UnitRankOverlayParser);
+	using InventorySpriteOverlay = MACRO_NAMED_SCRIPT("inventorySpriteOverlay", InventorySpriteOverlayParser);
+	using HandOverlay = MACRO_NAMED_SCRIPT("handOverlay", HandOverlayParser);
 	using SelectUnitSprite = MACRO_NAMED_SCRIPT("selectUnitSprite", SelectUnitParser);
 	using SelectMoveSoundUnit = MACRO_NAMED_SCRIPT("selectMoveSoundUnit", SelectMoveSoundUnitParser);
 
@@ -448,6 +471,8 @@ public:
 	////////////////////////////////////////////////////////////
 
 	using BattleUnitScripts = ScriptGroup<Mod,
+		UnitPaperdollOverlay,
+		UnitRankOverlay,
 		RecolorUnitSprite,
 		SelectUnitSprite,
 		SelectMoveSoundUnit,
@@ -476,6 +501,8 @@ public:
 	>;
 
 	using BattleItemScripts = ScriptGroup<Mod,
+		InventorySpriteOverlay,
+		HandOverlay,
 		RecolorItemSprite,
 		SelectItemSprite,
 		VaporParticleAmmo,

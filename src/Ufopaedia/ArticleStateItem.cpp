@@ -21,6 +21,7 @@
 #include <algorithm>
 #include "Ufopaedia.h"
 #include "ArticleStateItem.h"
+#include "../Battlescape/SpriteOverlay.h"
 #include "../Mod/Mod.h"
 #include "../Mod/ArticleDefinition.h"
 #include "../Mod/RuleItem.h"
@@ -183,6 +184,9 @@ namespace OpenXcom
 		add(_image, "image", "articleItem", _bg);
 
 		item->drawHandSprite(_game->getMod()->getSurfaceSet("BIGOBS.PCK"), _image);
+		InventorySpriteContext context{InventorySpriteContext::SCREEN_UFOPEDIA, 0};
+		SpriteOverlay(*_image, SpriteOverlay::itemBounds(*item, item->getHandSpriteOffX(), item->getHandSpriteOffY()),
+			nullptr, _game->getMod(), _game->getLanguage()).drawItem(*item, nullptr, context, 0);
 
 		_txtWeaponClipSize = new NumberText(30, 5, 157, 5);
 		add(_txtWeaponClipSize, "image", "articleItem", _bg);
@@ -406,6 +410,9 @@ namespace OpenXcom
 							addAmmoDamagePower(currShow, type, item);
 
 							type->drawHandSprite(_game->getMod()->getSurfaceSet("BIGOBS.PCK"), _imageAmmo[currShow]);
+							InventorySpriteContext ammoContext{InventorySpriteContext::SCREEN_UFOPEDIA | InventorySpriteContext::INVENTORY_AMMO, 0};
+							SpriteOverlay(*_imageAmmo[currShow], SpriteOverlay::itemBounds(*type, type->getHandSpriteOffX(), type->getHandSpriteOffY()),
+								nullptr, _game->getMod(), _game->getLanguage()).drawItem(*type, nullptr, ammoContext, 0);
 							_txtAmmoClipSize[currShow]->setValue(type->getClipSize());
 							_txtAmmoClipSize[currShow]->setVisible(Options::oxcePediaShowClipSize && type->getClipSize() > 0);
 

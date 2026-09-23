@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -920,6 +920,9 @@
     </ClCompile>
     <ClCompile Include="Geoscape\TrainingState.cpp">
       <Filter>Geoscape</Filter>
+    </ClCompile>
+    <ClCompile Include="Battlescape\SpriteOverlay.cpp">
+      <Filter>Battlescape</Filter>
     </ClCompile>
     <ClCompile Include="Battlescape\ItemSprite.cpp">
       <Filter>Battlescape</Filter>
@@ -2182,6 +2185,9 @@
     </ClInclude>
     <ClInclude Include="Geoscape\TrainingState.h">
       <Filter>Geoscape</Filter>
+    </ClInclude>
+    <ClInclude Include="Battlescape\SpriteOverlay.h">
+      <Filter>Battlescape</Filter>
     </ClInclude>
     <ClInclude Include="Battlescape\ItemSprite.h">
       <Filter>Battlescape</Filter>

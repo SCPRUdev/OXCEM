@@ -44,7 +44,7 @@ class Base;
 class InventoryState : public State
 {
 private:
-	Surface *_bg, *_soldier;
+	Surface *_bg, *_soldier, *_soldierOverlay;
 	Text *_txtItem, *_txtAmmo, *_txtWeight, *_txtTus, *_txtStatLine1, *_txtStatLine2, *_txtStatLine3, *_txtStatLine4, *_txtPosition;
 	Text *_txtNameStatic;
 	TextEdit *_txtName;
@@ -73,6 +73,8 @@ private:
 	void _createInventoryTemplate(std::vector<EquipmentLayoutItem*> &inventoryTemplate);
 	/// Helper method for Apply Template button
 	void _applyInventoryTemplate(std::vector<EquipmentLayoutItem*> &inventoryTemplate);
+	/// Refresh a separate overlay surface without modifying the paperdoll pixels.
+	void drawPaperdollOverlay();
 public:
 	/// Creates the Inventory state.
 	InventoryState(bool tu, BattlescapeState *parent, Base *base, bool noCraft = false);

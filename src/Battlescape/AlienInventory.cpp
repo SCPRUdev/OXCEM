@@ -17,6 +17,7 @@
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "AlienInventory.h"
+#include "SpriteOverlay.h"
 #include <cmath>
 #include "../Engine/Action.h"
 #include "../Engine/Font.h"
@@ -180,6 +181,11 @@ void AlienInventory::drawItems()
 
 				BattleItem::ScriptFill(&work, item, save, BODYPART_ITEM_INVENTORY, _animFrame, 0);
 				work.executeBlit(frame, _items, x, y, 0);
+				InventorySpriteContext context{InventorySpriteContext::SCREEN_ALIEN_INV, 0};
+				const auto handBounds = SpriteOverlay::bounds(x - item->getRules()->getHandSpriteOffX(),
+					y - item->getRules()->getHandSpriteOffY(), RuleInventory::HAND_W * RuleInventory::SLOT_W,
+					RuleInventory::HAND_H * RuleInventory::SLOT_H);
+				SpriteOverlay::itemOverlays(_game, *_items, item, x, y, context, _animFrame, &handBounds);
 			}
 			else
 			{

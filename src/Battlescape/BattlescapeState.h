@@ -47,7 +47,7 @@ class BattlescapeGame;
 class BattlescapeState : public State
 {
 private:
-	Surface *_rank, *_rankTiny;
+	Surface *_rank, *_rankTiny, *_rankOverlay;
 	InteractiveSurface *_icons;
 	Map *_map;
 	BattlescapeButton *_btnUnitUp, *_btnUnitDown, *_btnMapUp, *_btnMapDown, *_btnShowMap, *_btnKneel;
@@ -106,6 +106,7 @@ private:
 	void drawItem(BattleItem *item, Surface *hand, std::vector<NumberText*> &ammoText, std::vector<NumberText*> &medikitText, NumberText *twoHandedText, bool drawReactionIndicator, bool drawNoReactionIndicator);
 	/// Draw both hands sprites.
 	void drawHandsItems();
+	void drawRankOverlay();
 	/// Shifts the colors of the health bar when unit has fatal wounds.
 	void blinkHealthBar();
 	/// Shows the unit kneel state.
