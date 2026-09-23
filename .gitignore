@@ -7760,3 +7760,11 @@ bin/standard/OpenSCP/Diagrams/SCP-347-preview.svg
 bin/standard/OpenSCP/Diagrams/SCP-347-audit.json
 /tests
 /obj/sprite-overlay-tests/
+bin/standard/OpenSCP/Resources/Indicators/aim-arms.png
+bin/standard/OpenSCP/Resources/Indicators/aim-head.png
+bin/standard/OpenSCP/Resources/Indicators/aim-legs.png
+bin/standard/OpenSCP/Resources/Indicators/aim-torso.png
+bin/standard/OpenSCP/Resources/Indicators/README.md
+bin/standard/OpenSCP/Resources/Indicators/shock.png
+bin/standard/OpenSCP/Ruleset/indicators.rul
+bin/standard/OpenSCP/Ruleset/medical-charge-overlays.rul

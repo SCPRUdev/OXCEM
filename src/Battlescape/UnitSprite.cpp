@@ -17,6 +17,7 @@
  * along with OpenXcom.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "UnitSprite.h"
+#include "SpriteOverlay.h"
 #include "../Engine/SurfaceSet.h"
 #include "../Mod/RuleItem.h"
 #include "../Mod/Armor.h"
@@ -261,6 +262,11 @@ void UnitSprite::draw(const BattleUnit* unit, int part, int x, int y, int shade,
 			tmpSurface->blitNShade(_dest, _x, _y- 30 + (22 - unit->getHeight()), shade, _mask);
 		}
 	}
+	// Use the same tile mask and lighting as the unit. Map may draw this part
+	// several times with different masks while moving or crossing levels.
+	SpriteOverlay overlay(*_dest, SpriteOverlay::bounds(_x, _y, 32, 40), _save, _mod, nullptr);
+	ModScript::scriptCallback<ModScript::UnitSpriteOverlay>(armor, unit, _save, &overlay, _animationFrame, part, shade);
+	overlay.finishMasked(_mask, shade);
 	if (drawFacingIndicator && part == 0)
 	{
 		// draw unit facing indicator

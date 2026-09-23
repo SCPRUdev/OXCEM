@@ -62,6 +62,7 @@ public:
 	static void itemOverlays(Game* game, Surface& target, const BattleItem* item, int x, int y,
 		InventorySpriteContext& context, int frame, const SDL_Rect* handBounds = nullptr);
 	void finish();
+	void finishMasked(GraphSubset mask, int shade);
 	int getWidth() const { return _bounds.w; }
 	int getHeight() const { return _bounds.h; }
 

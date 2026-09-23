@@ -81,6 +81,15 @@ void SpriteOverlay::finish()
 	}
 }
 
+void SpriteOverlay::finishMasked(GraphSubset mask, int shade)
+{
+	if (_layer)
+	{
+		_layer->blitNShade(&_target, _bounds.x, _bounds.y, shade, mask);
+		_layer.reset();
+	}
+}
+
 void SpriteOverlay::drawItem(const RuleItem& rule, const BattleItem* item, InventorySpriteContext& context, int frame, bool hand)
 {
 	if (hand)
@@ -216,6 +225,11 @@ ModScript::UnitPaperdollOverlayParser::UnitPaperdollOverlayParser(ScriptGlobal* 
 }
 ModScript::UnitRankOverlayParser::UnitRankOverlayParser(ScriptGlobal* shared, const std::string& name, Mod* mod)
 	: ScriptParserEvents{shared, name, "unit", "battle_game", "overlay", "anim_frame"}
+{
+	BindBase b{this}; b.addCustomPtr<const Mod>("rules", mod);
+}
+ModScript::UnitSpriteOverlayParser::UnitSpriteOverlayParser(ScriptGlobal* shared, const std::string& name, Mod* mod)
+	: ScriptParserEvents{shared, name, "unit", "battle_game", "overlay", "anim_frame", "unit_part", "shade"}
 {
 	BindBase b{this}; b.addCustomPtr<const Mod>("rules", mod);
 }
