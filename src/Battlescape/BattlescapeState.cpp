@@ -194,21 +194,24 @@ BattlescapeState::BattlescapeState() :
 	}
 	_numVisibleUnit[9]->setX(_numVisibleUnit[9]->getX() - 2); // center number 10
 	_warning = new WarningMessage(224, 24, x + 48, y + 32);
-	_btnLaunch = new BattlescapeButton(32, 24, screenWidth - 32, 0); // we need screenWidth, because that is independent of the black bars on the screen
+	// SPICONS buttons share their drawing and hit-test bounds.
+	constexpr int specialWidth = 34;
+	constexpr int specialHeight = 33;
+	_btnLaunch = new BattlescapeButton(specialWidth, specialHeight, screenWidth - specialWidth, 0); // we need screenWidth, because that is independent of the black bars on the screen
 	_btnLaunch->setVisible(false);
-	_btnPsi = new BattlescapeButton(32, 24, screenWidth - 32, 25); // we need screenWidth, because that is independent of the black bars on the screen
+	_btnPsi = new BattlescapeButton(specialWidth, specialHeight, screenWidth - specialWidth, specialHeight + 1); // we need screenWidth, because that is independent of the black bars on the screen
 	_btnPsi->setVisible(false);
-	_btnSpecial = new BattlescapeButton(32, 24, screenWidth - 32, 25); // we need screenWidth, because that is independent of the black bars on the screen
+	_btnSpecial = new BattlescapeButton(specialWidth, specialHeight, screenWidth - specialWidth, specialHeight + 1); // we need screenWidth, because that is independent of the black bars on the screen
 	_btnSpecial->setVisible(false);
-	_btnSkills = new BattlescapeButton(32, 24, screenWidth - 32, 25); // we need screenWidth, because that is independent of the black bars on the screen
+	_btnSkills = new BattlescapeButton(specialWidth, specialHeight, screenWidth - specialWidth, specialHeight + 1); // we need screenWidth, because that is independent of the black bars on the screen
 	_btnSkills->setVisible(false);
 
 	{
-		int posX = (screenWidth - 32);
+		int posX = (screenWidth - specialWidth);
 		for (auto& pos :  _posSpecialActions)
 		{
 			pos = posX;
-			posX -= 32;
+			posX -= specialWidth;
 		}
 	}
 
@@ -2425,6 +2428,7 @@ void BattlescapeState::updateUiButton(const BattleUnit *battleUnit)
 	{
 		if (offset < SPECIAL_BUTTONS_MAX)
 		{
+			btn->clear();
 			_game->getMod()->getSurfaceSet("SPICONS.DAT")->getFrame(spriteIndex)->blitNShade(btn, 0, 0);
 			btn->setVisible(true);
 			btn->setX(_posSpecialActions[offset]);
@@ -2440,6 +2444,7 @@ void BattlescapeState::updateUiButton(const BattleUnit *battleUnit)
 	if (hasSkills)
 	{
 		show(_btnSkills, battleUnit->getGeoscapeSoldier()->getRules()->getSkillIconSprite());
+		drawSkillIconOverlay();
 	}
 	if (hasPsiWeapon)
 	{
@@ -2449,6 +2454,18 @@ void BattlescapeState::updateUiButton(const BattleUnit *battleUnit)
 			show(_btnPsi, 1);
 		}
 	}
+}
+
+void BattlescapeState::drawSkillIconOverlay()
+{
+	const auto unit = _save->getSelectedUnit();
+	if (!_btnSkills->getVisible() || !unit || !unit->getGeoscapeSoldier()) return;
+	_btnSkills->clear();
+	const auto index = unit->getGeoscapeSoldier()->getRules()->getSkillIconSprite();
+	if (const auto sprite = _game->getMod()->getSurfaceSet("SPICONS.DAT")->getFrame(index))
+		sprite->blitNShade(_btnSkills, 0, 0);
+	SpriteOverlay(*_btnSkills, SpriteOverlay::surfaceBounds(*_btnSkills), _save, _game->getMod(), _game->getLanguage())
+		.draw<ModScript::UnitSkillIconOverlay>(*unit->getArmor(), unit, _save->getAnimFrame());
 }
 
 void BattlescapeState::resetUiButton()
@@ -2560,6 +2577,7 @@ void BattlescapeState::animate()
 	blinkVisibleUnitButtons();
 	blinkHealthBar();
 	drawRankOverlay();
+	drawSkillIconOverlay();
 
 	if (!_map->getProjectile())
 	{

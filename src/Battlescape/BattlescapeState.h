@@ -249,6 +249,7 @@ public:
 	void showLaunchButton(bool show);
 	/// Reset visiblity of special buttons like psi or skill.
 	void resetUiButton();
+	void drawSkillIconOverlay();
 	/// Clears mouse-scrolling state.
 	void clearMouseScrollingState();
 	/// Returns a pointer to the battlegame, in case we need its functions.

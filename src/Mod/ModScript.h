@@ -357,6 +357,7 @@ public:
 	using RecolorUnitSprite = MACRO_NAMED_SCRIPT("recolorUnitSprite", RecolorUnitParser);
 	using UnitPaperdollOverlay = MACRO_NAMED_SCRIPT("unitPaperdollOverlay", UnitPaperdollOverlayParser);
 	using UnitRankOverlay = MACRO_NAMED_SCRIPT("unitRankOverlay", UnitRankOverlayParser);
+	using UnitSkillIconOverlay = MACRO_NAMED_SCRIPT("unitSkillIconOverlay", UnitRankOverlayParser);
 	using UnitSpriteOverlay = MACRO_NAMED_SCRIPT("unitSpriteOverlay", UnitSpriteOverlayParser);
 	using InventorySpriteOverlay = MACRO_NAMED_SCRIPT("inventorySpriteOverlay", InventorySpriteOverlayParser);
 	using HandOverlay = MACRO_NAMED_SCRIPT("handOverlay", HandOverlayParser);
@@ -478,6 +479,7 @@ public:
 	using BattleUnitScripts = ScriptGroup<Mod,
 		UnitPaperdollOverlay,
 		UnitRankOverlay,
+		UnitSkillIconOverlay,
 		UnitSpriteOverlay,
 		RecolorUnitSprite,
 		SelectUnitSprite,
