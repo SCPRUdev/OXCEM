@@ -34,6 +34,7 @@ class RuleBaseFacility;
 class RuleCraft;
 class RuleCraftWeapon;
 class RuleItem;
+struct RuleItemAction;
 struct RuleDamageType;
 class RuleTerrain;
 class MapDataSet;
@@ -142,7 +143,7 @@ class ModScript
 		AiCalculateTargetWeightParser(ScriptGlobal* shared, const std::string& name, Mod* mod);
 	};
 
-	struct HitUnitParser : ScriptParserEvents<ScriptOutputArgs<int&, int&, int&>, BattleUnit*, BattleItem*, BattleItem*, BattleUnit*, SavedBattleGame*, const RuleSkill*, int, int, int>
+	struct HitUnitParser : ScriptParserEvents<ScriptOutputArgs<int&, int&, int&>, BattleUnit*, BattleItem*, BattleItem*, BattleUnit*, SavedBattleGame*, const RuleSkill*, int, int, int, const RuleItemAction*>
 	{
 		HitUnitParser(ScriptGlobal* shared, const std::string& name, Mod* mod);
 	};
@@ -158,11 +159,11 @@ class ModScript
 	{
 		TryMeleeAttackUnitParser(ScriptGlobal* shared, const std::string& name, Mod* mod);
 	};
-	struct DamageUnitParser : ScriptParserEvents<ScriptOutputArgs<int&, int&, int&, int&, int&, int&, int&, int&, int&>, BattleUnit*, BattleItem*, BattleItem*, BattleUnit*, SavedBattleGame*, const RuleSkill*, int, int, int, int, int, int>
+	struct DamageUnitParser : ScriptParserEvents<ScriptOutputArgs<int&, int&, int&, int&, int&, int&, int&, int&, int&>, BattleUnit*, BattleItem*, BattleItem*, BattleUnit*, SavedBattleGame*, const RuleSkill*, int, int, int, int, int, int, const RuleItemAction*>
 	{
 		DamageUnitParser(ScriptGlobal* shared, const std::string& name, Mod* mod);
 	};
-	struct DamageSpecialUnitParser : ScriptParserEvents<ScriptOutputArgs<int, int&, int, int&, int&, int&, int&, int&>, BattleUnit*, BattleItem*, BattleItem*, BattleUnit*, SavedBattleGame*, const RuleSkill*, int, int, int, int, int, int>
+	struct DamageSpecialUnitParser : ScriptParserEvents<ScriptOutputArgs<int, int&, int, int&, int&, int&, int&, int&>, BattleUnit*, BattleItem*, BattleItem*, BattleUnit*, SavedBattleGame*, const RuleSkill*, int, int, int, int, int, int, const RuleItemAction*>
 	{
 		DamageSpecialUnitParser(ScriptGlobal* shared, const std::string& name, Mod* mod);
 	};
@@ -257,7 +258,7 @@ class ModScript
 	//					bonus stat script
 	////////////////////////////////////////////////////////////
 
-	struct BonusStatsBaseParser : ScriptParserEvents<ScriptOutputArgs<int&>, const BattleUnit*, int, const BattleItem*, const BattleItem*, int, const RuleSkill*>
+	struct BonusStatsBaseParser : ScriptParserEvents<ScriptOutputArgs<int&>, const BattleUnit*, int, const BattleItem*, const BattleItem*, int, const RuleSkill*, const RuleItemAction*>
 	{
 		BonusStatsBaseParser(ScriptGlobal* shared, const std::string& name, Mod* mod);
 

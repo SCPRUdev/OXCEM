@@ -98,7 +98,7 @@ void ProjectileFlyBState::init()
 	bool reactionShoot = _unit->getFaction() != _parent->getSave()->getSide();
 	if (_action.type != BA_THROW)
 	{
-		_ammo = _action.weapon->getAmmoForAction(_action.type, reactionShoot ? nullptr : &_action.result);
+		_ammo = _action.weapon->getAmmoForAction(_action.type, reactionShoot ? nullptr : &_action.result, nullptr, _action.getItemAction());
 		if (!_ammo)
 		{
 			_parent->popState();
@@ -305,7 +305,7 @@ void ProjectileFlyBState::init()
 			}
 		}
 	}
-	else if (!_action.weapon->getArcingShot(_action.type))
+	else if (!_action.weapon->getArcingShot(_action.type, _action.getItemAction()))
 	{
 		// determine the target voxel.
 		// aim at the center of the unit, the object, the walls or the floor (in that priority)
@@ -394,7 +394,7 @@ void ProjectileFlyBState::init()
 
 	if (createNewProjectile())
 	{
-		auto* conf = weapon->getActionConf(_action.type);
+		auto* conf = weapon->getActionConf(_action.type, _action.getItemAction());
 		if (_parent->getMap()->isAltPressed() || (conf && !conf->followProjectiles))
 		{
 			// temporarily turn off camera following projectiles to prevent annoying flashing effects (e.g. on minigun-like weapons)
@@ -502,7 +502,7 @@ bool ProjectileFlyBState::createNewProjectile()
 			return false;
 		}
 	}
-	else if (_action.weapon->getArcingShot(_action.type)) // special code for the "spit" trajectory
+	else if (_action.weapon->getArcingShot(_action.type, _action.getItemAction())) // special code for the "spit" trajectory
 	{
 		_projectileImpact = projectile->calculateThrow(BattleUnit::getFiringAccuracy(attack, _parent->getMod()) / accuracyDivider);
 		if ((_projectileImpact != V_EMPTY && _projectileImpact != V_OUTOFBOUNDS) || projectile->canPierce())
@@ -520,7 +520,7 @@ bool ProjectileFlyBState::createNewProjectile()
 			}
 			if (_action.type != BA_LAUNCH)
 			{
-				_action.weapon->spendAmmoForAction(_action.type, _parent->getSave());
+				_action.weapon->spendAmmoForAction(_action.type, _parent->getSave(), _action.getItemAction());
 			}
 		}
 		else
@@ -562,7 +562,7 @@ bool ProjectileFlyBState::createNewProjectile()
 			}
 			if (_action.type != BA_LAUNCH)
 			{
-				_action.weapon->spendAmmoForAction(_action.type, _parent->getSave());
+				_action.weapon->spendAmmoForAction(_action.type, _parent->getSave(), _action.getItemAction());
 			}
 		}
 		else
@@ -608,7 +608,7 @@ void ProjectileFlyBState::deinit()
 void ProjectileFlyBState::think()
 {
 	/// checks if a weapon has any more shots to fire.
-	auto noMoreShotsToShoot = [this]() { return !_action.weapon->haveNextShotsForAction(_action.type, _action.autoShotCounter) || !_action.weapon->getAmmoForAction(_action.type); };
+	auto noMoreShotsToShoot = [this]() { return !_action.weapon->haveNextShotsForAction(_action.type, _action.autoShotCounter, _action.getItemAction()) || !_action.weapon->getAmmoForAction(_action.type, nullptr, nullptr, _action.getItemAction()); };
 
 	_parent->getSave()->getBattleState()->clearMouseScrollingState();
 	/* TODO refactoring : store the projectile in this state, instead of getting it from the map each time? */
@@ -617,7 +617,7 @@ void ProjectileFlyBState::think()
 		bool hasFloor = _action.actor->haveNoFloorBelow() == false;
 		bool unitCanFly = _action.actor->getMovementType() == MT_FLY;
 
-		if (_action.weapon->haveNextShotsForAction(_action.type, _action.autoShotCounter)
+		if (_action.weapon->haveNextShotsForAction(_action.type, _action.autoShotCounter, _action.getItemAction())
 			&& !_action.actor->isOut()
 			&& _ammo->getAmmoQuantity() != 0
 			&& (hasFloor || unitCanFly))
@@ -795,7 +795,7 @@ void ProjectileFlyBState::think()
 				_parent->getMap()->resetCameraSmoothing();
 				if (_action.type == BA_LAUNCH)
 				{
-					_action.weapon->spendAmmoForAction(_action.type, _parent->getSave());
+					_action.weapon->spendAmmoForAction(_action.type, _parent->getSave(), _action.getItemAction());
 				}
 
 				if (_projectileImpact != V_OUTOFBOUNDS)
@@ -1056,7 +1056,7 @@ void ProjectileFlyBState::projectileHitUnit(Position pos)
 
 			{
 				int upperLimit, lowerLimit;
-				int dropoff = _action.weapon->getRules()->calculateLimits(upperLimit, lowerLimit, _parent->getSave()->getDepth(), _action.type);
+				int dropoff = _action.weapon->getRules()->calculateLimits(upperLimit, lowerLimit, _parent->getSave()->getDepth(), _action.type, _action.getItemAction());
 
 				if (distance > upperLimit)
 				{

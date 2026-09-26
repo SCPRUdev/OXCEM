@@ -180,6 +180,7 @@ void SkillMenuState::btnActionMenuItemClick(Action *action)
 		TileEngine *tileEngine = _game->getSavedGame()->getSavedBattle()->getTileEngine();
 		const RuleSkill *selectedSkill = _actionMenu[btnID]->getSkill();
 		_action->skillRules = selectedSkill;
+		_action->itemAction = nullptr;
 		_action->type = _actionMenu[btnID]->getAction();
 		chooseWeaponForSkill(_action, selectedSkill);
 		_action->updateTU();

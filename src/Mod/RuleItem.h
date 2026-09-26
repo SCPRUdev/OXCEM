@@ -266,6 +266,10 @@ inline RuleItemUseRuleBase<T> getDefault(const RuleItemUseRuleBase<NullableValue
  */
 struct RuleItemAction
 {
+	static constexpr const char* ScriptName = "RuleItemAction";
+	static void ScriptRegister(ScriptParserBase* parser);
+	std::string id;
+	BattleActionType type = BA_NONE;
 	int accuracy = 0;
 	int range = 0;
 	int shots = 1;
@@ -307,6 +311,7 @@ struct BattleActionAttackReadOnlyImpl
 	const BattleItem *weapon_item = nullptr;
 	const BattleItem *damage_item = nullptr;
 	const RuleSkill *skill_rules = nullptr;
+	const RuleItemAction *item_action = nullptr;
 };
 
 }
@@ -322,6 +327,7 @@ struct BattleActionAttack
 	BattleItem *weapon_item = nullptr;
 	BattleItem *damage_item = nullptr;
 	const RuleSkill *skill_rules = nullptr;
+	const RuleItemAction *item_action = nullptr;
 
 	/**
 	 * Helper class that have only readonly access to data.
@@ -333,7 +339,7 @@ struct BattleActionAttack
 	 */
 	operator ReadOnly() const
 	{
-		return { type, attacker, weapon_item, damage_item, skill_rules, };
+		return { type, attacker, weapon_item, damage_item, skill_rules, item_action };
 	}
 
 	/// Get Action Attack from Action cost.
@@ -414,6 +420,8 @@ private:
 	RuleDamageType _damageType, _meleeType;
 	bool _damageTypeSet, _meleeTypeSet;
 	RuleItemAction _confAimed, _confAuto, _confSnap, _confMelee;
+	bool _hasActions = false;
+	std::vector<RuleItemAction> _actions;
 	int _accuracyUse, _accuracyMind, _accuracyPanic, _accuracyThrow, _accuracyCloseQuarters;
 	int _noLOSAccuracyPenalty;
 	int _explodeInventory;
@@ -716,6 +724,10 @@ public:
 
 	/// Get configuration of aimed shot action.
 	const RuleItemAction *getConfigAimed() const;
+	bool hasActions() const { return _hasActions; }
+	void loadActions(const YAML::YamlNodeReader& reader);
+	const std::vector<RuleItemAction>& getActions() const { return _actions; }
+	bool ownsAction(const RuleItemAction* action) const;
 	/// Get configuration of autoshot action.
 	const RuleItemAction *getConfigAuto() const;
 	/// Get configuration of snapshot action.
@@ -985,7 +997,7 @@ public:
 	/// Get the accuracy dropoff of this weapon.
 	int getDropoff() const;
 	/// Helper function to calculate limits and dropoff.
-	int calculateLimits(int& upperLimit, int& lowerLimit, int depth, BattleActionType type) const;
+	int calculateLimits(int& upperLimit, int& lowerLimit, int depth, BattleActionType type, const RuleItemAction* variant = nullptr) const;
 	/// Get the number of projectiles to trace.
 	int getShotgunPellets() const;
 	/// Get the shotgun behavior type.

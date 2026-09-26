@@ -65,6 +65,11 @@ namespace OpenXcom
 
 bool BattlescapeGame::_debugPlay = false;
 
+const RuleItemAction* BattleActionCost::getItemAction() const
+{
+	return !skillRules && weapon && weapon->getRules()->ownsAction(itemAction) && itemAction->type == type ? itemAction : nullptr;
+}
+
 /**
  * Update value of TU and Energy
  */
@@ -76,7 +81,7 @@ void BattleActionCost::updateTU()
 	}
 	else if (actor && weapon)
 	{
-		*(RuleItemUseCost*)this = actor->getActionTUs(type, weapon);
+		*(RuleItemUseCost*)this = actor->getActionTUs(type, weapon, getItemAction());
 	}
 	else
 	{
@@ -189,6 +194,7 @@ BattlescapeGame::BattlescapeGame(SavedBattleGame *save, BattlescapeState *parent
 	_currentAction.targeting = false;
 	_currentAction.type = BA_NONE;
 	_currentAction.skillRules = nullptr;
+	_currentAction.itemAction = nullptr;
 
 	_debugPlay = false;
 
@@ -513,6 +519,7 @@ void BattlescapeGame::endTurn()
 	_debugPlay = _save->getDebugMode() && _parentState->getGame()->isCtrlPressed() && (_save->getSide() != FACTION_NEUTRAL);
 	_currentAction.type = BA_NONE;
 	_currentAction.skillRules = nullptr;
+	_currentAction.itemAction = nullptr;
 	getMap()->getWaypoints()->clear();
 	_currentAction.waypoints.clear();
 	_parentState->showLaunchButton(false);
@@ -1665,6 +1672,7 @@ bool BattlescapeGame::cancelCurrentAction(bool bForce)
 				_currentAction.targeting = false;
 				_currentAction.type = BA_NONE;
 				_currentAction.skillRules = nullptr;
+				_currentAction.itemAction = nullptr;
 				_currentAction.result = ""; // TODO
 				setupCursor();
 				_parentState->getGame()->getCursor()->setVisible(true);
@@ -1695,6 +1703,7 @@ void BattlescapeGame::cancelAllActions()
 	_currentAction.targeting = false;
 	_currentAction.type = BA_NONE;
 	_currentAction.skillRules = nullptr;
+	_currentAction.itemAction = nullptr;
 	_currentAction.result = ""; // TODO
 	setupCursor();
 	_parentState->getGame()->getCursor()->setVisible(true);
@@ -1758,7 +1767,7 @@ void BattlescapeGame::primaryAction(Position pos)
 
 				// Populate the action's waypoints with the positions we want to fire at
 				// Start from the last shot and move to the first, since we'll be using the last element first and then pop_back()
-				int numberOfShots = _currentAction.weapon->getRules()->getConfigAuto()->shots;
+				int numberOfShots = _currentAction.weapon->getActionConf(_currentAction.type, _currentAction.getItemAction())->shots;
 				int numberOfWaypoints = _currentAction.waypoints.size();
 				_currentAction.waypoints.clear();
 				for (int i = numberOfShots - 1; i > 0; --i)
@@ -2217,7 +2226,7 @@ void BattlescapeGame::spawnNewUnit(BattleActionAttack attack, Position position)
 		return;
 
 	int chance = item->getSpawnUnitChance();
-	if (auto* conf = attack.weapon_item ? attack.weapon_item->getActionConf(attack.type) : nullptr)
+	if (auto* conf = attack.weapon_item ? attack.weapon_item->getActionConf(attack.type, attack.item_action) : nullptr)
 	{
 		chance = useIntNullable(conf->ammoSpawnUnitChanceOverride, chance);
 	}
@@ -2341,7 +2350,7 @@ void BattlescapeGame::spawnNewItem(BattleActionAttack attack, Position position)
 		return;
 
 	int chance = item->getSpawnItemChance();
-	if (auto* conf = attack.weapon_item ? attack.weapon_item->getActionConf(attack.type) : nullptr)
+	if (auto* conf = attack.weapon_item ? attack.weapon_item->getActionConf(attack.type, attack.item_action) : nullptr)
 	{
 		chance = useIntNullable(conf->ammoSpawnItemChanceOverride, chance);
 	}

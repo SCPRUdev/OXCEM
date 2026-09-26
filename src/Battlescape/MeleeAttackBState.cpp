@@ -72,7 +72,7 @@ void MeleeAttackBState::init()
 	_unit = _action.actor;
 
 	bool reactionShoot = _unit->getFaction() != _parent->getSave()->getSide();
-	_ammo = _action.weapon->getAmmoForAction(BA_HIT, reactionShoot ? nullptr : &_action.result);
+	_ammo = _action.weapon->getAmmoForAction(BA_HIT, reactionShoot ? nullptr : &_action.result, nullptr, _action.getItemAction());
 	if (!_ammo)
 	{
 		_parent->popState();
@@ -185,7 +185,7 @@ void MeleeAttackBState::think()
 		// whose target is still alive or at least conscious
 		_target && !_target->isOutThresholdExceed() &&
 		// and we still have ammo to make the attack
-		_weapon->getAmmoForAction(BA_HIT) &&
+		_weapon->getAmmoForAction(BA_HIT, nullptr, nullptr, _action.getItemAction()) &&
 		// spend the TUs immediately
 		_action.spendTU())
 	{
@@ -223,7 +223,7 @@ void MeleeAttackBState::performMeleeAttack(int terrainMeleeTilePart)
 	_unit->aim(true);
 
 	// use up ammo if applicable
-	_action.weapon->spendAmmoForAction(BA_HIT, _parent->getSave());
+	_action.weapon->spendAmmoForAction(BA_HIT, _parent->getSave(), _action.getItemAction());
 	_parent->getMap()->setCursorType(CT_NONE);
 
 	// offset the damage voxel ever so slightly so that the target knows which side the attack came from

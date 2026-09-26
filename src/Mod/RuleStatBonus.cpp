@@ -563,7 +563,7 @@ int RuleStatBonus::getBonus(BattleActionAttack::ReadOnly attack, int externalBon
 	assert(!_refresh && "RuleStatBonus not loaded correctly");
 
 	ModScript::BonusStatsCommon::Output arg{ externalBonuses };
-	ModScript::BonusStatsCommon::Worker work{ attack.attacker, externalBonuses, attack.weapon_item, attack.damage_item, attack.type, attack.skill_rules };
+	ModScript::BonusStatsCommon::Worker work{ attack.attacker, externalBonuses, attack.weapon_item, attack.damage_item, attack.type, attack.skill_rules, attack.item_action };
 	work.execute(_container, arg);
 
 	return arg.getFirst();
@@ -577,7 +577,7 @@ int RuleStatBonus::getBonus(const BattleUnit* unit, int externalBonuses) const
 	assert(!_refresh && "RuleStatBonus not loaded correctly");
 
 	ModScript::BonusStatsCommon::Output arg{ externalBonuses };
-	ModScript::BonusStatsCommon::Worker work{ unit, externalBonuses, nullptr, nullptr, BA_NONE, nullptr };
+	ModScript::BonusStatsCommon::Worker work{ unit, externalBonuses, nullptr, nullptr, BA_NONE, nullptr, nullptr };
 	work.execute(_container, arg);
 
 	return arg.getFirst();
@@ -589,7 +589,7 @@ int RuleStatBonus::getBonus(const BattleUnit* unit, int externalBonuses) const
 
 ModScript::BonusStatsBaseParser::BonusStatsBaseParser(ScriptGlobal* shared, const std::string& name, Mod* mod) : ScriptParserEvents{ shared, name,
 	"bonus",
-	"unit", "external_bonuses", "weapon", "ammo", "battle_action", "skill" }
+	"unit", "external_bonuses", "weapon", "ammo", "battle_action", "skill", "item_action" }
 {
 	Bind<BattleUnit> bu = { this };
 

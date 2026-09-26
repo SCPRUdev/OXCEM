@@ -48,6 +48,9 @@ struct BattleActionCost : RuleItemUseCost
 	BattleUnit *actor = nullptr;
 	BattleItem *weapon = nullptr;
 	const RuleSkill* skillRules = nullptr; // if defined, this is a skill action
+	const RuleItemAction* itemAction = nullptr;
+	/// Returns only a variant belonging to this weapon and action type.
+	const RuleItemAction* getItemAction() const;
 
 	/// Default constructor.
 	BattleActionCost() : type(BA_NONE) { }

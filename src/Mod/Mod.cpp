@@ -7094,6 +7094,7 @@ void Mod::ScriptRegister(ScriptParserBase *parser)
 	sprite.add<&Surface::getHeight>("getHeight");
 	parser->registerPointerType<Unit>();
 	parser->registerPointerType<RuleItem>();
+	parser->registerPointerType<RuleItemAction>();
 	parser->registerPointerType<Armor>();
 	parser->registerPointerType<RuleSkill>();
 	parser->registerPointerType<RuleResearch>();

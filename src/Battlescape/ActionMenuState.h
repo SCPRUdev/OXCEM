@@ -37,12 +37,13 @@ protected:
 	BattleAction *_action;
 	std::vector<ActionMenuItem*> _actionMenu;
 	std::vector<SDLKey> _menuKeys;
+	std::vector<const RuleItemAction*> _menuVariants;
 	int _menuX = 0, _menuY = 0, _firstItem = 0;
 	Text* _pageInfo = nullptr;
 	void createMenuItem(int id);
 	void layoutMenu();
 	/// Adds a new menu item for an action.
-	void addItem(BattleActionType ba, const std::string &name, int *id, SDLKey key);
+	void addItem(BattleActionType ba, const std::string &name, int *id, SDLKey key, const RuleItemAction* variant = nullptr);
 	/// Acts on the action instance that has been chosen and set.
 	void handleAction();
 public:

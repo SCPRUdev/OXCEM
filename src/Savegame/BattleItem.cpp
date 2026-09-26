@@ -72,6 +72,7 @@ BattleItem::BattleItem(const RuleItem *rules, int *id) : _id(*id), _rules(rules)
 				used |= (_confAuto && _confAuto->ammoSlot == slot);
 				used |= (_confSnap && _confSnap->ammoSlot == slot);
 				used |= (_confMelee && _confMelee->ammoSlot == slot);
+				for (const auto& action : _rules->getActions()) used |= action.ammoSlot == slot;
 				if (_rules->getCompatibleAmmoForSlot(slot)->empty())
 				{
 					if (used && showSelfAmmo)
@@ -807,8 +808,9 @@ bool BattleItem::setAmmoPreMission(BattleItem *item)
  * @param action Action type.
  * @return Return config of item action or nullptr for wrong action type or item.
  */
-const RuleItemAction *BattleItem::getActionConf(BattleActionType action) const
+const RuleItemAction *BattleItem::getActionConf(BattleActionType action, const RuleItemAction* variant) const
 {
+	if (variant && _rules->ownsAction(variant) && variant->type == action) return variant;
 	switch (action)
 	{
 	case BA_LAUNCH:
@@ -823,14 +825,15 @@ const RuleItemAction *BattleItem::getActionConf(BattleActionType action) const
 /**
  * Check if attack shoot in arc.
  */
-bool BattleItem::getArcingShot(BattleActionType action) const
+bool BattleItem::getArcingShot(BattleActionType action, const RuleItemAction* variant) const
 {
+	if (variant && _rules->ownsAction(variant) && variant->type == action) return variant->arcing;
 	if (_rules->getArcingShot())
 	{
 		return true;
 	}
 
-	auto* conf = getActionConf(action);
+	auto* conf = getActionConf(action, variant);
 	if (conf && conf->arcing)
 	{
 		return true;
@@ -842,9 +845,9 @@ bool BattleItem::getArcingShot(BattleActionType action) const
 /**
  * Determines if this item uses ammo.
  */
-bool BattleItem::needsAmmoForAction(BattleActionType action) const
+bool BattleItem::needsAmmoForAction(BattleActionType action, const RuleItemAction* variant) const
 {
-	auto* conf = getActionConf(action);
+	auto* conf = getActionConf(action, variant);
 	if (!conf || conf->ammoSlot == RuleItem::AmmoSlotSelfUse)
 	{
 		return false;
@@ -858,9 +861,9 @@ bool BattleItem::needsAmmoForAction(BattleActionType action) const
  * @param action Battle Action done using this item.
  * @return
  */
-const BattleItem *BattleItem::getAmmoForAction(BattleActionType action) const
+const BattleItem *BattleItem::getAmmoForAction(BattleActionType action, const RuleItemAction* variant) const
 {
-	auto* conf = getActionConf(action);
+	auto* conf = getActionConf(action, variant);
 	if (!conf)
 	{
 		return nullptr;
@@ -885,9 +888,9 @@ const BattleItem *BattleItem::getAmmoForAction(BattleActionType action) const
  * @param spendPerShot How much ammo should be spent for one shot.
  * @return
  */
-BattleItem *BattleItem::getAmmoForAction(BattleActionType action, std::string* message, int* spendPerShot)
+BattleItem *BattleItem::getAmmoForAction(BattleActionType action, std::string* message, int* spendPerShot, const RuleItemAction* variant)
 {
-	auto* conf = getActionConf(action);
+	auto* conf = getActionConf(action, variant);
 	if (!conf)
 	{
 		return nullptr;
@@ -920,15 +923,15 @@ BattleItem *BattleItem::getAmmoForAction(BattleActionType action, std::string* m
  * @param action Battle Action done using this item.
  * @param save Save game.
  */
-void BattleItem::spendAmmoForAction(BattleActionType action, SavedBattleGame* save)
+void BattleItem::spendAmmoForAction(BattleActionType action, SavedBattleGame* save, const RuleItemAction* variant)
 {
-	if (save->getDebugMode() || getActionConf(action)->ammoSlot == RuleItem::AmmoSlotSelfUse)
+	if (save->getDebugMode() || getActionConf(action, variant)->ammoSlot == RuleItem::AmmoSlotSelfUse)
 	{
 		return;
 	}
 
 	int spendPerShot = 1;
-	auto* ammo = getAmmoForAction(action, nullptr, &spendPerShot);
+	auto* ammo = getAmmoForAction(action, nullptr, &spendPerShot, variant);
 	if (ammo)
 	{
 		if (ammo->getRules()->getClipSize() > 0 && ammo->spendBullet(spendPerShot) == false && !ammo->getRules()->isAmmoRechargeable())
@@ -955,9 +958,9 @@ void BattleItem::spendAmmoForAction(BattleActionType action, SavedBattleGame* sa
  * @param shotCount Current shot count.
  * @return True if still can shoot.
  */
-bool BattleItem::haveNextShotsForAction(BattleActionType action, int shotCount) const
+bool BattleItem::haveNextShotsForAction(BattleActionType action, int shotCount, const RuleItemAction* variant) const
 {
-	auto* conf = getActionConf(action);
+	auto* conf = getActionConf(action, variant);
 	if (conf)
 	{
 		return shotCount < conf->shots;

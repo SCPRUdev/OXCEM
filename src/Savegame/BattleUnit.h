@@ -355,7 +355,7 @@ public:
 	bool isIgnored() const;
 
 	/// Get the number of time units a certain action takes.
-	RuleItemUseCost getActionTUs(BattleActionType actionType, const BattleItem *item) const;
+	RuleItemUseCost getActionTUs(BattleActionType actionType, const BattleItem *item, const RuleItemAction* variant = nullptr) const;
 	/// Get the number of time units a certain action takes.
 	RuleItemUseCost getActionTUs(BattleActionType actionType, const RuleItem *item) const;
 	/// Get the number of time units a certain skill action takes.

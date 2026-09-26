@@ -2862,7 +2862,7 @@ bool TileEngine::tryReaction(ReactionScore *reaction, BattleUnit *target, const 
 	action.weapon = reaction->weapon;
 	action.type = reaction->attackType;
 
-	if (!_save->canUseWeapon(action.weapon, action.actor, false, action.type))
+	if (!_save->canUseWeapon(action.weapon, action.actor, false, action.type, nullptr, action.getItemAction()))
 	{
 		return false;
 	}
@@ -2871,7 +2871,7 @@ bool TileEngine::tryReaction(ReactionScore *reaction, BattleUnit *target, const 
 	action.updateTU();
 
 	auto* unit = action.actor;
-	auto* ammo = action.weapon->getAmmoForAction(action.type);
+	auto* ammo = action.weapon->getAmmoForAction(action.type, nullptr, nullptr, action.getItemAction());
 	if (ammo && action.haveTU())
 	{
 		action.targeting = true;
@@ -3101,7 +3101,7 @@ bool TileEngine::awardExperience(BattleActionAttack attack, BattleUnit *target, 
 				expType = ETM_FIRING_100;
 				expFuncA = &BattleUnit::addFiringExp; // vanilla compatibility
 			}
-			else if (weapon->getArcingShot(attack.type))
+			else if (weapon->getArcingShot(attack.type, attack.item_action))
 			{
 				expType = ETM_THROWING_100;
 				expFuncA = &BattleUnit::addThrowingExp; // e.g. flamethrower, javelins, combat bow, grenade launcher, black powder bomb, stick grenade, acid flask, apple, ...

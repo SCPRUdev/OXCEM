@@ -75,7 +75,7 @@ void UpdateAmmo(BattleActionAttack& attack)
 		}
 		else
 		{
-			attack.damage_item = attack.weapon_item->getAmmoForAction(attack.type);
+			attack.damage_item = attack.weapon_item->getAmmoForAction(attack.type, nullptr, nullptr, attack.item_action);
 		}
 	}
 }
@@ -104,7 +104,12 @@ void UpdateGrenade(BattleActionAttack& attack)
  */
 BattleActionAttack BattleActionAttack::GetBeforeShoot(const BattleActionCost &action)
 {
-	return GetBeforeShoot(action.type, action.actor, action.weapon, action.skillRules);
+	auto attack = BattleActionAttack{ action.type, action.actor, action.weapon };
+	attack.skill_rules = action.skillRules;
+	attack.item_action = action.getItemAction();
+	UpdateAttacker(attack);
+	UpdateAmmo(attack);
+	return attack;
 }
 
 BattleActionAttack BattleActionAttack::GetBeforeShoot(BattleActionType type, BattleUnit *unit, BattleItem *wepon, const RuleSkill *skill)
@@ -124,7 +129,9 @@ BattleActionAttack BattleActionAttack::GetBeforeShoot(BattleActionType type, Bat
  */
 BattleActionAttack BattleActionAttack::GetAferShoot(const BattleActionCost &action, BattleItem *ammo)
 {
-	return GetAferShoot(action.type, action.actor, action.weapon, ammo, action.skillRules);
+	auto attack = GetAferShoot(action.type, action.actor, action.weapon, ammo, action.skillRules);
+	attack.item_action = action.getItemAction();
+	return attack;
 }
 
 BattleActionAttack BattleActionAttack::GetAferShoot(BattleActionType type, BattleUnit *unit, BattleItem *wepon, BattleItem *ammo, const RuleSkill *skill)
@@ -692,6 +699,89 @@ void RuleItem::load(const YAML::YamlNodeReader& node, Mod *mod, const ModScript&
 	_scriptValues.load(reader, parsers.getShared());
 
 	_battleItemScripts.load(_type, reader, parsers.battleItemScripts);
+	loadActions(reader);
+}
+
+void RuleItem::loadActions(const YAML::YamlNodeReader& reader)
+{
+	if (const auto& actions = reader["actions"])
+	{
+		_hasActions = true;
+		_actions.clear();
+		for (const auto& entry : actions.children())
+		{
+			RuleItemAction a;
+			RuleItemUseCost cost;
+			RuleItemUseFlat flat;
+			const auto base = entry["extends"].readVal<std::string>();
+			if (base == "aimed") { a = _confAimed; a.type = BA_AIMEDSHOT; cost = getCostAimed(); flat = getFlatAimed(); }
+			else if (base == "snap") { a = _confSnap; a.type = BA_SNAPSHOT; cost = getCostSnap(); flat = getFlatSnap(); }
+			else if (base == "auto") { a = _confAuto; a.type = BA_AUTOSHOT; cost = getCostAuto(); flat = getFlatAuto(); }
+			else if (base == "melee") { a = _confMelee; a.type = BA_HIT; cost = getCostMelee(); flat = getFlatMelee(); }
+			else if (base == "throw") { a.type = BA_THROW; a.name = "STR_THROW"; a.accuracy = getAccuracyThrow(); a.ammoSlot = AmmoSlotSelfUse; cost = getCostThrow(); flat = getFlatThrow(); }
+			else throw Exception("Item " + _type + ": unsupported action extends: " + base);
+			a.id = entry["id"].readVal<std::string>();
+			if (a.id.empty() || std::any_of(_actions.begin(), _actions.end(), [&](const RuleItemAction& other) { return other.id == a.id; }))
+				throw Exception("Item " + _type + ": empty or duplicate action id: " + a.id);
+			if (a.name.empty()) a.name = _battleType == BT_MELEE && getDamageType()->ResistType == DT_STUN ? "STR_STUN" : "STR_HIT_MELEE";
+			a.cost.Time = cost.Time; a.cost.Energy = cost.Energy; a.cost.Morale = cost.Morale;
+			a.cost.Health = cost.Health; a.cost.Stun = cost.Stun; a.cost.Mana = cost.Mana;
+			a.flat.Time = flat.Time; a.flat.Energy = flat.Energy; a.flat.Morale = flat.Morale;
+			a.flat.Health = flat.Health; a.flat.Stun = flat.Stun; a.flat.Mana = flat.Mana;
+			a.arcing = a.arcing || _arcingShot;
+			entry.tryRead("name", a.name);
+			entry.tryRead("shortName", a.shortName);
+			entry.tryRead("accuracy", a.accuracy);
+			entry.tryRead("range", a.range);
+			entry.tryRead("shots", a.shots);
+			entry.tryRead("spendPerShot", a.spendPerShot);
+			entry.tryRead("arcing", a.arcing);
+			entry.tryRead("followProjectiles", a.followProjectiles);
+			entry.tryRead("ammoSlot", a.ammoSlot);
+			if (a.ammoSlot < AmmoSlotSelfUse || a.ammoSlot >= AmmoSlotMax)
+				throw Exception("Item " + _type + ": invalid ammoSlot for action " + a.id);
+			if (entry["cost"]) a.cost.load(entry["cost"]);
+			if (const auto& f = entry["flat"])
+			{
+				if (f.hasVal()) f.tryReadVal(a.flat.Time);
+				else a.flat.load(f);
+			}
+			loadIntNullable(a.ammoZombieUnitChanceOverride, entry["ammoZombieUnitChanceOverride"]);
+			loadIntNullable(a.ammoSpawnUnitChanceOverride, entry["ammoSpawnUnitChanceOverride"]);
+			loadIntNullable(a.ammoSpawnItemChanceOverride, entry["ammoSpawnItemChanceOverride"]);
+			if (a.shots < 1 || a.spendPerShot < 1 || a.range < 0 || a.accuracy < 0)
+				throw Exception("Item " + _type + ": invalid parameters for action " + a.id);
+			_actions.push_back(a);
+		}
+	}
+}
+
+bool RuleItem::ownsAction(const RuleItemAction* action) const
+{
+	return action && std::any_of(_actions.begin(), _actions.end(), [action](const RuleItemAction& a) { return &a == action; });
+}
+
+static void getActionIdScript(const RuleItemAction* a, ScriptText& value)
+{
+	value = a ? ScriptText{a->id.c_str()} : ScriptText::empty;
+}
+
+static void getActionAmmoSlotScript(const RuleItemAction* a, int& value)
+{
+	value = a ? a->ammoSlot : -1;
+}
+
+static void getActionAccuracyScript(const RuleItemAction* a, int& value)
+{
+	value = a ? a->accuracy : 0;
+}
+
+void RuleItemAction::ScriptRegister(ScriptParserBase* parser)
+{
+	Bind<RuleItemAction> b = { parser };
+	b.add<&getActionIdScript>("getId");
+	b.add<&getActionAmmoSlotScript>("getAmmoSlot");
+	b.add<&getActionAccuracyScript>("getAccuracy");
 }
 
 /**
@@ -699,6 +789,11 @@ void RuleItem::load(const YAML::YamlNodeReader& node, Mod *mod, const ModScript&
  */
 void RuleItem::afterLoad(const Mod* mod)
 {
+	for (const auto& action : _actions)
+	{
+		if (action.type != BA_THROW && action.ammoSlot != AmmoSlotSelfUse && _clipSize == 0 && _compatibleAmmoNames[action.ammoSlot].empty())
+			throw Exception("Item " + _type + ": action " + action.id + " references an undefined ammo slot");
+	}
 	if ((_battleType == BT_MELEE || _battleType == BT_FIREARM) && _clipSize == 0)
 	{
 		for (RuleItemAction* conf : { &_confAimed, &_confAuto, &_confSnap, &_confMelee, })
@@ -2424,7 +2519,7 @@ int RuleItem::getDropoff() const
  * Helper function to calculate limits and dropoff.
  * @return The per-tile dropoff.
  */
-int RuleItem::calculateLimits(int& upperLimit, int& lowerLimit, int depth, BattleActionType type) const
+int RuleItem::calculateLimits(int& upperLimit, int& lowerLimit, int depth, BattleActionType type, const RuleItemAction* variant) const
 {
 	upperLimit = type == BA_THROW ? 200 : getAimRange();
 	lowerLimit = type == BA_THROW ?   0 : getMinRange();
@@ -2447,6 +2542,8 @@ int RuleItem::calculateLimits(int& upperLimit, int& lowerLimit, int depth, Battl
 		}
 	}
 
+	if (variant && ownsAction(variant) && variant->type == type && type != BA_THROW)
+		upperLimit = variant->range;
 	return type == BA_THROW ? getThrowDropoff() : getDropoff();
 }
 

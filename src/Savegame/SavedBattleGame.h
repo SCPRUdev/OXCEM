@@ -46,6 +46,7 @@ class State;
 class ItemContainer;
 class Craft;
 class RuleItem;
+struct RuleItemAction;
 class HitLog;
 enum HitLogEntryType : int;
 struct BattlescapeTally;
@@ -394,7 +395,7 @@ public:
 	/// Gets the playing side.
 	UnitFaction getSide() const;
 	/// Can unit use that weapon?
-	bool canUseWeapon(const BattleItem *weapon, const BattleUnit *unit, bool isBerserking, BattleActionType actionType, std::string* message = nullptr) const;
+	bool canUseWeapon(const BattleItem *weapon, const BattleUnit *unit, bool isBerserking, BattleActionType actionType, std::string* message = nullptr, const RuleItemAction* variant = nullptr) const;
 	/// Gets the turn number.
 	int getTurn() const;
 	/// Sets the bug hunt turn number.

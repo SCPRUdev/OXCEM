@@ -365,7 +365,7 @@ void Projectile::applyAccuracy(Position origin, Position *target, double accurac
 	if (_action.type != BA_HIT)
 	{
 		int upperLimit, lowerLimit;
-		int dropoff = _action.weapon->getRules()->calculateLimits(upperLimit, lowerLimit, _save->getDepth(), _action.type);
+		int dropoff = _action.weapon->getRules()->calculateLimits(upperLimit, lowerLimit, _save->getDepth(), _action.type, _action.getItemAction());
 
 		double distance = realDistance / 16; // distance in tiles, but still fractional
 		double accuracyLoss = 0.0;

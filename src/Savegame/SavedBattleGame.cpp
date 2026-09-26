@@ -1120,7 +1120,7 @@ UnitFaction SavedBattleGame::getSide() const
  * @param unit
  * @return Unit can shoot/use it.
  */
-bool SavedBattleGame::canUseWeapon(const BattleItem* weapon, const BattleUnit* unit, bool isBerserking, BattleActionType actionType, std::string* message) const
+bool SavedBattleGame::canUseWeapon(const BattleItem* weapon, const BattleUnit* unit, bool isBerserking, BattleActionType actionType, std::string* message, const RuleItemAction* variant) const
 {
 	if (!weapon || !unit) return false;
 
@@ -1134,7 +1134,7 @@ bool SavedBattleGame::canUseWeapon(const BattleItem* weapon, const BattleUnit* u
 		// 2. leeroy jenkins AI
 		// 3. all reaction fire
 		// 4. all unit berserking
-		ammoItem = weapon->getAmmoForAction(actionType);
+		ammoItem = weapon->getAmmoForAction(actionType, variant);
 	}
 	else
 	{

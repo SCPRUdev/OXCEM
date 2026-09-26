@@ -1648,7 +1648,7 @@ int BattleUnit::damage(Position relative, int damage, const RuleDamageType *type
 
 	{
 		ModScript::HitUnit::Output args { damage, bodypart, side, };
-		ModScript::HitUnit::Worker work { this, attack.damage_item, attack.weapon_item, attack.attacker, save, attack.skill_rules, orgDamage, type->ResistType, attack.type };
+		ModScript::HitUnit::Worker work { this, attack.damage_item, attack.weapon_item, attack.attacker, save, attack.skill_rules, orgDamage, type->ResistType, attack.type, attack.item_action };
 
 		if (attack.damage_item)
 		{
@@ -1690,7 +1690,7 @@ int BattleUnit::damage(Position relative, int damage, const RuleDamageType *type
 	{
 		specialDamageTransformChance = specialDamageTransform->getZombieUnitChance();
 
-		if (auto conf = attack.weapon_item ? attack.weapon_item->getActionConf(attack.type) : nullptr)
+		if (auto conf = attack.weapon_item ? attack.weapon_item->getActionConf(attack.type, attack.item_action) : nullptr)
 		{
 			specialDamageTransformChance = useIntNullable(conf->ammoZombieUnitChanceOverride, specialDamageTransformChance);
 		}
@@ -1765,7 +1765,7 @@ int BattleUnit::damage(Position relative, int damage, const RuleDamageType *type
 			std::get<toArmor>(args.data) += type->getArmorFinalDamage(damage);
 		}
 
-		ModScript::DamageUnit::Worker work { this, attack.damage_item, attack.weapon_item, attack.attacker, save, attack.skill_rules, damage, orgDamage, bodypart, side, type->ResistType, attack.type, };
+		ModScript::DamageUnit::Worker work { this, attack.damage_item, attack.weapon_item, attack.attacker, save, attack.skill_rules, damage, orgDamage, bodypart, side, type->ResistType, attack.type, attack.item_action };
 
 		if (attack.damage_item)
 		{
@@ -1907,7 +1907,7 @@ int BattleUnit::damage(Position relative, int damage, const RuleDamageType *type
 
 		// script call
 
-		ModScript::DamageSpecialUnit::Worker work { this, attack.damage_item, attack.weapon_item, attack.attacker, save, attack.skill_rules, damage, orgDamage, bodypart, side, type->ResistType, attack.type, };
+		ModScript::DamageSpecialUnit::Worker work { this, attack.damage_item, attack.weapon_item, attack.attacker, save, attack.skill_rules, damage, orgDamage, bodypart, side, type->ResistType, attack.type, attack.item_action };
 
 		if (attack.damage_item)
 		{
@@ -2126,11 +2126,17 @@ bool BattleUnit::isIgnored() const
  * @param item
  * @return TUs
  */
-RuleItemUseCost BattleUnit::getActionTUs(BattleActionType actionType, const BattleItem *item) const
+RuleItemUseCost BattleUnit::getActionTUs(BattleActionType actionType, const BattleItem *item, const RuleItemAction* variant) const
 {
 	if (item == 0)
 	{
 		return 0;
+	}
+	if (variant && item->getRules()->ownsAction(variant) && variant->type == actionType)
+	{
+		RuleItemUseCost cost = getDefault(variant->cost);
+		applyPercentages(cost, getDefault(variant->flat));
+		return cost;
 	}
 	return getActionTUs(actionType, item->getRules());
 }
@@ -2487,25 +2493,25 @@ int BattleUnit::getFiringAccuracy(BattleActionAttack::ReadOnly attack, const Mod
 
 	if (actionType == BA_SNAPSHOT)
 	{
-		result = item->getRules()->getAccuracyMultiplier(attack) * item->getRules()->getAccuracySnap() / 100;
+		result = item->getRules()->getAccuracyMultiplier(attack) * (attack.item_action ? attack.item_action->accuracy : item->getRules()->getAccuracySnap()) / 100;
 	}
 	else if (actionType == BA_AIMEDSHOT || actionType == BA_LAUNCH)
 	{
-		result = item->getRules()->getAccuracyMultiplier(attack) * item->getRules()->getAccuracyAimed() / 100;
+		result = item->getRules()->getAccuracyMultiplier(attack) * (attack.item_action ? attack.item_action->accuracy : item->getRules()->getAccuracyAimed()) / 100;
 	}
 	else if (actionType == BA_AUTOSHOT)
 	{
-		result = item->getRules()->getAccuracyMultiplier(attack) * item->getRules()->getAccuracyAuto() / 100;
+		result = item->getRules()->getAccuracyMultiplier(attack) * (attack.item_action ? attack.item_action->accuracy : item->getRules()->getAccuracyAuto()) / 100;
 	}
 	else if (actionType == BA_HIT)
 	{
 		kneeled = false;
-		result = item->getRules()->getMeleeMultiplier(attack) * item->getRules()->getAccuracyMelee() / 100;
+		result = item->getRules()->getMeleeMultiplier(attack) * (attack.item_action ? attack.item_action->accuracy : item->getRules()->getAccuracyMelee()) / 100;
 	}
 	else if (actionType == BA_THROW)
 	{
 		kneeled = false;
-		result = item->getRules()->getThrowMultiplier(attack) * item->getRules()->getAccuracyThrow() / 100;
+		result = item->getRules()->getThrowMultiplier(attack) * (attack.item_action ? attack.item_action->accuracy : item->getRules()->getAccuracyThrow()) / 100;
 	}
 	else if (actionType == BA_CQB)
 	{
@@ -7105,7 +7111,7 @@ ModScript::DamageUnitParser::DamageUnitParser(ScriptGlobal* shared, const std::s
 	"to_mana",
 
 	"unit", "damaging_item", "weapon_item", "attacker",
-	"battle_game", "skill", "currPower", "orig_power", "part", "side", "damaging_type", "battle_action", }
+	"battle_game", "skill", "currPower", "orig_power", "part", "side", "damaging_type", "battle_action", "item_action" }
 {
 	BindBase b { this };
 
@@ -7127,7 +7133,7 @@ ModScript::DamageSpecialUnitParser::DamageSpecialUnitParser(ScriptGlobal* shared
 	"attacker_turns_left_spotted_for_snipers",
 
 	"unit", "damaging_item", "weapon_item", "attacker",
-	"battle_game", "skill", "health_damage", "orig_power", "part", "side", "damaging_type", "battle_action", }
+	"battle_game", "skill", "health_damage", "orig_power", "part", "side", "damaging_type", "battle_action", "item_action" }
 {
 	BindBase b { this };
 
@@ -7183,7 +7189,7 @@ ModScript::HitUnitParser::HitUnitParser(ScriptGlobal* shared, const std::string&
 	"part",
 	"side",
 	"unit", "damaging_item", "weapon_item", "attacker",
-	"battle_game", "skill", "orig_power", "damaging_type", "battle_action" }
+	"battle_game", "skill", "orig_power", "damaging_type", "battle_action", "item_action" }
 {
 	BindBase b { this };
 

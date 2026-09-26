@@ -74,6 +74,53 @@ ActionMenuState::ActionMenuState(BattleAction *action, int x, int y) : _action(a
 	// Build up the popup menu
 	int id = 0;
 	const RuleItem *weapon = _action->weapon->getRules();
+	_action->itemAction = nullptr;
+	if (weapon->hasActions())
+	{
+		if (weapon->isPsiRequired() && _action->actor->getBaseStats()->psiSkill <= 0) return;
+		// Assign shortcuts in YAML order before reversing the upward-growing menu.
+		std::vector<const RuleItemAction*> actions;
+		std::vector<SDLKey> keys;
+		std::vector<bool> extra;
+		for (const auto& action : weapon->getActions())
+		{
+			if (getDefault(action.cost).Time <= 0 || (action.type == BA_THROW && weapon->isFixed())) continue;
+			SDLKey key = SDLK_UNKNOWN;
+			const bool additional = std::any_of(actions.begin(), actions.end(), [&](const RuleItemAction* a) { return a->type == action.type; });
+			if (!additional)
+			{
+				switch (action.type)
+				{
+				case BA_AIMEDSHOT: key = Options::keyBattleActionItem1; break;
+				case BA_SNAPSHOT: key = Options::keyBattleActionItem2; break;
+				case BA_AUTOSHOT: key = Options::keyBattleActionItem3; break;
+				case BA_HIT: key = Options::keyBattleActionItem4; break;
+				case BA_THROW: key = Options::keyBattleActionItem5; break;
+				default: break;
+				}
+			}
+			actions.push_back(&action);
+			keys.push_back(key);
+			extra.push_back(additional);
+		}
+		const SDLKey extraKeys[] = { SDLK_6, SDLK_7, SDLK_8, SDLK_9, SDLK_0 };
+		size_t nextKey = 0;
+		for (size_t i = 0; i < actions.size(); ++i)
+		{
+			if (!extra[i]) continue;
+			// Respect remapped classic shortcuts: never assign the same key twice.
+			while (nextKey < std::size(extraKeys) && std::find(keys.begin(), keys.end(), extraKeys[nextKey]) != keys.end()) ++nextKey;
+			if (nextKey < std::size(extraKeys)) keys[i] = extraKeys[nextKey++];
+		}
+		for (size_t i = actions.size(); i > 0; --i)
+		{
+			const auto* action = actions[i - 1];
+			addItem(action->type, action->name, &id, keys[i - 1], action);
+		}
+		// Start at the first YAML entries, which are at the top of this upward-growing list.
+		_firstItem = id;
+		return;
+	}
 
 	// throwing (if not a fixed weapon)
 	if (!weapon->isFixed() && weapon->getCostThrow().Time > 0)
@@ -219,6 +266,7 @@ void ActionMenuState::createMenuItem(int id)
 {
 	auto* item = new ActionMenuItem(id, _game, 0, 0);
 	_actionMenu.push_back(item);
+	_menuVariants.push_back(nullptr);
 	add(item);
 	item->onMouseClick((ActionHandler)&ActionMenuState::btnActionMenuItemClick);
 }
@@ -252,23 +300,32 @@ void ActionMenuState::layoutMenu()
 		_pageInfo->setVisible(count > capacity);
 		_pageInfo->setX(x);
 		_pageInfo->setY(bottom);
-		_pageInfo->setText(std::to_string(_firstItem + 1) + "-" + std::to_string(_firstItem + shown) + " / " + std::to_string(count) + "  [PgUp/PgDn]");
+		const bool yamlOrder = !_menuVariants.empty() && _menuVariants.front();
+		const int first = yamlOrder ? count - _firstItem - shown + 1 : _firstItem + 1;
+		const int last = yamlOrder ? count - _firstItem : _firstItem + shown;
+		_pageInfo->setText(std::to_string(first) + "-" + std::to_string(last) + " / " + std::to_string(count) + "  [PgUp/PgDn]");
 	}
 }
 
 /**
  * Adds an action with its accuracy, cost and optional keyboard shortcut.
  */
-void ActionMenuState::addItem(BattleActionType ba, const std::string &name, int *id, SDLKey key)
+void ActionMenuState::addItem(BattleActionType ba, const std::string &name, int *id, SDLKey key, const RuleItemAction* variant)
 {
 	std::string s1, s2;
-	int acc = BattleUnit::getFiringAccuracy(BattleActionAttack::GetBeforeShoot(ba, _action->actor, _action->weapon), _game->getMod());
-	int tu = _action->actor->getActionTUs(ba, _action->weapon).Time;
+	BattleActionCost preview;
+	preview.type = ba;
+	preview.actor = _action->actor;
+	preview.weapon = _action->weapon;
+	preview.itemAction = variant;
+	int acc = BattleUnit::getFiringAccuracy(BattleActionAttack::GetBeforeShoot(preview), _game->getMod());
+	int tu = _action->actor->getActionTUs(ba, _action->weapon, variant).Time;
 
 	if (ba == BA_THROW || ba == BA_AIMEDSHOT || ba == BA_SNAPSHOT || ba == BA_AUTOSHOT || ba == BA_LAUNCH || ba == BA_HIT)
 		s1 = tr("STR_ACCURACY_SHORT").arg(Unicode::formatPercentage(acc));
 	s2 = tr("STR_TIME_UNITS_SHORT").arg(tu);
 	createMenuItem(*id);
+	_menuVariants.back() = variant;
 	_menuKeys.push_back(key);
 	_actionMenu[*id]->setAction(ba, tr(name), s1, s2, tu);
 	_actionMenu[*id]->setVisible(true);
@@ -367,6 +424,7 @@ void ActionMenuState::btnActionMenuItemClick(Action *action)
 	if (btnID != -1)
 	{
 		_action->type = _actionMenu[btnID]->getAction();
+		_action->itemAction = _menuVariants[btnID];
 		_action->skillRules = nullptr;
 		_action->updateTU();
 
@@ -392,7 +450,7 @@ void ActionMenuState::handleAction()
 			_game->popState();
 		}
 		else if (_action->type != BA_THROW &&
-			!_game->getSavedGame()->getSavedBattle()->canUseWeapon(_action->weapon, _action->actor, false, _action->type, &actionResult))
+			!_game->getSavedGame()->getSavedBattle()->canUseWeapon(_action->weapon, _action->actor, false, _action->type, &actionResult, _action->getItemAction()))
 		{
 			_action->result = actionResult;
 			_game->popState();

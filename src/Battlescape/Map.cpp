@@ -1355,7 +1355,7 @@ void Map::drawTerrain(Surface *surface)
 
 									{
 										int upperLimit, lowerLimit;
-										int dropoff = weapon->calculateLimits(upperLimit, lowerLimit, _save->getDepth(), action->type);
+										int dropoff = weapon->calculateLimits(upperLimit, lowerLimit, _save->getDepth(), action->type, action->getItemAction());
 
 										// at this point, let's assume the shot is adjusted and set the text amber.
 										_txtAccuracy->setColor(Palette::blockOffset(Pathfinding::yellow - 1) - 1);

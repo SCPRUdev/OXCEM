@@ -159,21 +159,21 @@ public:
 	/// Sets the item's ammo item based on it type.
 	bool setAmmoPreMission(BattleItem *item);
 	/// Get ammo slot for action.
-	const RuleItemAction *getActionConf(BattleActionType action) const;
+	const RuleItemAction *getActionConf(BattleActionType action, const RuleItemAction* variant = nullptr) const;
 	/// Check if attack shoot in arc.
-	bool getArcingShot(BattleActionType action) const;
+	bool getArcingShot(BattleActionType action, const RuleItemAction* variant = nullptr) const;
 	/// Determines if this item uses ammo.
-	bool needsAmmoForAction(BattleActionType action) const;
+	bool needsAmmoForAction(BattleActionType action, const RuleItemAction* variant = nullptr) const;
 	/// Get ammo for action.
-	const BattleItem *getAmmoForAction(BattleActionType action) const;
+	const BattleItem *getAmmoForAction(BattleActionType action, const RuleItemAction* variant = nullptr) const;
 	/// Get ammo for action.
-	BattleItem *getAmmoForAction(BattleActionType action, std::string* message = nullptr, int* spendPerShot = nullptr);
+	BattleItem *getAmmoForAction(BattleActionType action, std::string* message = nullptr, int* spendPerShot = nullptr, const RuleItemAction* variant = nullptr);
 	/// Spend weapon ammo.
-	void spendAmmoForAction(BattleActionType action, SavedBattleGame *save);
+	void spendAmmoForAction(BattleActionType action, SavedBattleGame* save, const RuleItemAction* variant = nullptr);
 	/// Spend one quantity of a healing item use
 	void spendHealingItemUse(BattleMediKitAction mediKitAction);
 	/// How many auto shots does this weapon fire.
-	bool haveNextShotsForAction(BattleActionType action, int shotCount) const;
+	bool haveNextShotsForAction(BattleActionType action, int shotCount, const RuleItemAction* variant = nullptr) const;
 	/// Determines if this item uses ammo.
 	bool needsAmmoForSlot(int slot) const;
 	/// Set the item's ammo slot.
