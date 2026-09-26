@@ -45,6 +45,8 @@ private:
 	Frame *_frame;
 	Text *_txtDescription, *_txtAcc, *_txtTU;
 public:
+	static constexpr int WIDTH = 200;
+	static constexpr int HEIGHT = 30;
 	/// Creates a new ActionMenuItem.
 	ActionMenuItem(int id, Game *game, int x, int y);
 	/// Cleans up the ActionMenuItem.

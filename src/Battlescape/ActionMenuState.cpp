@@ -27,6 +27,8 @@
 #include "../Mod/Mod.h"
 #include "../Mod/Armor.h"
 #include "../Mod/RuleItem.h"
+#include "../Mod/RuleInventory.h"
+#include "../Mod/RuleInterface.h"
 #include "ActionMenuItem.h"
 #include "PrimeGrenadeState.h"
 #include "MedikitState.h"
@@ -63,13 +65,11 @@ ActionMenuState::ActionMenuState(BattleAction *action, int x, int y) : _action(a
 	// Set palette
 	_game->getSavedGame()->getSavedBattle()->setPaletteByDepth(this);
 
-	for (int i = 0; i < 6; ++i)
-	{
-		_actionMenu[i] = new ActionMenuItem(i, _game, x, y);
-		add(_actionMenu[i]);
-		_actionMenu[i]->setVisible(false);
-		_actionMenu[i]->onMouseClick((ActionHandler)&ActionMenuState::btnActionMenuItemClick);
-	}
+	// Mirror the left-hand position around the centre of the battlescape panel.
+	const int panelWidth = _game->getMod()->getInterface("battlescape")->getElement("icons")->w;
+	const auto* slot = _action->weapon->getSlot();
+	_menuX = x + (slot && slot->isRightHand() ? panelWidth - 24 - ActionMenuItem::WIDTH : 24);
+	_menuY = y + 20;
 
 	// Build up the popup menu
 	int id = 0;
@@ -204,7 +204,8 @@ ActionMenuState::~ActionMenuState()
  */
 void ActionMenuState::init()
 {
-	if (!_actionMenu[0]->getVisible())
+	layoutMenu();
+	if (_actionMenu.empty())
 	{
 		// Item don't have any actions, close popup.
 		_game->popState();
@@ -212,10 +213,51 @@ void ActionMenuState::init()
 }
 
 /**
- * Adds a new menu item for an action.
- * @param ba Action type.
- * @param name Action description.
- * @param id Pointer to the new item ID.
+ * Creates a menu item shared by the action and skill menus.
+ */
+void ActionMenuState::createMenuItem(int id)
+{
+	auto* item = new ActionMenuItem(id, _game, 0, 0);
+	_actionMenu.push_back(item);
+	add(item);
+	item->onMouseClick((ActionHandler)&ActionMenuState::btnActionMenuItemClick);
+}
+
+void ActionMenuState::layoutMenu()
+{
+	const int count = static_cast<int>(_actionMenu.size());
+	const int capacity = std::max(1, (Options::baseYResolution - 16) / ActionMenuItem::HEIGHT);
+	_firstItem = std::max(0, std::min(_firstItem, std::max(0, count - capacity)));
+	const int shown = std::min(count, capacity);
+	const int x = std::max(0, std::min(_menuX, Options::baseXResolution - ActionMenuItem::WIDTH));
+	const int bottom = std::max(shown * ActionMenuItem::HEIGHT, std::min(_menuY, Options::baseYResolution - 12));
+	for (int i = 0; i < count; ++i)
+	{
+		auto* item = _actionMenu[i];
+		item->setVisible(i >= _firstItem && i < _firstItem + shown);
+		item->setX(x);
+		item->setY(bottom - (i - _firstItem + 1) * ActionMenuItem::HEIGHT);
+	}
+	if (count > capacity && !_pageInfo)
+	{
+		_pageInfo = new Text(ActionMenuItem::WIDTH, 10);
+		add(_pageInfo);
+		_pageInfo->initText(_game->getMod()->getFont("FONT_BIG"), _game->getMod()->getFont("FONT_SMALL"), _game->getLanguage());
+		_pageInfo->setSmall();
+		_pageInfo->setHighContrast(true);
+		_pageInfo->setColor(_game->getMod()->getInterface("battlescape")->getElement("actionMenu")->color);
+	}
+	if (_pageInfo)
+	{
+		_pageInfo->setVisible(count > capacity);
+		_pageInfo->setX(x);
+		_pageInfo->setY(bottom);
+		_pageInfo->setText(std::to_string(_firstItem + 1) + "-" + std::to_string(_firstItem + shown) + " / " + std::to_string(count) + "  [PgUp/PgDn]");
+	}
+}
+
+/**
+ * Adds an action with its accuracy, cost and optional keyboard shortcut.
  */
 void ActionMenuState::addItem(BattleActionType ba, const std::string &name, int *id, SDLKey key)
 {
@@ -226,6 +268,8 @@ void ActionMenuState::addItem(BattleActionType ba, const std::string &name, int 
 	if (ba == BA_THROW || ba == BA_AIMEDSHOT || ba == BA_SNAPSHOT || ba == BA_AUTOSHOT || ba == BA_LAUNCH || ba == BA_HIT)
 		s1 = tr("STR_ACCURACY_SHORT").arg(Unicode::formatPercentage(acc));
 	s2 = tr("STR_TIME_UNITS_SHORT").arg(tu);
+	createMenuItem(*id);
+	_menuKeys.push_back(key);
 	_actionMenu[*id]->setAction(ba, tr(name), s1, s2, tu);
 	_actionMenu[*id]->setVisible(true);
 	if (key != SDLK_UNKNOWN)
@@ -241,6 +285,37 @@ void ActionMenuState::addItem(BattleActionType ba, const std::string &name, int 
  */
 void ActionMenuState::handle(Action *action)
 {
+	const auto* event = action->getDetails();
+	if (event->type == SDL_KEYDOWN)
+	{
+		for (size_t i = 0; i < _menuKeys.size(); ++i)
+		{
+			if (_menuKeys[i] != SDLK_UNKNOWN && event->key.keysym.sym == _menuKeys[i])
+			{
+				action->setSender(_actionMenu[i]);
+				btnActionMenuItemClick(action);
+				return;
+			}
+		}
+	}
+	int scroll = 0;
+	if (event->type == SDL_MOUSEBUTTONDOWN)
+	{
+		if (event->button.button == SDL_BUTTON_WHEELUP) scroll = 1;
+		if (event->button.button == SDL_BUTTON_WHEELDOWN) scroll = -1;
+	}
+	if (event->type == SDL_KEYDOWN)
+	{
+		const int page = std::max(1, (Options::baseYResolution - 16) / ActionMenuItem::HEIGHT);
+		if (event->key.keysym.sym == SDLK_PAGEUP) scroll = page;
+		if (event->key.keysym.sym == SDLK_PAGEDOWN) scroll = -page;
+	}
+	if (scroll)
+	{
+		_firstItem += scroll;
+		layoutMenu();
+		return;
+	}
 	State::handle(action);
 	if (action->getDetails()->type == SDL_MOUSEBUTTONDOWN && _game->isRightClick(action))
 	{
@@ -534,7 +609,9 @@ void ActionMenuState::handleAction()
  */
 void ActionMenuState::resize(int &dX, int &dY)
 {
-	State::recenter(dX, dY * 2);
+	_menuX += dX / 2;
+	_menuY += dY;
+	layoutMenu();
 }
 
 }

@@ -33,7 +33,7 @@ namespace OpenXcom
  * @param x Position on the x-axis.
  * @param y Position on the y-axis.
  */
-ActionMenuItem::ActionMenuItem(int id, Game *game, int x, int y) : InteractiveSurface(272, 40, x + 24, y - (id*40)), _highlighted(false), _action(BA_NONE), _skill(nullptr), _tu(0)
+ActionMenuItem::ActionMenuItem(int id, Game *game, int x, int y) : InteractiveSurface(WIDTH, HEIGHT, x + 24, y - (id*HEIGHT)), _highlighted(false), _action(BA_NONE), _skill(nullptr), _tu(0)
 {
 	Font *big = game->getMod()->getFont("FONT_BIG"), *small = game->getMod()->getFont("FONT_SMALL");
 	Language *lang = game->getLanguage();
@@ -46,24 +46,24 @@ ActionMenuItem::ActionMenuItem(int id, Game *game, int x, int y) : InteractiveSu
 	_frame->setHighContrast(true);
 	_frame->setColor(actionMenu->border);
 	_frame->setSecondaryColor(actionMenu->color2);
-	_frame->setThickness(8);
+	_frame->setThickness(2);
 
-	_txtDescription = new Text(200, 20, 10, 13);
+	_txtDescription = new Text(192, 9, 4, 5);
 	_txtDescription->initText(big, small, lang);
-	_txtDescription->setBig();
+	_txtDescription->setSmall();
 	_txtDescription->setHighContrast(true);
 	_txtDescription->setColor(actionMenu->color);
 	_txtDescription->setVisible(true);
 
-	_txtAcc = new Text(100, 20, 140, 13);
+	_txtAcc = new Text(110, 9, 4, 17);
 	_txtAcc->initText(big, small, lang);
-	_txtAcc->setBig();
+	_txtAcc->setSmall();
 	_txtAcc->setHighContrast(true);
 	_txtAcc->setColor(actionMenu->color);
 
-	_txtTU = new Text(80, 20, 210, 13);
+	_txtTU = new Text(78, 9, 118, 17);
 	_txtTU->initText(big, small, lang);
-	_txtTU->setBig();
+	_txtTU->setSmall();
 	_txtTU->setHighContrast(true);
 	_txtTU->setColor(actionMenu->color);
 }

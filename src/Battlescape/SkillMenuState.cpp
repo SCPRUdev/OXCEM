@@ -23,6 +23,7 @@
 #include "../Engine/Options.h"
 #include "../Engine/Unicode.h"
 #include "../Mod/Mod.h"
+#include "../Mod/RuleInterface.h"
 #include "../Mod/RuleSkill.h"
 #include "../Mod/RuleSoldier.h"
 #include "../Mod/RuleSoldierBonus.h"
@@ -55,13 +56,9 @@ SkillMenuState::SkillMenuState(BattleAction *action, int x, int y) : ActionMenuS
 	// Set palette
 	_game->getSavedGame()->getSavedBattle()->setPaletteByDepth(this);
 
-	for (int i = 0; i < (int)std::size(_actionMenu); ++i)
-	{
-		_actionMenu[i] = new ActionMenuItem(i, _game, x, y);
-		add(_actionMenu[i]);
-		_actionMenu[i]->setVisible(false);
-		_actionMenu[i]->onMouseClick((ActionHandler)&SkillMenuState::btnActionMenuItemClick);
-	}
+	const int panelWidth = _game->getMod()->getInterface("battlescape")->getElement("icons")->w;
+	_menuX = x + (panelWidth - ActionMenuItem::WIDTH) / 2;
+	_menuY = y + 20;
 
 	// Build up the popup menu
 	int id = 0;
@@ -76,8 +73,7 @@ SkillMenuState::SkillMenuState(BattleAction *action, int x, int y) : ActionMenuS
 	auto* soldier = _action->actor->getGeoscapeSoldier();
 	for (auto* skill : soldier->getRules()->getSkills())
 	{
-		if (!hotkeys.empty()
-			&& soldier->hasAllRequiredBonusesForSkill(skill)
+		if (soldier->hasAllRequiredBonusesForSkill(skill)
 			&& (skill->getCost().Time > 0 || skill->getCost().Mana > 0)
 			&& (!skill->isPsiRequired() || _action->actor->getBaseStats()->psiSkill > 0))
 		{
@@ -89,9 +85,9 @@ SkillMenuState::SkillMenuState(BattleAction *action, int x, int y) : ActionMenuS
 			chooseWeaponForSkill(_action, skill);
 
 			// Attention: here the modified values are consumed
-			addItem(skill, &id, hotkeys.back());
+			addItem(skill, &id, hotkeys.empty() ? SDLK_UNKNOWN : hotkeys.back());
 
-			hotkeys.pop_back();
+			if (!hotkeys.empty()) hotkeys.pop_back();
 		}
 	}
 
@@ -138,6 +134,8 @@ void SkillMenuState::addItem(const RuleSkill* skill, int *id, SDLKey key)
 		s2 = tr("STR_MANA_SHORT").arg(cost.Mana);
 	}
 
+	createMenuItem(*id);
+	_menuKeys.push_back(key);
 	_actionMenu[*id]->setAction(ba, tr(skill->getType()), s1, s2, cost.Time);
 	_actionMenu[*id]->setSkill(skill);
 	_actionMenu[*id]->setVisible(true);

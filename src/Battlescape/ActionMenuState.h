@@ -19,11 +19,13 @@
  */
 #include "../Engine/State.h"
 #include "BattlescapeGame.h"
+#include <vector>
 
 namespace OpenXcom
 {
 
 class ActionMenuItem;
+class Text;
 
 /**
  * Window that allows the player
@@ -33,7 +35,12 @@ class ActionMenuState : public State
 {
 protected:
 	BattleAction *_action;
-	ActionMenuItem *_actionMenu[6];
+	std::vector<ActionMenuItem*> _actionMenu;
+	std::vector<SDLKey> _menuKeys;
+	int _menuX = 0, _menuY = 0, _firstItem = 0;
+	Text* _pageInfo = nullptr;
+	void createMenuItem(int id);
+	void layoutMenu();
 	/// Adds a new menu item for an action.
 	void addItem(BattleActionType ba, const std::string &name, int *id, SDLKey key);
 	/// Acts on the action instance that has been chosen and set.

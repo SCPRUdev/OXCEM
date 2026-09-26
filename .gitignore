@@ -7768,3 +7768,7 @@ bin/standard/OpenSCP/Resources/Indicators/README.md
 bin/standard/OpenSCP/Resources/Indicators/shock.png
 bin/standard/OpenSCP/Ruleset/indicators.rul
 bin/standard/OpenSCP/Ruleset/medical-charge-overlays.rul
+bin/standard/OpenSCP/Resources/UnitUI/spIcon_torso.png
+bin/standard/OpenSCP/Resources/UnitUI/spIcon_legs.png
+bin/standard/OpenSCP/Resources/UnitUI/spIcon_head.png
+bin/standard/OpenSCP/Resources/UnitUI/spIcon_arms.png

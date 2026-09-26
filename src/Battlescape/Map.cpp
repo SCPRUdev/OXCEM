@@ -19,6 +19,7 @@
 #include "Map.h"
 #include "Camera.h"
 #include "UnitSprite.h"
+#include "SpriteOverlay.h"
 #include "ItemSprite.h"
 #include "Pathfinding.h"
 #include "TileEngine.h"
@@ -1529,6 +1530,18 @@ void Map::drawTerrain(Surface *surface)
 								_txtAccuracy->setText(ss.str());
 								_txtAccuracy->draw();
 								_txtAccuracy->blitNShade(surface, screenPosition.x, screenPosition.y, 0);
+								if (_cursorType == CT_AIM && action->actor &&
+									(action->type == BA_SNAPSHOT || action->type == BA_AIMEDSHOT || action->type == BA_AUTOSHOT))
+								{
+									// Screen-space icon next to the accuracy text; never use the target unit.
+									constexpr int iconSize = 16;
+									int iconX = screenPosition.x + _txtAccuracy->getTextWidth() + 2;
+									if (iconX + iconSize > surface->getWidth()) iconX = screenPosition.x - iconSize - 2;
+									iconX = std::max(0, std::min(iconX, surface->getWidth() - iconSize));
+									const int iconY = std::max(0, std::min(static_cast<int>(screenPosition.y), surface->getHeight() - iconSize));
+									SpriteOverlay(*surface, SpriteOverlay::bounds(iconX, iconY, iconSize, iconSize), _save, _game->getMod(), _game->getLanguage())
+										.draw<ModScript::UnitAimCursorOverlay>(*action->actor->getArmor(), action->actor, _animFrame);
+								}
 							}
 						}
 						else if (_camera->getViewLevel() > itZ)

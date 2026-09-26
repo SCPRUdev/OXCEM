@@ -358,6 +358,7 @@ public:
 	using UnitPaperdollOverlay = MACRO_NAMED_SCRIPT("unitPaperdollOverlay", UnitPaperdollOverlayParser);
 	using UnitRankOverlay = MACRO_NAMED_SCRIPT("unitRankOverlay", UnitRankOverlayParser);
 	using UnitSkillIconOverlay = MACRO_NAMED_SCRIPT("unitSkillIconOverlay", UnitRankOverlayParser);
+	using UnitAimCursorOverlay = MACRO_NAMED_SCRIPT("unitAimCursorOverlay", UnitRankOverlayParser);
 	using UnitSpriteOverlay = MACRO_NAMED_SCRIPT("unitSpriteOverlay", UnitSpriteOverlayParser);
 	using InventorySpriteOverlay = MACRO_NAMED_SCRIPT("inventorySpriteOverlay", InventorySpriteOverlayParser);
 	using HandOverlay = MACRO_NAMED_SCRIPT("handOverlay", HandOverlayParser);
@@ -480,6 +481,7 @@ public:
 		UnitPaperdollOverlay,
 		UnitRankOverlay,
 		UnitSkillIconOverlay,
+		UnitAimCursorOverlay,
 		UnitSpriteOverlay,
 		RecolorUnitSprite,
 		SelectUnitSprite,
